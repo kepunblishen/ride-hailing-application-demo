@@ -750,13 +750,16 @@ struct ScheduleRideSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var date = Date().addingTimeInterval(3600)
 
+    /// Called only when the rider confirms a time (or Ride now) — not on cancel / swipe-away.
+    var onConfirmed: (() -> Void)? = nil
+
     var body: some View {
         NavigationStack {
             Form {
                 Section {
                     Button {
                         tripSession.scheduleForLater = nil
-                        dismiss()
+                        confirmAndDismiss()
                     } label: {
                         Label("Ride now", systemImage: "bolt.fill")
                             .foregroundStyle(VuumColor.primaryText)
@@ -776,7 +779,7 @@ struct ScheduleRideSheet: View {
                         .tint(VuumColor.brand)
                     Button("Use this time") {
                         tripSession.scheduleForLater = date
-                        dismiss()
+                        confirmAndDismiss()
                     }
                     .font(VuumType.button)
                     .foregroundStyle(VuumColor.brand)
@@ -813,6 +816,11 @@ struct ScheduleRideSheet: View {
             }
         }
         .presentationDetents([.medium, .large])
+    }
+
+    private func confirmAndDismiss() {
+        onConfirmed?()
+        dismiss()
     }
 }
 

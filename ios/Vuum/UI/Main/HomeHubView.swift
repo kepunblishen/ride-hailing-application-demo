@@ -13,8 +13,6 @@ struct HomeHubView: View {
 
     @State private var hubTab: HubTopTab = .rides
     @State private var showSchedule = false
-    /// After Later / schedule sheet dismisses, continue into full-page Plan-your-ride.
-    @State private var openPlanRideAfterSchedule = false
     @State private var showSafety = false
     @State private var showInbox = false
     @State private var showPermissionsExplainer = false
@@ -128,12 +126,11 @@ struct HomeHubView: View {
                 }
             }
         }
-        .sheet(isPresented: $showSchedule, onDismiss: {
-            guard openPlanRideAfterSchedule else { return }
-            openPlanRideAfterSchedule = false
-            tripSession.beginDestinationSelection()
-        }) {
-            ScheduleRideSheet()
+        .sheet(isPresented: $showSchedule) {
+            // Only enter Plan-your-ride after an explicit confirm — not when closing / tapping outside.
+            ScheduleRideSheet(onConfirmed: {
+                tripSession.beginDestinationSelection()
+            })
         }
         .sheet(isPresented: $showSafety) {
             SafetyToolkitView()
@@ -365,8 +362,6 @@ struct HomeHubView: View {
                 .frame(width: 1, height: 28)
 
             Button {
-                // Later → pick a time, then enter Plan-your-ride (same full-page flow as Where to?).
-                openPlanRideAfterSchedule = true
                 showSchedule = true
             } label: {
                 HStack(spacing: 6) {
@@ -655,7 +650,6 @@ struct HomeHubView: View {
         case .bookRide(let tierID):
             tripSession.beginDestinationSelection(preferredTierID: tierID)
         case .schedule:
-            openPlanRideAfterSchedule = true
             showSchedule = true
         case .openServices:
             if item.id == ServiceProductID.twoWheels {
@@ -675,7 +669,6 @@ struct HomeHubView: View {
         case .bookRide(let tierID):
             tripSession.beginDestinationSelection(preferredTierID: tierID)
         case .schedule:
-            openPlanRideAfterSchedule = true
             showSchedule = true
         case .openServices:
             if suggestion.id == ServiceProductID.twoWheels {
