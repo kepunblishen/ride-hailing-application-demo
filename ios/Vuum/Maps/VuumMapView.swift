@@ -219,10 +219,10 @@ struct VuumMapView: UIViewRepresentable {
                         : TripGeo.lerpHeading(from: previous, to: pin.heading, fraction: 0.55)
                     renderedHeadings[pin.id] = smoothed
                     marker.rotation = smoothed
-                    marker.flat = true
+                    marker.isFlat = true
                 } else {
                     marker.rotation = 0
-                    marker.flat = false
+                    marker.isFlat = false
                 }
                 marker.map = map
                 markers[pin.id] = marker
@@ -387,7 +387,7 @@ struct VuumMapView: UIViewRepresentable {
                 withLatitude: target.latitude,
                 longitude: target.longitude,
                 zoom: zoom,
-                bearing: Float(bearing ?? map.camera.bearing),
+                bearing: bearing ?? map.camera.bearing,
                 viewingAngle: 0
             )
             CATransaction.begin()
