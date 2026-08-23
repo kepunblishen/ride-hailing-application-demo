@@ -4,19 +4,23 @@ import UIKit
 // MARK: - Palette & type
 
 enum AuthPalette {
-    static let fieldFill = Color(red: 0.929, green: 0.929, blue: 0.941) // #EDEDF0
-    static let fieldFillPressed = Color(red: 0.90, green: 0.90, blue: 0.91)
-    static let ink = Color.black
-    static let muted = Color(white: 0.42)
-    static let hairline = Color.black.opacity(0.10)
-    static let link = Color(red: 0.12, green: 0.33, blue: 0.82)
-    static let page = Color.white
+    static let page = Color(.systemBackground)
+    static let fieldFill = Color(.tertiarySystemFill)
+    static let fieldFillPressed = Color(.secondarySystemFill)
+    static let ink = Color(.label)
+    static let muted = Color(.secondaryLabel)
+    static let hairline = Color(.separator)
+    static let accent = VuumColor.accent
+    static let accentBright = VuumColor.accentBright
+    static let link = VuumColor.accent
+    static let onAccent = VuumColor.accentOn
 }
 
 enum AuthType {
-    static let hero = Font.system(size: 34, weight: .bold)
-    static let title = Font.system(size: 28, weight: .bold)
-    static let titleCompact = Font.system(size: 26, weight: .bold)
+    /// Onboarding headlines — SF Pro, ~26pt semibold (not display/heavy).
+    static let hero = Font.system(size: 28, weight: .semibold)
+    static let title = Font.system(size: 26, weight: .semibold)
+    static let titleCompact = Font.system(size: 24, weight: .semibold)
     static let body = Font.system(size: 16, weight: .regular)
     static let bodyMedium = Font.system(size: 16, weight: .medium)
     static let bodySemibold = Font.system(size: 16, weight: .semibold)
@@ -25,14 +29,18 @@ enum AuthType {
     static let fine = Font.system(size: 12, weight: .regular)
     static let button = Font.system(size: 17, weight: .semibold)
     static let buttonSecondary = Font.system(size: 16, weight: .semibold)
-    static let otpDigit = Font.system(size: 26, weight: .semibold)
+    static let otpDigit = Font.system(size: 32, weight: .bold)
 }
 
 enum AuthLayout {
     static let pageInset: CGFloat = 24
     static let fieldHeight: CGFloat = 54
-    static let fieldRadius: CGFloat = 8
-    static let buttonRadius: CGFloat = 8
+    static let fieldRadius: CGFloat = 12
+    static let buttonRadius: CGFloat = 28
+    static let otpBoxWidth: CGFloat = 72
+    static let otpBoxHeight: CGFloat = 88
+    static let otpBoxRadius: CGFloat = 14
+    static let topBarHeight: CGFloat = 56
     static let controlSpacing: CGFloat = 12
     static let sectionGap: CGFloat = 28
     static let titleTop: CGFloat = 8
@@ -103,18 +111,20 @@ struct AuthBlackButton: View {
                 if isLoading {
                     ProgressView()
                         .progressViewStyle(.circular)
-                        .tint(.white)
+                        .tint(AuthPalette.onAccent)
                 } else {
                     Text(title)
                         .font(AuthType.button)
-                        .foregroundStyle(interactive ? Color.white : Color.white.opacity(0.55))
+                        .foregroundStyle(interactive ? AuthPalette.onAccent : AuthPalette.onAccent.opacity(0.55))
                 }
             }
             .frame(maxWidth: .infinity)
             .frame(height: AuthLayout.fieldHeight)
             .background(
-                interactive || isLoading ? Color.black : Color.black.opacity(0.32),
-                in: RoundedRectangle(cornerRadius: AuthLayout.buttonRadius, style: .continuous)
+                interactive || isLoading
+                    ? AuthPalette.accent
+                    : AuthPalette.accent.opacity(0.35),
+                in: Capsule()
             )
         }
         .buttonStyle(AuthPressStyle())
@@ -165,7 +175,7 @@ struct AuthGrayButton: View {
             .frame(height: AuthLayout.fieldHeight)
             .background(
                 AuthPalette.fieldFill,
-                in: RoundedRectangle(cornerRadius: AuthLayout.buttonRadius, style: .continuous)
+                in: Capsule()
             )
         }
         .buttonStyle(AuthPressStyle())
@@ -183,7 +193,7 @@ struct AuthCircleBackButton: View {
             Image(systemName: "arrow.left")
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(AuthPalette.ink)
-                .frame(width: 48, height: 48)
+                .frame(width: 44, height: 44)
                 .background(AuthPalette.fieldFill, in: Circle())
         }
         .buttonStyle(AuthPressStyle())
@@ -201,7 +211,7 @@ struct AuthNextPill: View {
             HStack(spacing: 8) {
                 if isLoading {
                     ProgressView()
-                        .tint(.white)
+                        .tint(AuthPalette.onAccent)
                 } else {
                     Text(L10n.Common.next)
                     Image(systemName: "arrow.right")
@@ -209,11 +219,11 @@ struct AuthNextPill: View {
                 }
             }
             .font(AuthType.bodySemibold)
-            .foregroundStyle(enabled ? Color.white : Color.white.opacity(0.55))
+            .foregroundStyle(enabled ? AuthPalette.onAccent : AuthPalette.onAccent.opacity(0.55))
             .padding(.horizontal, 24)
             .frame(height: 52)
             .background(
-                enabled ? Color.black : Color.black.opacity(0.22),
+                enabled ? AuthPalette.accent : AuthPalette.accent.opacity(0.32),
                 in: Capsule()
             )
         }
@@ -242,10 +252,10 @@ struct AuthInlineError: View {
         HStack(alignment: .top, spacing: 8) {
             Image(systemName: "exclamationmark.circle.fill")
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(Color(red: 0.75, green: 0.12, blue: 0.12))
+                .foregroundStyle(VuumColor.danger)
             Text(message)
                 .font(AuthType.caption)
-                .foregroundStyle(Color(red: 0.55, green: 0.08, blue: 0.08))
+                .foregroundStyle(VuumColor.danger)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
         }
@@ -275,7 +285,7 @@ struct AuthLegalDocumentSheet: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button(L10n.Common.close) { isPresented = false }
                         .font(AuthType.bodyMedium)
-                        .foregroundStyle(AuthPalette.ink)
+                        .foregroundStyle(AuthPalette.accent)
                 }
             }
         }
@@ -308,7 +318,7 @@ struct AuthFieldBackground: ViewModifier {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: AuthLayout.fieldRadius, style: .continuous)
-                    .strokeBorder(focused ? Color.black : Color.clear, lineWidth: 2)
+                    .strokeBorder(focused ? AuthPalette.accent : Color.clear, lineWidth: 2)
             )
     }
 }
@@ -408,7 +418,7 @@ struct AuthCountryPickerSheet: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button(L10n.Common.close) { isPresented = false }
                         .font(AuthType.bodyMedium)
-                        .foregroundStyle(AuthPalette.ink)
+                        .foregroundStyle(AuthPalette.accent)
                 }
             }
         }
@@ -470,7 +480,7 @@ struct AuthCountryPickerSheet: View {
                 if selected {
                     Image(systemName: "checkmark")
                         .font(.system(size: 14, weight: .bold))
-                        .foregroundStyle(AuthPalette.ink)
+                        .foregroundStyle(AuthPalette.accent)
                         .padding(.leading, 4)
                 }
             }

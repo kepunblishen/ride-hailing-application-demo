@@ -2,6 +2,7 @@ import SwiftUI
 import UIKit
 
 struct SplashView: View {
+    @Environment(\.colorScheme) private var colorScheme
     @State private var markOpacity: Double = 0
     @State private var markScale: CGFloat = 0.94
     @State private var markOffset: CGFloat = 8
@@ -19,7 +20,7 @@ struct SplashView: View {
                 .accessibilityHidden(true)
 
             Text(VuumTheme.displayName)
-                .font(.system(size: 44, weight: .bold, design: .rounded))
+                .font(.system(size: 40, weight: .semibold, design: .rounded))
                 .tracking(0.6)
                 .foregroundStyle(VuumColor.primaryText)
                 .scaleEffect(markScale)
@@ -38,12 +39,12 @@ struct SplashView: View {
 
     @ViewBuilder
     private var splashBackdrop: some View {
-        if hasSplashBackground {
+        // Light-mode asset only — dark mode uses adaptive system background.
+        if hasSplashBackground, colorScheme == .light {
             Image("SplashBackground")
                 .resizable()
                 .scaledToFill()
         } else {
-            // Brand-safe fallback — no invented artwork; solid field + restrained map mark.
             ZStack {
                 VuumColor.pageBackground
                 Image(systemName: "map")

@@ -77,7 +77,7 @@ struct HomeHubView: View {
                         .padding(.horizontal, 16)
                         .padding(.top, 8)
                         .padding(.bottom, 10)
-                        .background(Color.white.opacity(0.94))
+                        .background(VuumColor.pageBackground.opacity(0.94))
 
                     if showLocationDeniedBanner {
                         PermissionDeniedBanner(
@@ -143,7 +143,7 @@ struct HomeHubView: View {
                             .buttonStyle(.plain)
                         }
                         .padding(12)
-                        .background(Color.white.opacity(0.94), in: RoundedRectangle(cornerRadius: 12))
+                        .background(VuumColor.pageBackground.opacity(0.94), in: RoundedRectangle(cornerRadius: 12))
                         .padding(.horizontal, 16)
                         .padding(.top, 8)
                     }
@@ -161,7 +161,6 @@ struct HomeHubView: View {
                 }
             }
         }
-        .preferredColorScheme(.light)
         .onAppear {
             if permissions.shouldShowExplainer {
                 showPermissionsExplainer = true
@@ -327,7 +326,7 @@ struct HomeHubView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            Color.white
+            VuumColor.pageBackground
                 .clipShape(RoundedRectangle(cornerRadius: VuumLayout.radiusSheet, style: .continuous))
                 .shadow(color: .black.opacity(0.10), radius: 14, y: -3)
                 .ignoresSafeArea(edges: .bottom)

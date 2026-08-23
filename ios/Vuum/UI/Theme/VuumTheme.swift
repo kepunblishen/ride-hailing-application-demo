@@ -8,6 +8,11 @@ enum VuumColor {
     static let brand = Color(red: 245 / 255, green: 165 / 255, blue: 36 / 255)
     static let brandInk = Color(red: 15 / 255, green: 20 / 255, blue: 25 / 255)
 
+    /// Uber-like interactive blue — primary CTAs, links, focus rings.
+    static let accent = Color(red: 0 / 255, green: 86 / 255, blue: 197 / 255) // #0056c5
+    static let accentBright = Color(red: 15 / 255, green: 109 / 255, blue: 243 / 255) // #0f6df3
+    static let accentOn = Color.white
+
     static let pageBackground = Color(.systemBackground)
     /// Grouped hubs (Services / Activity) — one surface language across tabs.
     static let groupedBackground = Color(.systemGroupedBackground)
@@ -66,32 +71,34 @@ enum VuumLayout {
 // MARK: - Type scale (mobility-product density, not oversized display)
 
 enum VuumType {
-    static let hero = Font.system(size: 28, weight: .bold)
-    static let title = Font.system(size: 22, weight: .bold)
-    static let titleSmall = Font.system(size: 20, weight: .bold)
-    static let section = Font.system(size: 22, weight: .bold)
+    static let hero = Font.system(size: 28, weight: .semibold)
+    static let title = Font.system(size: 22, weight: .semibold)
+    static let titleSmall = Font.system(size: 20, weight: .semibold)
+    static let section = Font.system(size: 22, weight: .semibold)
     static let rowTitle = Font.system(size: 16, weight: .semibold)
     static let body = Font.system(size: 15, weight: .regular)
     static let bodySemibold = Font.system(size: 15, weight: .semibold)
     static let callout = Font.system(size: 14, weight: .medium)
     static let caption = Font.system(size: 13, weight: .regular)
     static let captionSemibold = Font.system(size: 13, weight: .semibold)
-    static let micro = Font.system(size: 11, weight: .bold)
-    static let button = Font.system(size: 17, weight: .semibold, design: .rounded)
+    static let micro = Font.system(size: 11, weight: .semibold)
+    static let button = Font.system(size: 17, weight: .semibold)
 }
 
 // MARK: - Theme bootstrap
 
 enum VuumTheme {
     static let brandHex = "#F5A524"
+    static let accentHex = "#0056C5"
+    static let accentBrightHex = "#0F6DF3"
     static let displayName = "Vuum"
 
-    /// Align ComponentsKit accent with Vuum brand (same bootstrap pattern as Wells).
+    /// Align ComponentsKit accent with interactive blue (auth + controls).
     static func configureComponentsKit() {
         Theme.current.update {
             $0.colors.accent = .init(
-                main: .universal(.hex(brandHex)),
-                contrast: .universal(.hex("#0F1419")),
+                main: .universal(.hex(accentHex)),
+                contrast: .universal(.hex("#FFFFFF")),
                 background: .themed(
                     light: .hex("#F4F5F7"),
                     dark: .hex("#1A1F24")

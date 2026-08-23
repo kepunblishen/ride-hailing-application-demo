@@ -12,11 +12,11 @@ struct GetStartedView: View {
                     Spacer()
                     ZStack {
                         RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .fill(Color.black)
-                            .frame(width: 56, height: 56)
+                            .fill(AuthPalette.accent)
+                            .frame(width: 52, height: 52)
                         Text("Vuum")
-                            .font(.system(size: 12, weight: .bold, design: .rounded))
-                            .foregroundStyle(.white)
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(AuthPalette.onAccent)
                     }
                     Spacer()
                 }
@@ -27,7 +27,7 @@ struct GetStartedView: View {
                     .foregroundStyle(AuthPalette.ink)
                     .multilineTextAlignment(.center)
                     .frame(maxWidth: .infinity)
-                    .padding(.top, 20)
+                    .padding(.top, 18)
                     .padding(.bottom, AuthLayout.sectionGap)
 
                 Text(L10n.Auth.mobileNumber)
@@ -110,7 +110,7 @@ struct GetStartedView: View {
                         Text(L10n.Auth.findAccount)
                             .font(AuthType.bodyMedium)
                     }
-                    .foregroundStyle(AuthPalette.ink)
+                    .foregroundStyle(AuthPalette.accent)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(L10n.Auth.findAccount)

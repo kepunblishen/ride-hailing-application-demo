@@ -305,10 +305,10 @@ struct PermissionDeniedBanner: View {
             Spacer(minLength: 0)
         }
         .padding(12)
-        .background(Color.white.opacity(0.96), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .background(VuumColor.pageBackground.opacity(0.96), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .stroke(Color.black.opacity(0.06), lineWidth: 1)
+                .stroke(VuumColor.divider.opacity(0.6), lineWidth: 1)
         )
         .accessibilityElement(children: .combine)
     }

@@ -119,8 +119,14 @@ enum L10n {
         static var findAccount: String { t("auth.find_account") }
         static var smsDisclaimer: String { t("auth.sms_disclaimer") }
         static var otpPrompt: String { t("auth.otp_prompt") }
+        static var otpTitle: String { t("auth.otp_title") }
+        static var otpSubtitle: String { t("auth.otp_subtitle") }
         static var changedNumber: String { t("auth.changed_number") }
         static var resendSMS: String { t("auth.resend_sms") }
+        static var resendPrompt: String { t("auth.resend_prompt") }
+        static var resendCode: String { t("auth.resend_code") }
+        static var resendCodeIn: String { t("auth.resend_code_in") }
+        static var verify: String { t("auth.verify") }
         static var backupCode: String { t("auth.backup_code") }
         static var digitA11y: String { t("auth.digit_a11y") }
         static var termsTitle: String { t("auth.terms_title") }
@@ -656,8 +662,24 @@ enum L10n {
             "Kotia code ya ba chiffre 4 oyo etindami na %@.",
             "Weka msimbo wa tarakimu 4 uliotumwa kwa %@."
         ),
+        "auth.otp_title": s(
+            "Enter the 4-digit code sent to you",
+            "Saisissez le code à 4 chiffres envoyé",
+            "Kotia code ya ba chiffre 4 oyo etindami",
+            "Weka msimbo wa tarakimu 4 uliotumwa"
+        ),
+        "auth.otp_subtitle": s(
+            "We sent a code to %@",
+            "Nous avons envoyé un code au %@",
+            "Totindaki code na %@",
+            "Tumepeleka msimbo kwa %@"
+        ),
         "auth.changed_number": s("Changed your mobile number?", "Vous avez changé de numéro ?", "Obongoli numéro ?", "Umebadilisha nambari?"),
         "auth.resend_sms": s("Resend code via SMS", "Renvoyer le code par SMS", "Tinda code lisusu na SMS", "Tuma tena msimbo kwa SMS"),
+        "auth.resend_prompt": s("Didn't receive it?", "Vous ne l’avez pas reçu ?", "Ozwaki yango te ?", "Hukupokea?"),
+        "auth.resend_code": s("Resend code", "Renvoyer le code", "Tinda code lisusu", "Tuma msimbo tena"),
+        "auth.resend_code_in": s("Resend code (%ds)", "Renvoyer le code (%ds)", "Tinda code (%ds)", "Tuma msimbo (%ds)"),
+        "auth.verify": s("Verify", "Vérifier", "Ndimisa", "Thibitisha"),
         "auth.backup_code": s("Use Backup Code", "Utiliser un code de secours", "Salisa code ya backup", "Tumia msimbo wa akiba"),
         "auth.digit_a11y": s("Digit %d", "Chiffre %d", "Chiffre %d", "Tarakimu %d"),
         "auth.terms_title": s(

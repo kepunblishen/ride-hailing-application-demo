@@ -9,9 +9,8 @@ struct ContentView: View {
 
     var body: some View {
         ZStack {
-            // Mount interactive destinations only after splash dismisses so:
-            // - auth TextFields cannot auto-focus / open the keyboard under splash
-            // - AuthFlowView's forced light scheme cannot tint splash appearance
+            // Mount interactive destinations only after splash dismisses so
+            // auth TextFields cannot auto-focus / open the keyboard under splash.
             if !showSplash {
                 Group {
                     if session.isSignedIn {

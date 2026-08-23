@@ -13,7 +13,7 @@ struct WelcomeView: View {
             Spacer()
 
             Text(L10n.Auth.welcome)
-                .font(AuthType.hero)
+                .font(AuthType.title)
                 .foregroundStyle(AuthPalette.ink)
                 .opacity(titleOpacity)
                 .offset(y: titleOffset)
@@ -26,8 +26,8 @@ struct WelcomeView: View {
                 .accessibilityLabel(L10n.Auth.customizing)
 
             Image(systemName: "arrow.right")
-                .font(.system(size: 40, weight: .bold))
-                .foregroundStyle(AuthPalette.ink)
+                .font(.system(size: 28, weight: .semibold))
+                .foregroundStyle(AuthPalette.accent)
                 .opacity(showArrow ? 1 : 0)
                 .offset(x: showArrow ? 0 : -8)
                 .padding(.top, 32)

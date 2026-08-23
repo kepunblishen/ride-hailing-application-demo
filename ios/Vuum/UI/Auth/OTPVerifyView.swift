@@ -6,80 +6,124 @@ struct OTPVerifyView: View {
     @State private var showBackup = false
     @State private var backupCode = ""
 
-    private var resendTitle: String {
-        if auth.resendSecondsRemaining > 0 {
-            return String(format: L10n.Auth.resendIn, auth.resendSecondsRemaining)
-        }
-        return L10n.Auth.resendSMS
-    }
+    private var resendEnabled: Bool { auth.canResendOTP }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text(String(format: L10n.Auth.otpPrompt, auth.maskedPhoneForOTP))
-                .font(AuthType.titleCompact)
-                .foregroundStyle(AuthPalette.ink)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(.top, AuthLayout.titleTop)
+        VStack(spacing: 0) {
+            topBar
 
-            Button {
-                auth.goBack()
-            } label: {
-                Text(L10n.Auth.changedNumber)
-                    .font(AuthType.bodyMedium)
-                    .underline(true, color: AuthPalette.ink.opacity(0.85))
+            VStack(alignment: .leading, spacing: 0) {
+                Text(L10n.Auth.otpTitle)
+                    .font(AuthType.title)
                     .foregroundStyle(AuthPalette.ink)
-            }
-            .buttonStyle(.plain)
-            .padding(.top, 12)
-            .accessibilityLabel(L10n.Auth.changedNumber)
-            .accessibilityHint("Goes back to edit your phone number")
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityAddTraits(.isHeader)
 
-            HStack(spacing: AuthLayout.controlSpacing) {
-                ForEach(0..<4, id: \.self) { index in
-                    otpBox(index: index)
+                Text(String(format: L10n.Auth.otpSubtitle, auth.maskedPhoneForOTP))
+                    .font(AuthType.body)
+                    .foregroundStyle(AuthPalette.muted)
+                    .padding(.top, 10)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                HStack(spacing: 12) {
+                    ForEach(0..<4, id: \.self) { index in
+                        otpBox(index: index)
+                    }
                 }
-            }
-            .padding(.top, 32)
-            .accessibilityElement(children: .contain)
-            .accessibilityLabel("Verification code")
+                .frame(maxWidth: .infinity)
+                .padding(.top, 28)
+                .accessibilityElement(children: .contain)
+                .accessibilityLabel("Verification code")
 
-            if let otpError = auth.otpError {
-                AuthInlineError(message: otpError)
-            }
-
-            VStack(spacing: AuthLayout.controlSpacing) {
-                AuthGrayButton(title: resendTitle, enabled: auth.canResendOTP) {
-                    auth.resendCode()
+                if let otpError = auth.otpError {
+                    AuthInlineError(message: otpError)
                 }
-                AuthGrayButton(title: L10n.Auth.backupCode) {
+
+                resendRow
+                    .padding(.top, 22)
+
+                Button {
                     backupCode = ""
                     showBackup = true
+                } label: {
+                    Text(L10n.Auth.backupCode)
+                        .font(AuthType.caption)
+                        .foregroundStyle(AuthPalette.muted)
+                        .underline(true, color: AuthPalette.muted.opacity(0.7))
                 }
+                .buttonStyle(.plain)
+                .padding(.top, 14)
+                .accessibilityLabel(L10n.Auth.backupCode)
             }
-            .padding(.top, 28)
+            .padding(.horizontal, AuthLayout.pageInset)
+            .padding(.top, 8)
 
             Spacer(minLength: 16)
 
-            HStack {
-                AuthCircleBackButton { auth.goBack() }
-                Spacer()
-                AuthNextPill(
-                    enabled: auth.canSubmitOTP,
-                    isLoading: auth.otpVerifyPhase == .loading
-                ) {
-                    auth.goToTerms()
-                }
+            AuthBlackButton(
+                title: L10n.Auth.verify,
+                enabled: auth.canSubmitOTP,
+                isLoading: auth.otpVerifyPhase == .loading
+            ) {
+                focusedIndex = nil
+                auth.goToTerms()
             }
+            .padding(.horizontal, AuthLayout.pageInset)
             .padding(.bottom, 12)
         }
-        .padding(.horizontal, AuthLayout.pageInset)
         .background(AuthPalette.page.ignoresSafeArea())
         .onChange(of: auth.otpDigits) { _, _ in
-            advanceFocus()
+            advanceFocusIfNeeded()
         }
         .sheet(isPresented: $showBackup) {
             backupSheet
         }
+    }
+
+    private var topBar: some View {
+        HStack {
+            Button {
+                auth.goBack()
+            } label: {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(AuthPalette.ink)
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(L10n.Common.back)
+
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 12)
+        .frame(height: AuthLayout.topBarHeight)
+    }
+
+    private var resendRow: some View {
+        HStack(spacing: 4) {
+            Text(L10n.Auth.resendPrompt)
+                .font(AuthType.body)
+                .foregroundStyle(AuthPalette.muted)
+
+            if auth.resendSecondsRemaining > 0 {
+                Text(String(format: L10n.Auth.resendCodeIn, auth.resendSecondsRemaining))
+                    .font(AuthType.bodyMedium)
+                    .foregroundStyle(AuthPalette.muted)
+            } else {
+                Button {
+                    auth.resendCode()
+                } label: {
+                    Text(L10n.Auth.resendCode)
+                        .font(AuthType.bodyMedium)
+                        .foregroundStyle(resendEnabled ? AuthPalette.accent : AuthPalette.muted)
+                }
+                .buttonStyle(.plain)
+                .disabled(!resendEnabled)
+                .accessibilityLabel(L10n.Auth.resendCode)
+            }
+        }
+        .fixedSize(horizontal: false, vertical: true)
     }
 
     private var backupSheet: some View {
@@ -121,7 +165,7 @@ struct OTPVerifyView: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button(L10n.Common.close) { showBackup = false }
                         .font(AuthType.bodyMedium)
-                        .foregroundStyle(AuthPalette.ink)
+                        .foregroundStyle(AuthPalette.accent)
                 }
             }
         }
@@ -152,19 +196,19 @@ struct OTPVerifyView: View {
         .textContentType(.oneTimeCode)
         .multilineTextAlignment(.center)
         .font(AuthType.otpDigit)
+        .foregroundStyle(AuthPalette.ink)
         .focused($focusedIndex, equals: index)
-        .frame(maxWidth: .infinity)
-        .frame(height: 64)
+        .frame(width: AuthLayout.otpBoxWidth, height: AuthLayout.otpBoxHeight)
         .background(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
+            RoundedRectangle(cornerRadius: AuthLayout.otpBoxRadius, style: .continuous)
                 .fill(AuthPalette.fieldFill)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
+            RoundedRectangle(cornerRadius: AuthLayout.otpBoxRadius, style: .continuous)
                 .strokeBorder(
                     auth.otpError != nil
-                        ? Color.red.opacity(0.55)
-                        : (isActive ? Color.black : Color.clear),
+                        ? VuumColor.danger.opacity(0.7)
+                        : (isActive ? AuthPalette.accentBright : Color.clear),
                     lineWidth: 2
                 )
         )
@@ -173,7 +217,9 @@ struct OTPVerifyView: View {
         .accessibilityValue(auth.otpDigits[index].isEmpty ? "Empty" : auth.otpDigits[index])
     }
 
-    private func advanceFocus() {
+    /// Only move focus after the rider has already tapped a digit field — never on appear.
+    private func advanceFocusIfNeeded() {
+        guard focusedIndex != nil else { return }
         if let empty = auth.otpDigits.firstIndex(where: { $0.isEmpty }) {
             focusedIndex = empty
         } else {

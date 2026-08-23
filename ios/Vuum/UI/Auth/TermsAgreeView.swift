@@ -56,7 +56,7 @@ struct TermsAgreeView: View {
                     Spacer()
                     Image(systemName: auth.agreedToTerms ? "checkmark.square.fill" : "square")
                         .font(.system(size: 28))
-                        .foregroundStyle(AuthPalette.ink)
+                        .foregroundStyle(auth.agreedToTerms ? AuthPalette.accent : AuthPalette.ink)
                 }
                 .contentShape(Rectangle())
             }
