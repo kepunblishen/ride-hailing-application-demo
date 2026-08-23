@@ -189,16 +189,16 @@ struct CurrencyConfiguration: Equatable, Hashable {
     }
 
     func moneyPair(local: Int, usd: Double? = nil) -> MoneyPair {
-        let primary = Money.local(local, currency: primary)
+        let primaryMoney = Money.local(local, currency: primary)
         let secondaryMoney: Money? = {
             guard let secondary else { return nil }
             if secondary == .usd {
                 let value = usd ?? rates.usdFromLocal(local, currency: primary)
                 return .usd(value)
             }
-            return rates.convert(primary, to: secondary)
+            return rates.convert(primaryMoney, to: secondary)
         }()
-        return MoneyPair(primary: primary, secondary: secondaryMoney)
+        return MoneyPair(primary: primaryMoney, secondary: secondaryMoney)
     }
 }
 

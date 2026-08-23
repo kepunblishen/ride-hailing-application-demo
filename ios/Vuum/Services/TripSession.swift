@@ -3233,25 +3233,6 @@ enum TripHistoryStore {
     }
 }
 
-enum ReservationStore {
-    private static let key = "vuum.reservations.v1"
-
-    static func load() -> [ReservedTrip] {
-        guard let data = UserDefaults.standard.data(forKey: key),
-              let decoded = try? JSONDecoder().decode([ReservedTrip].self, from: data)
-        else { return [] }
-        return decoded.sorted { $0.when < $1.when }
-    }
-
-    static func save(_ trips: [ReservedTrip]) {
-        if let data = try? JSONEncoder().encode(Array(trips.prefix(20))) {
-            UserDefaults.standard.set(data, forKey: key)
-        }
-    }
-}
-
-typealias ReservedTripStore = ReservationStore
-
 private struct StoredReceipt: Codable {
     var id: String
     var date: Date

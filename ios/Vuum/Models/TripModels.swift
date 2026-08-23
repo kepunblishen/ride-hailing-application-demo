@@ -272,7 +272,8 @@ struct FareBreakdown: Equatable, Hashable, Codable {
 struct SurgeState: Equatable, Hashable {
     var multiplier: Double
     var label: String
-    var zoneName: String
+    /// Stable zone / demand bucket id (catalog zone id, city id, or peak bucket).
+    var zoneId: String
 
     var isActive: Bool { multiplier > 1.001 }
 
