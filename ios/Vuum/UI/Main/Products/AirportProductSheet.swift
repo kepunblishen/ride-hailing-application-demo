@@ -68,19 +68,20 @@ struct AirportProductSheet: View {
 
                     if let flightStatus {
                         Label(flightStatus.title, systemImage: "airplane.circle.fill")
-                            .font(.footnote.weight(.medium))
-                            .foregroundStyle(VuumColor.brandInk)
+                            .font(VuumType.captionSemibold)
+                            .foregroundStyle(VuumColor.brand)
                     }
 
                     Stepper(value: $luggageCount, in: 0...6) {
                         Text(luggageCount == 1 ? "1 bag" : "\(luggageCount) bags")
+                            .foregroundStyle(VuumColor.primaryText)
                     }
 
                     Toggle("Meet at arrivals", isOn: $meetAndGreet)
 
                     Text("Larger vehicles · about \(VehiclePickupETA.largeXXLMinutes) min to pickup.")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
+                        .font(VuumType.caption)
+                        .foregroundStyle(VuumColor.secondaryText)
                 }
             } onConfirm: {
                 tripSession.startLocalProductBooking(
@@ -100,7 +101,7 @@ struct AirportProductSheet: View {
             }
             .onAppear { seedPlaces() }
         }
-        .presentationDetents([.medium, .large])
+        .productSheetPresentation()
     }
 
     private func refreshFlightStatus(_ raw: String) {

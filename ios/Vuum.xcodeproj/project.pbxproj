@@ -100,9 +100,11 @@
 		MAP100000000000000000002 /* RouteEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = MAP200000000000000000002 /* RouteEngine.swift */; };
 		MAP100000000000000000006 /* MapTrafficSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = MAP200000000000000000006 /* MapTrafficSettings.swift */; };
 		MAP100000000000000000007 /* RouteProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = MAP200000000000000000007 /* RouteProvider.swift */; };
+		MAP100000000000000000009 /* VehicleMapMarkerIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = MAP200000000000000000009 /* VehicleMapMarkerIcon.swift */; };
 		MAP100000000000000000003 /* VuumMapStyle.json in Resources */ = {isa = PBXBuildFile; fileRef = MAP200000000000000000003 /* VuumMapStyle.json */; };
 		MAP100000000000000000004 /* VuumMapStyleLite.json in Resources */ = {isa = PBXBuildFile; fileRef = MAP200000000000000000004 /* VuumMapStyleLite.json */; };
 		MAP100000000000000000005 /* VuumMapStyleNight.json in Resources */ = {isa = PBXBuildFile; fileRef = MAP200000000000000000005 /* VuumMapStyleNight.json */; };
+		MAP100000000000000000008 /* VuumMapStyleNightLite.json in Resources */ = {isa = PBXBuildFile; fileRef = MAP200000000000000000008 /* VuumMapStyleNightLite.json */; };
 		S1000000000000000000000D /* PromoCodesStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = S2000000000000000000000D /* PromoCodesStore.swift */; };
 		S1000000000000000000000E /* TripMotionTiming.swift in Sources */ = {isa = PBXBuildFile; fileRef = S2000000000000000000000E /* TripMotionTiming.swift */; };
 		S1000000000000000000000F /* NetworkReachability.swift in Sources */ = {isa = PBXBuildFile; fileRef = S2000000000000000000000F /* NetworkReachability.swift */; };
@@ -254,9 +256,11 @@
 		MAP200000000000000000002 /* RouteEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteEngine.swift; sourceTree = "<group>"; };
 		MAP200000000000000000006 /* MapTrafficSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapTrafficSettings.swift; sourceTree = "<group>"; };
 		MAP200000000000000000007 /* RouteProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteProvider.swift; sourceTree = "<group>"; };
+		MAP200000000000000000009 /* VehicleMapMarkerIcon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VehicleMapMarkerIcon.swift; sourceTree = "<group>"; };
 		MAP200000000000000000003 /* VuumMapStyle.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = VuumMapStyle.json; sourceTree = "<group>"; };
 		MAP200000000000000000004 /* VuumMapStyleLite.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = VuumMapStyleLite.json; sourceTree = "<group>"; };
 		MAP200000000000000000005 /* VuumMapStyleNight.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = VuumMapStyleNight.json; sourceTree = "<group>"; };
+		MAP200000000000000000008 /* VuumMapStyleNightLite.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = VuumMapStyleNightLite.json; sourceTree = "<group>"; };
 		S2000000000000000000000D /* PromoCodesStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromoCodesStore.swift; sourceTree = "<group>"; };
 		S2000000000000000000000E /* TripMotionTiming.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripMotionTiming.swift; sourceTree = "<group>"; };
 		S2000000000000000000000F /* NetworkReachability.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkReachability.swift; sourceTree = "<group>"; };
@@ -471,6 +475,7 @@
 			children = (
 				R20000000000000000000007 /* MapBootstrap.swift */,
 				R20000000000000000000008 /* VuumMapView.swift */,
+				MAP200000000000000000009 /* VehicleMapMarkerIcon.swift */,
 				MAP200000000000000000001 /* DirectionsRouteService.swift */,
 				MAP200000000000000000002 /* RouteEngine.swift */,
 				MAP200000000000000000006 /* MapTrafficSettings.swift */,
@@ -478,6 +483,7 @@
 				MAP200000000000000000003 /* VuumMapStyle.json */,
 				MAP200000000000000000004 /* VuumMapStyleLite.json */,
 				MAP200000000000000000005 /* VuumMapStyleNight.json */,
+				MAP200000000000000000008 /* VuumMapStyleNightLite.json */,
 			);
 			path = Maps;
 			sourceTree = "<group>";
@@ -738,6 +744,7 @@
 				MAP100000000000000000003 /* VuumMapStyle.json in Resources */,
 				MAP100000000000000000004 /* VuumMapStyleLite.json in Resources */,
 				MAP100000000000000000005 /* VuumMapStyleNight.json in Resources */,
+				MAP100000000000000000008 /* VuumMapStyleNightLite.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -767,6 +774,7 @@
 				R10000000000000000000006 /* MockCatalog.swift in Sources */,
 				R10000000000000000000007 /* MapBootstrap.swift in Sources */,
 				R10000000000000000000008 /* VuumMapView.swift in Sources */,
+				MAP100000000000000000009 /* VehicleMapMarkerIcon.swift in Sources */,
 				MAP100000000000000000001 /* DirectionsRouteService.swift in Sources */,
 				MAP100000000000000000002 /* RouteEngine.swift in Sources */,
 				MAP100000000000000000006 /* MapTrafficSettings.swift in Sources */,

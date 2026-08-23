@@ -39,8 +39,8 @@ struct HourlyProductSheet: View {
                     .frame(maxHeight: 120)
 
                     Text(L10n.format("products.hourly_fare_note", hours))
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
+                        .font(VuumType.caption)
+                        .foregroundStyle(VuumColor.secondaryText)
                 }
             } onConfirm: {
                 tripSession.startLocalProductBooking(
@@ -61,7 +61,7 @@ struct HourlyProductSheet: View {
             }
             .onAppear { seedPlaces() }
         }
-        .presentationDetents([.medium, .large])
+        .productSheetPresentation()
     }
 
     private func seedPlaces() {

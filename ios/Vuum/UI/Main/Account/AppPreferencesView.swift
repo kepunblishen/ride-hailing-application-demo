@@ -52,7 +52,7 @@ struct AppPreferencesView: View {
                         Text("Low-data / lite mode")
                         Text("Simpler map, traffic off, lighter tiles when coverage is weak.")
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(VuumColor.secondaryText)
                     }
                 }
                 .tint(VuumColor.brand)
@@ -73,6 +73,11 @@ struct AppPreferencesView: View {
                     .disabled(preferences.lowDataMode || !MapBootstrap.hasAPIKey)
             }
         }
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
+        .background(VuumColor.groupedBackground.ignoresSafeArea())
+        .listRowSeparatorTint(VuumColor.divider)
+        .tint(VuumColor.brand)
         .navigationTitle(L10n.Account.preferencesTitle)
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {

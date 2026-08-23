@@ -28,7 +28,7 @@ struct BusinessProfileView: View {
                 HStack(spacing: 14) {
                     Image(systemName: "building.2.fill")
                         .font(.system(size: 22, weight: .semibold))
-                        .foregroundStyle(VuumColor.brandInk)
+                        .foregroundStyle(VuumColor.brand)
                         .frame(width: 52, height: 52)
                         .background(VuumColor.brand.opacity(0.2), in: RoundedRectangle(cornerRadius: 12))
                     VStack(alignment: .leading, spacing: 4) {
@@ -36,10 +36,10 @@ struct BusinessProfileView: View {
                             .font(.system(size: 18, weight: .semibold))
                         Text("\(account.department) · \(account.employeeRole)")
                             .font(.system(size: 14))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(VuumColor.secondaryText)
                         Text("Employee ID · \(account.employeeId)")
                             .font(.system(size: 12))
-                            .foregroundStyle(.tertiary)
+                            .foregroundStyle(VuumColor.secondaryText)
                     }
                 }
                 .padding(.vertical, 4)
@@ -57,7 +57,7 @@ struct BusinessProfileView: View {
                 .tint(VuumColor.brand)
                 Text("Cost centre · \(account.costCentre)")
                     .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(VuumColor.secondaryText)
                 if account.remainingSpendCDF == 0 {
                     Text("Monthly spend limit reached. Personal payment methods are required until the next cycle.")
                         .font(.footnote)
@@ -79,7 +79,7 @@ struct BusinessProfileView: View {
                                 : "Limit reached — company wallet unavailable"
                         )
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(VuumColor.secondaryText)
                     }
                 }
                 .tint(VuumColor.brand)
@@ -106,7 +106,7 @@ struct BusinessProfileView: View {
                         Text("VIP / Executive transfer")
                         Text("Vetted drivers · advance-ready")
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(VuumColor.secondaryText)
                     }
                 }
                 .tint(VuumColor.brand)
@@ -122,7 +122,7 @@ struct BusinessProfileView: View {
                         Text("Meet-and-greet")
                         Text("Driver meets traveller at arrivals with name sign")
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(VuumColor.secondaryText)
                     }
                 }
                 .tint(VuumColor.brand)
@@ -150,7 +150,7 @@ struct BusinessProfileView: View {
                         }
                     Text("Premium messaging: confirmed driver profile, plate, and pickup briefing before departure.")
                         .font(.footnote)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(VuumColor.secondaryText)
 
                     Button {
                         showExecutiveBooking = true
@@ -167,7 +167,7 @@ struct BusinessProfileView: View {
                             .font(.system(size: 15, weight: .semibold))
                         Text("Company-wallet trips for \(account.costCentre) will appear here.")
                             .font(.system(size: 13))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(VuumColor.secondaryText)
                     }
                     .padding(.vertical, 2)
                 } else {
@@ -177,18 +177,18 @@ struct BusinessProfileView: View {
                                 .font(.system(size: 15, weight: .semibold))
                             Text("\(trip.tierName) · \(trip.purpose)")
                                 .font(.system(size: 12))
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(VuumColor.secondaryText)
                             HStack {
                                 Text(trip.date.formatted(date: .abbreviated, time: .shortened))
                                     .font(.system(size: 12))
-                                    .foregroundStyle(.tertiary)
+                                    .foregroundStyle(VuumColor.secondaryText)
                                 Spacer()
                                 Text("CDF \(trip.totalCDF.formatted())")
                                     .font(.system(size: 13, weight: .semibold))
                             }
                             Text(trip.billedToCompany ? "Billed to company · \(trip.costCentre)" : "Personal")
                                 .font(.system(size: 11))
-                                .foregroundStyle(.tertiary)
+                                .foregroundStyle(VuumColor.secondaryText)
                         }
                         .padding(.vertical, 2)
                     }
@@ -228,6 +228,11 @@ struct BusinessProfileView: View {
                 )
             }
         }
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
+        .background(VuumColor.groupedBackground.ignoresSafeArea())
+        .listRowSeparatorTint(VuumColor.divider)
+        .tint(VuumColor.brand)
         .navigationTitle("Business")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showExecutiveBooking) {
@@ -263,7 +268,7 @@ struct CorporateTripOptionsView: View {
             HStack(spacing: 8) {
                 Image(systemName: "briefcase.fill")
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(VuumColor.brandInk)
+                    .foregroundStyle(VuumColor.brand)
                 Text(account.companyName)
                     .font(.system(size: 13, weight: .semibold))
                 Spacer()

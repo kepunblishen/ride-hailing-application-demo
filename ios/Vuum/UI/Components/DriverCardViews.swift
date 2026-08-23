@@ -17,7 +17,7 @@ struct RideClassETABadge: View {
     var body: some View {
         Text("\(max(minutes, 1)) min")
             .font(.system(size: compact ? 12 : 13, weight: .bold, design: .rounded))
-            .foregroundStyle(VuumColor.brandInk)
+            .foregroundStyle(VuumColor.accentOn)
             .padding(.horizontal, compact ? 8 : 10)
             .padding(.vertical, compact ? 4 : 5)
             .background(VuumColor.brand, in: Capsule(style: .continuous))
@@ -88,14 +88,14 @@ struct DriverAvatarView: View {
                 driver.avatarTint
                 Text(driver.initials)
                     .font(.system(size: size * 0.34, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(VuumColor.accentOn)
             }
         }
         .frame(width: size, height: size)
         .clipShape(Circle())
         .overlay(
             Circle()
-                .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
+                .strokeBorder(VuumColor.glassBorder, lineWidth: 1)
         )
         .accessibilityHidden(true)
     }
@@ -248,7 +248,7 @@ struct DriverCardView: View {
     private func trustChip(_ title: String, systemImage: String) -> some View {
         Label(title, systemImage: systemImage)
             .font(.system(size: 10, weight: .semibold))
-            .foregroundStyle(VuumColor.brandInk)
+            .foregroundStyle(VuumColor.brand)
             .padding(.horizontal, 7)
             .padding(.vertical, 3)
             .background(VuumColor.brand.opacity(0.16), in: Capsule(style: .continuous))
@@ -275,10 +275,10 @@ struct DriverContactActionsBar: View {
                     if unreadChatCount > 0 {
                         Text(unreadChatCount > 9 ? "9+" : "\(unreadChatCount)")
                             .font(.system(size: 10, weight: .bold))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(VuumColor.accentOn)
                             .padding(.horizontal, 5)
                             .padding(.vertical, 2)
-                            .background(Color.red, in: Capsule())
+                            .background(VuumColor.danger, in: Capsule())
                             .offset(x: 4, y: -4)
                     }
                 }

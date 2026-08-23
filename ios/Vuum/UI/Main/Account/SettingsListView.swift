@@ -18,16 +18,16 @@ struct SettingsListView: View {
                 NavigationLink {
                     NotificationInboxView()
                 } label: {
-                    HStack {
+                    HStack(spacing: VuumLayout.rowSpacing) {
                         settingsRow(L10n.Settings.inbox, "tray.full.fill", L10n.Settings.inboxDetail)
-                        Spacer(minLength: 8)
                         if notifications.unreadCount > 0 {
                             Text("\(notifications.unreadCount)")
-                                .font(.system(size: 12, weight: .bold))
-                                .foregroundStyle(.white)
+                                .font(VuumType.micro)
+                                .foregroundStyle(VuumColor.accentOn)
                                 .padding(.horizontal, 8)
-                                .padding(.vertical, 3)
-                                .background(Color(red: 0.2, green: 0.45, blue: 0.95), in: Capsule())
+                                .padding(.vertical, 4)
+                                .background(VuumColor.brand, in: Capsule())
+                                .accessibilityLabel("\(notifications.unreadCount) unread")
                         }
                     }
                 }
@@ -103,22 +103,37 @@ struct SettingsListView: View {
                 }
             }
         }
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
+        .background(VuumColor.groupedBackground.ignoresSafeArea())
+        .listRowSeparatorTint(VuumColor.divider)
+        .tint(VuumColor.brand)
         .navigationTitle(L10n.Settings.title)
         .navigationBarTitleDisplayMode(.inline)
     }
 
     private func settingsRow(_ title: String, _ icon: String, _ subtitle: String) -> some View {
-        Label {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                Text(subtitle)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-            }
-        } icon: {
+        HStack(spacing: VuumLayout.rowSpacing) {
             Image(systemName: icon)
-                .foregroundStyle(VuumColor.brandInk)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(VuumColor.accent)
+                .frame(width: 32, height: 32)
+                .background(
+                    VuumColor.accent.opacity(0.16),
+                    in: RoundedRectangle(cornerRadius: 8, style: .continuous)
+                )
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(VuumType.rowTitle)
+                    .foregroundStyle(VuumColor.primaryText)
+                Text(subtitle)
+                    .font(VuumType.caption)
+                    .foregroundStyle(VuumColor.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .padding(.vertical, 2)
     }
 }
 
@@ -139,9 +154,14 @@ struct AccessibilitySettingsView: View {
             Section {
                 Text("These preferences stay on this device and shape how trip screens present information.")
                     .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(VuumColor.secondaryText)
             }
         }
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
+        .background(VuumColor.groupedBackground.ignoresSafeArea())
+        .listRowSeparatorTint(VuumColor.divider)
+        .tint(VuumColor.brand)
         .navigationTitle(L10n.Settings.accessibility)
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -164,9 +184,14 @@ struct CalendarSettingsView: View {
             Section {
                 Text("Calendar entries are created locally when you reserve a ride from Services.")
                     .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(VuumColor.secondaryText)
             }
         }
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
+        .background(VuumColor.groupedBackground.ignoresSafeArea())
+        .listRowSeparatorTint(VuumColor.divider)
+        .tint(VuumColor.brand)
         .navigationTitle(L10n.Settings.calendar)
         .navigationBarTitleDisplayMode(.inline)
     }

@@ -110,7 +110,7 @@ struct HomeMapScaffoldView: View {
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundStyle(VuumColor.primaryText)
                             .frame(width: 44, height: 44)
-                            .background(.ultraThinMaterial, in: Circle())
+                            .VuumChromeMaterialBackground(in: Circle())
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Safety")
@@ -122,13 +122,13 @@ struct HomeMapScaffoldView: View {
             }
 
             VuumSheetChrome(title: nil) {
-                VStack(alignment: .leading, spacing: 14) {
+                VStack(alignment: .leading, spacing: VuumLayout.stackSpacing) {
                     Text("Vuum")
-                        .font(.system(size: 28, weight: .bold))
+                        .font(VuumType.hero)
                         .foregroundStyle(VuumColor.primaryText)
 
                     Text(L10n.t("home.tagline"))
-                        .font(.system(size: 14, weight: .medium))
+                        .font(VuumType.callout)
                         .foregroundStyle(VuumColor.secondaryText)
 
                     Button {
@@ -139,45 +139,50 @@ struct HomeMapScaffoldView: View {
                                 .foregroundStyle(VuumColor.brand)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(L10n.t("home.pickup"))
-                                    .font(.system(size: 12, weight: .medium))
+                                    .font(VuumType.micro)
                                     .foregroundStyle(VuumColor.secondaryText)
                                 Text(tripSession.pickup.name)
-                                    .font(.system(size: 15, weight: .semibold))
+                                    .font(VuumType.bodySemibold)
                                     .foregroundStyle(VuumColor.primaryText)
                             }
                             Spacer()
                             Text(L10n.t("home.adjust"))
-                                .font(.system(size: 13, weight: .semibold))
+                                .font(VuumType.captionSemibold)
                                 .foregroundStyle(VuumColor.brand)
                         }
                         .padding(.horizontal, 12)
                         .padding(.vertical, 10)
-                        .background(VuumColor.chipBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        .background(
+                            VuumColor.chipBackground,
+                            in: RoundedRectangle(cornerRadius: VuumLayout.radiusControl, style: .continuous)
+                        )
                     }
                     .buttonStyle(.plain)
 
                     if !tripSession.reservedTrips.isEmpty {
-                        VStack(alignment: .leading, spacing: 8) {
+                        VStack(alignment: .leading, spacing: VuumLayout.chipSpacing) {
                             Text(L10n.t("home.upcoming"))
-                                .font(.system(size: 13, weight: .semibold))
+                                .font(VuumType.captionSemibold)
                                 .foregroundStyle(VuumColor.secondaryText)
                             ForEach(tripSession.reservedTrips.prefix(2)) { trip in
-                                HStack {
+                                HStack(spacing: 10) {
                                     Image(systemName: "calendar")
                                         .foregroundStyle(VuumColor.brand)
                                     VStack(alignment: .leading, spacing: 2) {
-                                        Text("\(trip.pickupName) ? \(trip.dropoffName)")
-                                            .font(.system(size: 14, weight: .semibold))
+                                        Text("\(trip.pickupName) → \(trip.dropoffName)")
+                                            .font(VuumType.callout)
+                                            .fontWeight(.semibold)
+                                            .foregroundStyle(VuumColor.primaryText)
                                         if !trip.stopNames.isEmpty {
                                             Text("via \(trip.stopNames.joined(separator: ", "))")
-                                                .font(.system(size: 12))
+                                                .font(VuumType.caption)
                                                 .foregroundStyle(VuumColor.secondaryText)
                                         }
                                         Text(trip.when.formatted(date: .abbreviated, time: .shortened))
-                                            .font(.system(size: 12))
+                                            .font(VuumType.caption)
                                             .foregroundStyle(VuumColor.secondaryText)
                                     }
-                                    Spacer()
+                                    Spacer(minLength: 8)
                                     Text(
                                         AppLocale.formatFareTotal(
                                             cdf: trip.priceCDF,
@@ -185,10 +190,14 @@ struct HomeMapScaffoldView: View {
                                             market: AppLocale.market(countryCode: session.countryCode)
                                         )
                                     )
-                                        .font(.system(size: 12, weight: .semibold))
+                                    .font(VuumType.captionSemibold)
+                                    .foregroundStyle(VuumColor.primaryText)
                                 }
                                 .padding(10)
-                                .background(VuumColor.chipBackground, in: RoundedRectangle(cornerRadius: 12))
+                                .background(
+                                    VuumColor.chipBackground,
+                                    in: RoundedRectangle(cornerRadius: VuumLayout.radiusControl, style: .continuous)
+                                )
                             }
                         }
                     }
@@ -197,17 +206,20 @@ struct HomeMapScaffoldView: View {
                         Button {
                             tripSession.beginDestinationSelection()
                         } label: {
-                            HStack(spacing: 12) {
+                            HStack(spacing: VuumLayout.rowSpacing) {
                                 Image(systemName: "magnifyingglass")
                                     .foregroundStyle(VuumColor.secondaryText)
                                 Text(L10n.t("home.where_to"))
-                                    .font(.system(size: 17, weight: .semibold))
+                                    .font(VuumType.button)
                                     .foregroundStyle(VuumColor.primaryText)
                                 Spacer()
                             }
                             .padding(.horizontal, 14)
                             .padding(.vertical, 12)
-                            .background(Color(white: 0.93), in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+                            .background(
+                                VuumDestinationSearchField.searchFill,
+                                in: RoundedRectangle(cornerRadius: VuumLayout.radiusSearch, style: .continuous)
+                            )
                         }
                         .buttonStyle(.plain)
 
@@ -218,11 +230,11 @@ struct HomeMapScaffoldView: View {
                                 Image(systemName: "clock.fill")
                                 Text(tripSession.scheduleForLater == nil ? L10n.t("home.now") : L10n.t("home.later"))
                             }
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(VuumType.captionSemibold)
                             .foregroundStyle(VuumColor.primaryText)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 14)
-                            .background(Color(white: 0.93), in: Capsule())
+                            .background(VuumDestinationSearchField.searchFill, in: Capsule())
                         }
                         .buttonStyle(.plain)
                     }
@@ -246,11 +258,11 @@ struct HomeMapScaffoldView: View {
                                     savedPlaces.recordRecent(place)
                                     tripSession.selectDestination(place)
                                 } label: {
-                                    HStack(spacing: 8) {
+                                    HStack(spacing: VuumLayout.chipSpacing) {
                                         Image(systemName: savedPlaces.systemImage(for: place))
                                             .foregroundStyle(VuumColor.brand)
                                         Text(savedPlaces.displayTitle(for: place))
-                                            .font(.system(size: 13, weight: .semibold))
+                                            .font(VuumType.captionSemibold)
                                             .foregroundStyle(VuumColor.primaryText)
                                     }
                                     .padding(.horizontal, 12)
@@ -310,11 +322,11 @@ struct HomeMapScaffoldView: View {
                 savedPlaces.recordRecent(place)
                 tripSession.selectDestination(place)
             } label: {
-                HStack(spacing: 8) {
+                HStack(spacing: VuumLayout.chipSpacing) {
                     Image(systemName: kind.systemImage)
                         .foregroundStyle(VuumColor.brand)
                     Text(kind.title)
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(VuumType.captionSemibold)
                         .foregroundStyle(VuumColor.primaryText)
                 }
                 .padding(.horizontal, 12)
@@ -326,11 +338,11 @@ struct HomeMapScaffoldView: View {
             Button {
                 assignSlot = kind
             } label: {
-                HStack(spacing: 8) {
+                HStack(spacing: VuumLayout.chipSpacing) {
                     Image(systemName: kind == .home ? "house" : "briefcase")
                         .foregroundStyle(VuumColor.secondaryText)
                     Text(emptyTitle)
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(VuumType.captionSemibold)
                         .foregroundStyle(VuumColor.secondaryText)
                 }
                 .padding(.horizontal, 12)
@@ -353,34 +365,34 @@ struct PermissionsExplainerSheet: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
                         Text(copy("permissions.intro"))
-                            .font(.system(size: 16))
+                            .font(VuumType.body)
                             .foregroundStyle(VuumColor.secondaryText)
                             .fixedSize(horizontal: false, vertical: true)
                             .padding(.top, 8)
-                            .padding(.bottom, 32)
+                            .padding(.bottom, VuumLayout.sectionSpacing)
 
                         permissionRow(
                             icon: "location",
                             title: copy("permissions.location"),
                             detail: copy("permissions.location_detail")
                         )
-                        .padding(.bottom, 32)
+                        .padding(.bottom, VuumLayout.sectionSpacing)
 
                         permissionRow(
                             icon: "bell",
                             title: copy("permissions.notifications"),
                             detail: copy("permissions.notifications_detail")
                         )
-                        .padding(.bottom, 32)
+                        .padding(.bottom, VuumLayout.sectionSpacing)
 
                         Text(copy("permissions.change_anytime"))
-                            .font(.system(size: 13))
+                            .font(VuumType.caption)
                             .foregroundStyle(VuumColor.secondaryText)
                             .fixedSize(horizontal: false, vertical: true)
                             .padding(.top, 4)
                     }
-                    .padding(.horizontal, 28)
-                    .padding(.bottom, 24)
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, VuumLayout.stackSpacing)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
 
@@ -389,12 +401,15 @@ struct PermissionsExplainerSheet: View {
                 VuumPrimaryButton(title: L10n.t("common.continue", authLanguage: authLocale.language)) {
                     onContinue()
                 }
-                .padding(.horizontal, 28)
-                .padding(.top, 12)
+                .padding(.horizontal, 24)
+                .padding(.top, VuumLayout.rowSpacing)
                 .padding(.bottom, 20)
             }
+            .VuumPageBackground()
             .navigationTitle(copy("permissions.title"))
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(VuumColor.pageBackground, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
         }
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
@@ -407,20 +422,20 @@ struct PermissionsExplainerSheet: View {
     }
 
     private func permissionRow(icon: String, title: String, detail: String) -> some View {
-        HStack(alignment: .top, spacing: 20) {
+        HStack(alignment: .top, spacing: VuumLayout.stackSpacing) {
             Image(systemName: icon)
                 .font(.system(size: 26, weight: .regular))
                 .foregroundStyle(VuumColor.brand)
-                .frame(width: 44, alignment: .center)
+                .frame(width: VuumLayout.iconBadgeLarge, alignment: .center)
                 .padding(.top, 2)
                 .accessibilityHidden(true)
 
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: VuumLayout.chipSpacing) {
                 Text(title)
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(VuumType.rowTitle)
                     .foregroundStyle(VuumColor.primaryText)
                 Text(detail)
-                    .font(.system(size: 15))
+                    .font(VuumType.body)
                     .foregroundStyle(VuumColor.secondaryText)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -429,6 +444,7 @@ struct PermissionsExplainerSheet: View {
         .accessibilityElement(children: .combine)
     }
 }
+
 struct DestinationScaffoldView: View {
     @EnvironmentObject private var tripSession: TripSession
     @EnvironmentObject private var savedPlaces: SavedPlacesStore
@@ -497,30 +513,21 @@ struct DestinationScaffoldView: View {
             TripMapLayer()
 
             VuumSheetChrome(title: sheetTitle) {
-                VStack(spacing: 12) {
+                VStack(spacing: VuumLayout.rowSpacing) {
                     if tripSession.isAddingStop {
                         Text("Stop \(tripSession.stops.count + 1) of \(TripSession.maxStops)")
-                            .font(.system(size: 13, weight: .medium))
+                            .font(VuumType.captionSemibold)
                             .foregroundStyle(VuumColor.secondaryText)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
 
-                    HStack(spacing: 10) {
-                        Image(systemName: "magnifyingglass")
-                            .foregroundStyle(VuumColor.secondaryText)
-                        TextField(
-                            tripSession.isAddingStop ? L10n.Destination.searchStop : L10n.Destination.searchPlaces,
-                            text: $query
-                        )
-                        .textInputAutocapitalization(.words)
-                        .autocorrectionDisabled()
-                        if isResolving || placesSearch.isQueryPending {
-                            ProgressView()
-                                .controlSize(.small)
-                        }
-                    }
-                    .padding(12)
-                    .background(VuumColor.fieldBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    VuumDestinationSearchField(
+                        placeholder: tripSession.isAddingStop
+                            ? L10n.Destination.searchStop
+                            : L10n.Destination.searchPlaces,
+                        text: $query,
+                        isBusy: isResolving || placesSearch.isQueryPending
+                    )
 
                     if let status = placesSearch.statusMessage {
                         HStack(alignment: .top, spacing: 10) {
@@ -643,12 +650,14 @@ struct DestinationScaffoldView: View {
     private var stopsPreview: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Stops")
-                .font(.system(size: 12, weight: .semibold))
+                .font(VuumType.captionSemibold)
                 .foregroundStyle(VuumColor.secondaryText)
             ForEach(Array(tripSession.stops.enumerated()), id: \.element.id) { index, stop in
-                HStack(spacing: 8) {
+                HStack(spacing: VuumLayout.chipSpacing) {
                     Text("\(index + 1). \(stop.name)")
-                        .font(.system(size: 14, weight: .medium))
+                        .font(VuumType.callout)
+                        .fontWeight(.medium)
+                        .foregroundStyle(VuumColor.primaryText)
                     Spacer(minLength: 4)
                     if index > 0 {
                         Button {
@@ -683,7 +692,10 @@ struct DestinationScaffoldView: View {
             }
         }
         .padding(10)
-        .background(VuumColor.chipBackground, in: RoundedRectangle(cornerRadius: 12))
+        .background(
+            VuumColor.chipBackground,
+            in: RoundedRectangle(cornerRadius: VuumLayout.radiusControl, style: .continuous)
+        )
     }
 
     private var savedSlotsSection: some View {
@@ -695,7 +707,7 @@ struct DestinationScaffoldView: View {
                 emptyTitle: "Add Home",
                 emptySubtitle: "Save an address for quick trips home"
             )
-            Divider()
+            Divider().background(VuumColor.divider)
             savedSlotRow(
                 kind: .work,
                 place: savedPlaces.work,
@@ -707,10 +719,10 @@ struct DestinationScaffoldView: View {
 
     private func sectionHeader(_ title: String) -> some View {
         Text(title)
-            .font(.system(size: 12, weight: .semibold))
+            .font(VuumType.captionSemibold)
             .foregroundStyle(VuumColor.secondaryText)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.top, 12)
+            .padding(.top, VuumLayout.rowSpacing)
             .padding(.bottom, 4)
     }
 
@@ -880,15 +892,17 @@ struct SavedPlacesManageView: View {
                 if savedPlaces.favorites.isEmpty {
                     Text("Star places from the destination list to save them here.")
                         .font(.system(size: 13))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(VuumColor.secondaryText)
                 } else {
                     ForEach(savedPlaces.favorites) { place in
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(place.name).font(.system(size: 15, weight: .semibold))
+                                Text(place.name)
+                                    .font(.system(size: 15, weight: .semibold))
+                                    .foregroundStyle(VuumColor.primaryText)
                                 Text(place.subtitle)
                                     .font(.system(size: 12))
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(VuumColor.secondaryText)
                             }
                             Spacer()
                             Button {
@@ -903,8 +917,13 @@ struct SavedPlacesManageView: View {
                 }
             }
         }
+        .scrollContentBackground(.hidden)
+        .listStyle(.insetGrouped)
+        .VuumGroupedBackground()
         .navigationTitle("Saved places")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(VuumColor.groupedBackground, for: .navigationBar)
+        .toolbarBackground(.visible, for: .navigationBar)
         .sheet(item: $assignSlot) { kind in
             AssignSavedPlaceSheet(kind: kind)
         }
@@ -916,7 +935,7 @@ struct SavedPlacesManageView: View {
         } label: {
             HStack(spacing: 12) {
                 Image(systemName: kind.systemImage)
-                    .foregroundStyle(VuumColor.brandInk)
+                    .foregroundStyle(VuumColor.brand)
                     .frame(width: 28)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(kind.title)
@@ -924,12 +943,12 @@ struct SavedPlacesManageView: View {
                         .foregroundStyle(VuumColor.primaryText)
                     Text(place?.name ?? "Not set")
                         .font(.system(size: 13))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(VuumColor.secondaryText)
                 }
                 Spacer()
                 Image(systemName: "chevron.right")
                     .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(VuumColor.secondaryText)
             }
         }
     }
@@ -957,7 +976,7 @@ struct RideOptionsScaffoldView: View {
             VuumSheetChrome(title: "Choose a ride") {
                 VStack(spacing: 0) {
                     ScrollView {
-                        VStack(spacing: 12) {
+                        VStack(spacing: VuumLayout.rowSpacing) {
                             if let cancellation = tripSession.lastCancellation {
                                 cancellationBanner(cancellation)
                             }
@@ -982,9 +1001,10 @@ struct RideOptionsScaffoldView: View {
                     .frame(maxHeight: 320)
 
                     Divider()
+                        .background(VuumColor.divider)
                         .padding(.vertical, 10)
 
-                    VStack(spacing: 12) {
+                    VStack(spacing: VuumLayout.rowSpacing) {
                         forMeSwitcher
 
                         if tripSession.bookForSomeoneElse {
@@ -1002,7 +1022,7 @@ struct RideOptionsScaffoldView: View {
                             tripSession.confirmRequest()
                         }
 
-                        HStack(spacing: 16) {
+                        HStack(spacing: VuumLayout.pageInset) {
                             Button("Adjust pickup") {
                                 showAdjustPickup = true
                             }
@@ -1066,6 +1086,7 @@ struct RideOptionsScaffoldView: View {
                                         .foregroundStyle(VuumColor.brand)
                                     Text(stop.name)
                                         .font(.system(size: 13, weight: .medium))
+                                        .foregroundStyle(VuumColor.primaryText)
                                         .lineLimit(1)
                                     Spacer(minLength: 4)
                                     if index > 0 {
@@ -1105,6 +1126,7 @@ struct RideOptionsScaffoldView: View {
 
                         Text("To \(dropoff.name)")
                             .font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(VuumColor.primaryText)
                     }
                     Spacer(minLength: 8)
                     VStack(alignment: .trailing, spacing: 4) {
@@ -1153,6 +1175,7 @@ struct RideOptionsScaffoldView: View {
                     HStack(spacing: 8) {
                         Text(tier.name)
                             .font(.system(size: 18, weight: .bold, design: .rounded))
+                            .foregroundStyle(VuumColor.primaryText)
                         HStack(spacing: 3) {
                             Image(systemName: "person.fill")
                                 .font(.system(size: 10, weight: .semibold))
@@ -1214,6 +1237,7 @@ struct RideOptionsScaffoldView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(cancellation.summaryLine)
                     .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(VuumColor.primaryText)
                 if !cancellation.wasFree, cancellation.feeLocal > 0 {
                     Text("Fee \(AppLocale.formatPrimary(local: cancellation.feeLocal, market: market))")
                         .font(.system(size: 12, weight: .medium))
@@ -1245,6 +1269,7 @@ struct RideOptionsScaffoldView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(surgeBannerTitle)
                     .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(VuumColor.primaryText)
                 Text(surgeBannerSubtitle)
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(VuumColor.secondaryText)
@@ -1351,9 +1376,11 @@ struct RideOptionsScaffoldView: View {
             HStack {
                 Text("Estimated total")
                     .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(VuumColor.primaryText)
                 Spacer()
                 Text(formatPrice(cdf: fare.totalCDF, usd: fare.totalUSD))
                     .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(VuumColor.primaryText)
             }
         }
         .padding(14)
@@ -1369,7 +1396,8 @@ struct RideOptionsScaffoldView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Suggest a fare")
                         .font(.system(size: 14, weight: .medium))
-                    Text("Optional ? driver may accept within ?15%")
+                        .foregroundStyle(VuumColor.primaryText)
+                    Text("Optional — driver may accept within ±15%")
                         .font(.caption)
                         .foregroundStyle(VuumColor.secondaryText)
                 }
@@ -1381,6 +1409,7 @@ struct RideOptionsScaffoldView: View {
                 Stepper {
                     Text(AppLocale.formatPrimary(local: target, market: market))
                         .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(VuumColor.primaryText)
                 } onIncrement: {
                     tripSession.setNegotiatedTargetCDF(target + step)
                 } onDecrement: {
@@ -1388,8 +1417,11 @@ struct RideOptionsScaffoldView: View {
                 }
             }
         }
-        .padding(12)
-        .background(VuumColor.chipBackground, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .padding(VuumLayout.rowSpacing)
+        .background(
+            VuumColor.chipBackground,
+            in: RoundedRectangle(cornerRadius: VuumLayout.radiusCard, style: .continuous)
+        )
     }
 
     private func farePreviewRow(_ title: String, _ amount: Int) -> some View {
@@ -1399,6 +1431,7 @@ struct RideOptionsScaffoldView: View {
             Spacer()
             Text(AppLocale.formatPrimary(local: amount, market: market))
                 .fontWeight(.medium)
+                .foregroundStyle(VuumColor.primaryText)
         }
         .font(.system(size: 13))
     }
@@ -1408,9 +1441,13 @@ struct RideOptionsScaffoldView: View {
             HStack(spacing: 10) {
                 TextField("Promo code", text: $tripSession.promoCode)
                     .textInputAutocapitalization(.characters)
+                    .foregroundStyle(VuumColor.primaryText)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 10)
-                    .background(VuumColor.fieldBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .background(
+                        VuumColor.fieldBackground,
+                        in: RoundedRectangle(cornerRadius: VuumLayout.radiusControl, style: .continuous)
+                    )
                 Button("Apply") {
                     tripSession.applyPromo()
                 }
@@ -1426,7 +1463,7 @@ struct RideOptionsScaffoldView: View {
         switch tripSession.promoStatus {
         case .applied(_, let discount, let title):
             HStack {
-                Text("\(title) ? \(formatLocalDiscount(discount))")
+                Text("\(title) — \(formatLocalDiscount(discount))")
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(VuumColor.brand)
                 Spacer()
@@ -1437,7 +1474,7 @@ struct RideOptionsScaffoldView: View {
                 .foregroundStyle(VuumColor.secondaryText)
             }
         case .invalid:
-            Text("This promo code isn?t valid")
+            Text("This promo code isn’t valid")
                 .font(.system(size: 12, weight: .medium))
                 .foregroundStyle(VuumColor.brand)
         case .expired:
@@ -1464,17 +1501,25 @@ struct RideOptionsScaffoldView: View {
             Toggle(isOn: $tripSession.preferQuietRide) {
                 Label("Quiet ride", systemImage: "speaker.slash.fill")
                     .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(VuumColor.primaryText)
             }
             .tint(VuumColor.brand)
 
             TextField("Accessibility notes for your driver", text: $tripSession.accessibilityNotes, axis: .vertical)
                 .lineLimit(2...4)
+                .foregroundStyle(VuumColor.primaryText)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 10)
-                .background(VuumColor.fieldBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .background(
+                    VuumColor.fieldBackground,
+                    in: RoundedRectangle(cornerRadius: VuumLayout.radiusControl, style: .continuous)
+                )
         }
-        .padding(12)
-        .background(VuumColor.chipBackground, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .padding(VuumLayout.rowSpacing)
+        .background(
+            VuumColor.chipBackground,
+            in: RoundedRectangle(cornerRadius: VuumLayout.radiusCard, style: .continuous)
+        )
     }
 
     // MARK: - For me / For others
@@ -1513,7 +1558,7 @@ struct RideOptionsScaffoldView: View {
                 Text(title)
                     .font(.system(size: 13, weight: .semibold))
             }
-            .foregroundStyle(selected ? VuumColor.brandInk : VuumColor.secondaryText)
+            .foregroundStyle(selected ? VuumColor.accentOn : VuumColor.secondaryText)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 10)
             .background(
@@ -1524,18 +1569,26 @@ struct RideOptionsScaffoldView: View {
     }
 
     private var passengerFields: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: VuumLayout.chipSpacing) {
             TextField("Passenger name", text: $tripSession.passengerName)
+                .foregroundStyle(VuumColor.primaryText)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 10)
-                .background(VuumColor.fieldBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .background(
+                    VuumColor.fieldBackground,
+                    in: RoundedRectangle(cornerRadius: VuumLayout.radiusControl, style: .continuous)
+                )
             TextField("Passenger phone", text: $tripSession.passengerPhone)
                 .keyboardType(.phonePad)
+                .foregroundStyle(VuumColor.primaryText)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 10)
-                .background(VuumColor.fieldBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .background(
+                    VuumColor.fieldBackground,
+                    in: RoundedRectangle(cornerRadius: VuumLayout.radiusControl, style: .continuous)
+                )
             if !tripSession.canConfirmRequest {
-                Text("Enter the passenger?s name and phone to continue.")
+                Text("Enter the passenger’s name and phone to continue.")
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(VuumColor.secondaryText)
             }
@@ -1557,7 +1610,7 @@ struct RideOptionsScaffoldView: View {
             HStack(spacing: 12) {
                 Image(systemName: tripSession.paymentMethod.systemImage)
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(VuumColor.brandInk)
+                    .foregroundStyle(VuumColor.brand)
                     .frame(width: 28)
                 Text(tripSession.paymentMethod.title)
                     .font(.system(size: 15, weight: .semibold))
@@ -1621,9 +1674,9 @@ struct AdjustPickupSheet: View {
     var body: some View {
         VStack(spacing: 0) {
             VuumSheetChrome(title: "Adjust pickup") {
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Current ? \(tripSession.pickup.name)")
-                        .font(.system(size: 13, weight: .medium))
+                VStack(alignment: .leading, spacing: VuumLayout.rowSpacing) {
+                    Text("Current — \(tripSession.pickup.name)")
+                        .font(VuumType.captionSemibold)
                         .foregroundStyle(VuumColor.secondaryText)
 
                     Button {
@@ -1633,12 +1686,15 @@ struct AdjustPickupSheet: View {
                             Image(systemName: "magnifyingglass")
                                 .foregroundStyle(VuumColor.brand)
                             Text(L10n.Destination.searchPlaces)
-                                .font(.system(size: 15, weight: .semibold))
+                                .font(VuumType.bodySemibold)
                                 .foregroundStyle(VuumColor.primaryText)
                             Spacer(minLength: 0)
                         }
-                        .padding(12)
-                        .background(VuumColor.fieldBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        .padding(VuumLayout.rowSpacing)
+                        .background(
+                            VuumDestinationSearchField.searchFill,
+                            in: RoundedRectangle(cornerRadius: VuumLayout.radiusControl, style: .continuous)
+                        )
                     }
                     .buttonStyle(.plain)
 
@@ -1648,15 +1704,15 @@ struct AdjustPickupSheet: View {
                                 tripSession.selectPickup(place)
                                 dismiss()
                             } label: {
-                                HStack(alignment: .top, spacing: 12) {
+                                HStack(alignment: .top, spacing: VuumLayout.rowSpacing) {
                                     Image(systemName: "mappin.circle.fill")
                                         .foregroundStyle(VuumColor.brand)
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text(place.name)
-                                            .font(.system(size: 16, weight: .semibold, design: .rounded))
+                                            .font(VuumType.rowTitle)
                                             .foregroundStyle(VuumColor.primaryText)
                                         Text(place.subtitle)
-                                            .font(.system(size: 13, weight: .regular, design: .rounded))
+                                            .font(VuumType.caption)
                                             .foregroundStyle(VuumColor.secondaryText)
                                         Text(TripGeo.formatDistance(
                                             TripGeo.distanceMeters(
@@ -1664,17 +1720,17 @@ struct AdjustPickupSheet: View {
                                                 to: place.coordinate
                                             )
                                         ))
-                                        .font(.system(size: 12, weight: .medium))
+                                        .font(VuumType.captionSemibold)
                                         .foregroundStyle(VuumColor.secondaryText)
                                     }
                                     Spacer()
                                 }
-                                .padding(.vertical, 12)
+                                .padding(.vertical, VuumLayout.rowSpacing)
                             }
                             .buttonStyle(.plain)
 
                             if place.id != suggestions.last?.id {
-                                Divider()
+                                Divider().background(VuumColor.divider)
                             }
                         }
                     }
@@ -1682,7 +1738,8 @@ struct AdjustPickupSheet: View {
                     Button("Cancel") {
                         dismiss()
                     }
-                    .font(.system(size: 15, weight: .medium, design: .rounded))
+                    .font(VuumType.body)
+                    .fontWeight(.medium)
                     .foregroundStyle(VuumColor.secondaryText)
                     .frame(maxWidth: .infinity)
                     .padding(.top, 4)
@@ -1691,6 +1748,7 @@ struct AdjustPickupSheet: View {
             .padding(.horizontal, 12)
             .padding(.bottom, 8)
         }
+        .VuumPageBackground()
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.hidden)
         .sheet(isPresented: $showPlaceSearch) {
@@ -1719,6 +1777,7 @@ struct ScheduleRideSheet: View {
                         dismiss()
                     } label: {
                         Label("Ride now", systemImage: "bolt.fill")
+                            .foregroundStyle(VuumColor.primaryText)
                     }
                 }
 
@@ -1729,22 +1788,35 @@ struct ScheduleRideSheet: View {
                         in: Date()...,
                         displayedComponents: [.date, .hourAndMinute]
                     )
+                    .foregroundStyle(VuumColor.primaryText)
                     Toggle("Remind me before pickup", isOn: $tripSession.scheduleReminderEnabled)
+                        .foregroundStyle(VuumColor.primaryText)
+                        .tint(VuumColor.brand)
                     Button("Use this time") {
                         tripSession.scheduleForLater = date
                         dismiss()
                     }
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(VuumType.button)
+                    .foregroundStyle(VuumColor.brand)
                 } header: {
                     Text("Schedule a pickup")
+                        .foregroundStyle(VuumColor.secondaryText)
                 } footer: {
                     Text("You'll pick destination, ride type, and payment next. Reserved rides appear under Activity → Upcoming.")
+                        .foregroundStyle(VuumColor.secondaryText)
                 }
             }
+            .scrollContentBackground(.hidden)
+            .VuumGroupedBackground()
+            .tint(VuumColor.brand)
             .navigationTitle("Pickup time")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(VuumColor.groupedBackground, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") { dismiss() }
+                        .foregroundStyle(VuumColor.brand)
                 }
             }
             .onAppear {

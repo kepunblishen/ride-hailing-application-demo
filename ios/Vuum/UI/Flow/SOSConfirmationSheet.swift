@@ -23,41 +23,55 @@ struct SOSConfirmationSheet: View {
                 Section {
                     Text("Vuum Safety will receive your trip details and try to reach you immediately.")
                         .font(.footnote)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(VuumColor.secondaryText)
                 }
 
                 if let trip = tripSession.activeTrip {
-                    Section("What we will send") {
+                    Section {
                         LabeledContent("Trip ID", value: TripShare.tripID(for: trip))
                         LabeledContent("Driver", value: trip.driver.name)
                         LabeledContent("Vehicle", value: "\(trip.driver.vehicle) · \(trip.driver.plate)")
                         LabeledContent("Destination", value: trip.dropoff.name)
                         LabeledContent("Location", value: coordinateSummary)
                         LabeledContent("Status", value: TripShare.phaseLabel(for: tripSession.phase))
+                    } header: {
+                        Text("What we will send")
+                            .foregroundStyle(VuumColor.secondaryText)
                     }
                 } else {
-                    Section("Location") {
+                    Section {
                         LabeledContent("GPS", value: coordinateSummary)
+                    } header: {
+                        Text("Location")
+                            .foregroundStyle(VuumColor.secondaryText)
                     }
                 }
 
                 if contacts.isEmpty {
-                    Section("Emergency contacts") {
+                    Section {
                         Text("No trusted contacts saved yet. You can still request help — add contacts under Safety for faster reach-out.")
                             .font(.footnote)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(VuumColor.secondaryText)
+                    } header: {
+                        Text("Emergency contacts")
+                            .foregroundStyle(VuumColor.secondaryText)
                     }
                 } else {
-                    Section("Emergency contacts") {
+                    Section {
                         ForEach(contacts) { contact in
-                            VStack(alignment: .leading, spacing: 2) {
+                            VStack(alignment: .leading, spacing: 4) {
                                 Text(contact.name)
                                     .font(.body.weight(.semibold))
+                                    .foregroundStyle(VuumColor.primaryText)
                                 Text("\(contact.displayPhone) · \(contact.relationship)")
                                     .font(.footnote)
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(VuumColor.secondaryText)
                             }
+                            .padding(.vertical, 2)
                         }
+                    } header: {
+                        Text("Emergency contacts")
+                            .foregroundStyle(VuumColor.secondaryText)
                     }
                 }
 
@@ -66,16 +80,22 @@ struct SOSConfirmationSheet: View {
                         onConfirm()
                         dismiss()
                     }
+                    .foregroundStyle(VuumColor.danger)
                     Button("Cancel", role: .cancel) {
                         dismiss()
                     }
+                    .foregroundStyle(VuumColor.primaryText)
                 }
             }
+            .listStyle(.insetGrouped)
+            .scrollContentBackground(.hidden)
+            .background(VuumColor.groupedBackground.ignoresSafeArea())
             .navigationTitle("Request emergency help?")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Close") { dismiss() }
+                        .foregroundStyle(VuumColor.accent)
                 }
             }
         }

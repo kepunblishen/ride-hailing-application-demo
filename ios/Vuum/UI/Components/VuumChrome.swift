@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 // MARK: - Buttons
 
@@ -14,7 +15,7 @@ struct VuumPrimaryButton: View {
             Group {
                 if isLoading {
                     ProgressView()
-                        .tint(Color.white)
+                        .tint(VuumColor.accentOn)
                 } else {
                     HStack(spacing: 8) {
                         Text(title)
@@ -28,7 +29,7 @@ struct VuumPrimaryButton: View {
             }
             .frame(maxWidth: .infinity)
             .frame(height: VuumLayout.primaryButtonHeight)
-            .foregroundStyle(Color.white.opacity(enabled ? 1 : 0.55))
+            .foregroundStyle(VuumColor.accentOn.opacity(enabled ? 1 : 0.55))
             .background(
                 VuumColor.brand.opacity(enabled ? 1 : 0.45),
                 in: RoundedRectangle(cornerRadius: VuumLayout.radiusCard, style: .continuous)
@@ -43,6 +44,8 @@ struct VuumSecondaryButton: View {
     let title: String
     let action: () -> Void
 
+    @Environment(\.colorScheme) private var colorScheme
+
     var body: some View {
         Button(action: action) {
             Text(title)
@@ -54,6 +57,10 @@ struct VuumSecondaryButton: View {
                     VuumColor.chipBackground,
                     in: RoundedRectangle(cornerRadius: VuumLayout.radiusControl, style: .continuous)
                 )
+                .overlay {
+                    RoundedRectangle(cornerRadius: VuumLayout.radiusControl, style: .continuous)
+                        .strokeBorder(VuumColor.hairline(for: colorScheme), lineWidth: 1)
+                }
         }
         .buttonStyle(VuumPressStyle())
     }
@@ -75,7 +82,7 @@ struct VuumPrimaryCapsuleButton: View {
             Group {
                 if isLoading {
                     ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        .tint(VuumColor.accentOn)
                 } else {
                     HStack(spacing: 8) {
                         Text(title)
@@ -87,7 +94,7 @@ struct VuumPrimaryCapsuleButton: View {
                 }
             }
             .font(.system(size: 14, weight: .semibold))
-            .foregroundStyle(Color.white)
+            .foregroundStyle(VuumColor.accentOn)
             .frame(maxWidth: .infinity)
             .frame(height: 56)
             .background(fillColor, in: Capsule())
@@ -172,6 +179,10 @@ struct VuumIconBadge: View {
             .font(.system(size: size * 0.48, weight: .medium))
             .foregroundStyle(emphasized ? VuumColor.brand : VuumColor.primaryText)
             .frame(width: size, height: size)
+            .background(
+                emphasized ? VuumColor.brand.opacity(0.18) : VuumColor.chipBackground,
+                in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+            )
             .accessibilityHidden(true)
     }
 }
@@ -204,33 +215,67 @@ struct VuumFilterChip: View {
     var selected: Bool
     let action: () -> Void
 
+    @Environment(\.colorScheme) private var colorScheme
+
     var body: some View {
         Button(action: action) {
             Text(title)
                 .font(VuumType.captionSemibold)
-                .foregroundStyle(selected ? Color.white : VuumColor.primaryText)
+                .foregroundStyle(selected ? VuumColor.accentOn : VuumColor.primaryText)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
                 .background(
-                    selected ? VuumColor.brand.opacity(0.9) : VuumColor.chipBackground,
+                    selected ? VuumColor.brand : VuumColor.chipBackground,
                     in: Capsule()
                 )
+                .overlay {
+                    Capsule()
+                        .strokeBorder(
+                            selected ? Color.clear : VuumColor.hairline(for: colorScheme),
+                            lineWidth: 1
+                        )
+                }
         }
         .buttonStyle(.plain)
     }
 }
 
+/// Solid promo / plan capsule — high contrast in light and dark (no washed opacity fills).
 struct VuumOfferBadge: View {
+    enum Kind {
+        /// Red “Promo” / “% off” style.
+        case promo
+        /// Blue informational pill (e.g. “Plan”).
+        case plan
+    }
+
     var title: String = "Promo"
+    var kind: Kind = .promo
+    /// Tighter padding for icon overlays (Home “For you” tiles).
+    var compact: Bool = false
+
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         Text(title)
-            .font(VuumType.micro)
+            .font(compact ? .system(size: 9, weight: .bold) : VuumType.micro)
             .foregroundStyle(Color.white)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(VuumColor.brand, in: Capsule())
+            .padding(.horizontal, compact ? 6 : 8)
+            .padding(.vertical, compact ? 3 : 4)
+            .background(fill, in: Capsule())
             .accessibilityLabel(title)
+    }
+
+    private var fill: Color {
+        switch kind {
+        case .promo:
+            // Solid red — slightly brighter in dark so it doesn’t look washed on dark tiles.
+            return colorScheme == .dark
+                ? Color(red: 0.92, green: 0.30, blue: 0.34)
+                : Color(red: 0.86, green: 0.18, blue: 0.22)
+        case .plan:
+            return colorScheme == .dark ? VuumColor.accentBright : VuumColor.brand
+        }
     }
 }
 
@@ -264,13 +309,15 @@ struct PermissionDeniedBanner: View {
     var actionTitle: String = "Open Settings"
     var action: () -> Void
 
+    @Environment(\.colorScheme) private var colorScheme
+
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: icon)
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(VuumColor.brandInk)
+                .foregroundStyle(VuumColor.brand)
                 .frame(width: 32, height: 32)
-                .background(VuumColor.brand.opacity(0.28), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .background(VuumColor.brand.opacity(0.18), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
 
             VStack(alignment: .leading, spacing: 6) {
                 Text(title)
@@ -284,7 +331,7 @@ struct PermissionDeniedBanner: View {
                 Button(action: action) {
                     Text(actionTitle)
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(VuumColor.brandInk)
+                        .foregroundStyle(VuumColor.brand)
                 }
                 .buttonStyle(.plain)
                 .padding(.top, 2)
@@ -292,11 +339,87 @@ struct PermissionDeniedBanner: View {
             Spacer(minLength: 0)
         }
         .padding(12)
-        .background(VuumColor.pageBackground.opacity(0.96), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .background(
+            VuumColor.cardBackground,
+            in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+        )
         .overlay(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .stroke(VuumColor.divider.opacity(0.6), lineWidth: 1)
+                .strokeBorder(VuumColor.hairline(for: colorScheme), lineWidth: 1)
         )
         .accessibilityElement(children: .combine)
+    }
+}
+
+// MARK: - Destination / place search field
+
+/// Shared pickup & destination search chrome — visible fill in dark mode (not sheet-matched gray),
+/// readable placeholders, brand caret, and a clear control.
+struct VuumDestinationSearchField: View {
+    let placeholder: String
+    @Binding var text: String
+    var isBusy: Bool = false
+
+    @Environment(\.colorScheme) private var colorScheme
+
+    /// Light: systemGray6 ≈ gray-100. Dark: tertiary fill so the field stays visible on sheets.
+    /// Prefer this over `VuumColor.fieldBackground` when the parent is already `secondarySystemBackground`.
+    static var searchFill: Color {
+        Color(uiColor: UIColor { traits in
+            traits.userInterfaceStyle == .dark
+                ? .tertiarySystemFill
+                : .systemGray6
+        })
+    }
+
+    private var fill: Color { Self.searchFill }
+
+    private var placeholderColor: Color {
+        colorScheme == .dark
+            ? Color.primary.opacity(0.48)
+            : Color.primary.opacity(0.40)
+    }
+
+    private var clearIconColor: Color {
+        colorScheme == .dark
+            ? Color.primary.opacity(0.55)
+            : VuumColor.secondaryText.opacity(0.85)
+    }
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(VuumColor.secondaryText)
+
+            TextField(
+                "",
+                text: $text,
+                prompt: Text(placeholder).foregroundStyle(placeholderColor)
+            )
+            .font(.system(size: 16, weight: .regular))
+            .foregroundStyle(VuumColor.primaryText)
+            .tint(VuumColor.brand)
+            .textInputAutocapitalization(.words)
+            .autocorrectionDisabled()
+            .accessibilityLabel(placeholder)
+
+            if isBusy {
+                ProgressView()
+                    .controlSize(.small)
+                    .tint(VuumColor.secondaryText)
+            } else if !text.isEmpty {
+                Button {
+                    text = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 18))
+                        .foregroundStyle(clearIconColor)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(L10n.Auth.clearSearch)
+            }
+        }
+        .padding(12)
+        .background(fill, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 }

@@ -66,7 +66,7 @@ struct ChangeDestinationSheet: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 12) {
+            VStack(spacing: VuumLayout.rowSpacing) {
                 if let current = currentDropoff {
                     HStack(alignment: .top, spacing: 10) {
                         Image(systemName: "mappin.circle.fill")
@@ -88,21 +88,13 @@ struct ChangeDestinationSheet: View {
                     .background(VuumColor.chipBackground, in: RoundedRectangle(cornerRadius: 12))
                 }
 
-                HStack(spacing: 10) {
-                    Image(systemName: "magnifyingglass")
-                        .foregroundStyle(VuumColor.secondaryText)
-                    TextField(L10n.Destination.searchNewDestination, text: $query)
-                        .textInputAutocapitalization(.words)
-                        .autocorrectionDisabled()
-                    if placesSearch.isResolving
+                VuumDestinationSearchField(
+                    placeholder: L10n.Destination.searchNewDestination,
+                    text: $query,
+                    isBusy: placesSearch.isResolving
                         || placesSearch.isQueryPending
-                        || tripSession.isRecalculatingTripRoute {
-                        ProgressView()
-                            .controlSize(.small)
-                    }
-                }
-                .padding(12)
-                .background(VuumColor.fieldBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        || tripSession.isRecalculatingTripRoute
+                )
 
                 Text("Fare and ETA update when you confirm a new place.")
                     .font(.system(size: 12, weight: .medium))
@@ -165,7 +157,7 @@ struct ChangeDestinationSheet: View {
                     }
                 }
             }
-            .padding(16)
+            .padding(VuumLayout.pageInset)
             .navigationTitle(L10n.Trip.changeDestination)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -192,6 +184,8 @@ struct ChangeDestinationSheet: View {
                 placesSearch.tearDown()
             }
         }
+        .presentationDetents([.medium, .large])
+        .presentationBackground(VuumColor.sheetBackground)
     }
 
     @ViewBuilder

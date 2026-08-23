@@ -99,8 +99,8 @@ struct ExecutiveProductSheet: View {
                         }
 
                         Text("About \(VehiclePickupETA.largeXXLMinutes) min to pickup · premium fare.")
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
+                            .font(VuumType.caption)
+                            .foregroundStyle(VuumColor.secondaryText)
                     }
                 }
 
@@ -140,7 +140,7 @@ struct ExecutiveProductSheet: View {
             }
             .onAppear { seedPlaces() }
         }
-        .presentationDetents([.medium, .large])
+        .productSheetPresentation()
     }
 
     private func seedPlaces() {

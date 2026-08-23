@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 // MARK: - Tab IA
 
@@ -53,12 +54,50 @@ extension Notification.Name {
     static let vuumNetworkRetry = Notification.Name("vuumNetworkRetry")
 }
 
+// MARK: - Tab bar chrome (dark-mode safe)
+
+/// UIKit appearance for the system tab bar — selected tint must not be near-black in dark mode.
+enum MainTabBarChrome {
+    static func apply() {
+        let appearance = UITabBarAppearance()
+        // System material adapts to light/dark (including floating pill bars).
+        appearance.configureWithDefaultBackground()
+
+        // Selected: brand accent (readable on light + dark). Avoid brandInk — it vanishes on dark bars.
+        let selected = UIColor(VuumColor.accent)
+        let normal = UIColor.secondaryLabel
+
+        styleItemAppearance(appearance.stackedLayoutAppearance, selected: selected, normal: normal)
+        styleItemAppearance(appearance.inlineLayoutAppearance, selected: selected, normal: normal)
+        styleItemAppearance(appearance.compactInlineLayoutAppearance, selected: selected, normal: normal)
+
+        let tabBar = UITabBar.appearance()
+        tabBar.standardAppearance = appearance
+        tabBar.scrollEdgeAppearance = appearance
+        tabBar.tintColor = selected
+        tabBar.unselectedItemTintColor = normal
+        tabBar.barTintColor = nil
+        tabBar.isTranslucent = true
+    }
+
+    private static func styleItemAppearance(
+        _ item: UITabBarItemAppearance,
+        selected: UIColor,
+        normal: UIColor
+    ) {
+        item.normal.iconColor = normal
+        item.normal.titleTextAttributes = [.foregroundColor: normal]
+        item.selected.iconColor = selected
+        item.selected.titleTextAttributes = [.foregroundColor: selected]
+    }
+}
+
 // MARK: - Shell
 
 struct MainTabView: View {
     @EnvironmentObject private var tripSession: TripSession
     @EnvironmentObject private var notifications: NotificationStore
-    @EnvironmentObject private var network: NetworkReachability
+    @Environment(\.colorScheme) private var colorScheme
     @State private var selectedTab: MainTab = .home
 
     /// Immersive map: hide the tab bar while matching / en route / in trip.
@@ -72,37 +111,38 @@ struct MainTabView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            VuumOfflineBanner {
-                NotificationCenter.default.post(name: .vuumNetworkRetry, object: nil)
+        // Offline banner lives on ContentView via safeAreaInset — do not stack another here.
+        TabView(selection: $selectedTab) {
+            RootFlowView()
+                .toolbar(hidesTabBarForActiveTrip ? .hidden : .visible, for: .tabBar)
+                .tabItem { Label(L10n.t("tab.home"), systemImage: "house.fill") }
+                .tag(MainTab.home)
+                .accessibilityLabel(L10n.t("tab.home"))
+
+            ServicesHubView { preferredTierID in
+                MainTabNavigation.openHome(beginBooking: true, preferredTierID: preferredTierID)
             }
+            .tabItem { Label(L10n.t("tab.services"), systemImage: "square.grid.2x2.fill") }
+            .tag(MainTab.services)
+            .accessibilityLabel(L10n.t("tab.services"))
 
-            TabView(selection: $selectedTab) {
-                RootFlowView()
-                    .toolbar(hidesTabBarForActiveTrip ? .hidden : .visible, for: .tabBar)
-                    .tabItem { Label(L10n.t("tab.home"), systemImage: "house.fill") }
-                    .tag(MainTab.home)
-                    .accessibilityLabel(L10n.t("tab.home"))
+            ActivityHubView()
+                .tabItem { Label(L10n.t("tab.activity"), systemImage: "list.bullet.rectangle.fill") }
+                .tag(MainTab.activity)
+                .accessibilityLabel(L10n.t("tab.activity"))
 
-                ServicesHubView { preferredTierID in
-                    MainTabNavigation.openHome(beginBooking: true, preferredTierID: preferredTierID)
-                }
-                .tabItem { Label(L10n.t("tab.services"), systemImage: "square.grid.2x2.fill") }
-                .tag(MainTab.services)
-                .accessibilityLabel(L10n.t("tab.services"))
-
-                ActivityHubView()
-                    .tabItem { Label(L10n.t("tab.activity"), systemImage: "list.bullet.rectangle.fill") }
-                    .tag(MainTab.activity)
-                    .accessibilityLabel(L10n.t("tab.activity"))
-
-                AccountView()
-                    .tabItem { Label(L10n.t("tab.account"), systemImage: "person.fill") }
-                    .badge(notifications.unreadCount)
-                    .tag(MainTab.account)
-                    .accessibilityLabel(L10n.t("tab.account"))
-            }
-            .tint(VuumColor.brandInk)
+            AccountView()
+                .tabItem { Label(L10n.t("tab.account"), systemImage: "person.fill") }
+                .badge(notifications.unreadCount)
+                .tag(MainTab.account)
+                .accessibilityLabel(L10n.t("tab.account"))
+        }
+        .tint(VuumColor.accent)
+        .toolbarBackground(.visible, for: .tabBar)
+        .toolbarBackground(VuumColor.pageBackground, for: .tabBar)
+        .onAppear { MainTabBarChrome.apply() }
+        .onChange(of: colorScheme) { _, _ in
+            MainTabBarChrome.apply()
         }
         .onChange(of: tripSession.phase) { _, phase in
             handleTripPhaseChange(phase)

@@ -58,24 +58,35 @@ struct ProductBookingForm<Extra: View>: View {
         return [pickup.coordinate, dropoff.coordinate]
     }
 
+    private var confirmEnabled: Bool {
+        canConfirm && pickup.id != dropoff.id
+    }
+
     var body: some View {
         Form {
             Section {
-                HStack(spacing: 14) {
+                HStack(spacing: VuumLayout.rowSpacing) {
                     Image(systemName: symbol)
                         .font(.system(size: 22, weight: .semibold))
-                        .foregroundStyle(VuumColor.brandInk)
+                        .foregroundStyle(VuumColor.brand)
                         .frame(width: 48, height: 48)
-                        .background(VuumColor.brand.opacity(0.22), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        .background(
+                            VuumColor.brand.opacity(0.18),
+                            in: RoundedRectangle(cornerRadius: VuumLayout.radiusControl, style: .continuous)
+                        )
+                        .accessibilityHidden(true)
                     VStack(alignment: .leading, spacing: 4) {
                         Text(title)
-                            .font(.system(size: 18, weight: .bold))
+                            .font(VuumType.titleSmall)
+                            .foregroundStyle(VuumColor.primaryText)
                         Text(subtitle)
-                            .font(.system(size: 13))
-                            .foregroundStyle(.secondary)
+                            .font(VuumType.caption)
+                            .foregroundStyle(VuumColor.secondaryText)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                 }
-                .padding(.vertical, 4)
+                .padding(.vertical, 6)
+                .accessibilityElement(children: .combine)
             }
 
             Section {
@@ -118,6 +129,7 @@ struct ProductBookingForm<Extra: View>: View {
                             applyQuickDropoff(place)
                         } label: {
                             Label(savedPlaces.displayTitle(for: place), systemImage: savedPlaces.systemImage(for: place))
+                                .foregroundStyle(VuumColor.primaryText)
                         }
                     }
                 }
@@ -129,6 +141,7 @@ struct ProductBookingForm<Extra: View>: View {
                 Section("Estimate") {
                     HStack {
                         Label("Pickup ETA", systemImage: "clock")
+                            .foregroundStyle(VuumColor.primaryText)
                         Spacer()
                         Text("\(estimate.etaMinutes) min")
                             .font(.system(size: 15, weight: .semibold, design: .rounded))
@@ -136,39 +149,38 @@ struct ProductBookingForm<Extra: View>: View {
                     }
                     HStack {
                         Label("Distance", systemImage: "road.lanes")
+                            .foregroundStyle(VuumColor.primaryText)
                         Spacer()
                         Text(TripGeo.formatDistance(routeMeters))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(VuumColor.secondaryText)
                     }
                     HStack {
                         Label("Capacity", systemImage: "person.fill")
+                            .foregroundStyle(VuumColor.primaryText)
                         Spacer()
                         Text("\(estimate.capacity)")
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(VuumColor.secondaryText)
                     }
                     HStack {
                         Label("Fare", systemImage: "banknote")
+                            .foregroundStyle(VuumColor.primaryText)
                         Spacer()
                         Text(estimate.priceLabel(for: fareMarket))
                             .font(.system(size: 16, weight: .bold, design: .rounded))
+                            .foregroundStyle(VuumColor.primaryText)
                     }
                     Text(estimate.detail)
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
+                        .font(VuumType.caption)
+                        .foregroundStyle(VuumColor.secondaryText)
                 }
             }
-
-            Section {
-                Button {
-                    savedPlaces.recordRecent(dropoff)
-                    onConfirm()
-                } label: {
-                    Text(confirmTitle)
-                        .font(.system(size: 16, weight: .semibold))
-                        .frame(maxWidth: .infinity)
-                }
-                .disabled(!canConfirm || pickup.id == dropoff.id)
-            }
+        }
+        .listSectionSpacing(VuumLayout.stackSpacing)
+        .scrollContentBackground(.hidden)
+        .background(VuumColor.groupedBackground.ignoresSafeArea())
+        .tint(VuumColor.brand)
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            confirmBar
         }
         .sheet(item: $pickerTarget) { target in
             PlaceSearchPickerSheet(
@@ -193,6 +205,23 @@ struct ProductBookingForm<Extra: View>: View {
         }
     }
 
+    private var confirmBar: some View {
+        VStack(spacing: 0) {
+            Divider()
+            VuumPrimaryButton(
+                title: confirmTitle,
+                enabled: confirmEnabled
+            ) {
+                savedPlaces.recordRecent(dropoff)
+                onConfirm()
+            }
+            .padding(.horizontal, VuumLayout.pageInset)
+            .padding(.top, VuumLayout.rowSpacing)
+            .padding(.bottom, VuumLayout.rowSpacing)
+        }
+        .background(VuumColor.sheetBackground.ignoresSafeArea(edges: .bottom))
+    }
+
     private var searchBias: GeoPoint {
         if let loc = location.latestLocation {
             return GeoPoint(latitude: loc.coordinate.latitude, longitude: loc.coordinate.longitude)
@@ -215,31 +244,31 @@ struct ProductBookingForm<Extra: View>: View {
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
-            HStack(alignment: .top, spacing: 12) {
+            HStack(alignment: .top, spacing: VuumLayout.rowSpacing) {
                 Image(systemName: icon)
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(VuumColor.brand)
                     .frame(width: 22)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(.secondary)
+                        .font(VuumType.micro)
+                        .foregroundStyle(VuumColor.secondaryText)
                     Text(savedPlaces.displayTitle(for: place))
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(.primary)
+                        .font(VuumType.rowTitle)
+                        .foregroundStyle(VuumColor.primaryText)
                         .multilineTextAlignment(.leading)
                     Text(place.subtitle)
-                        .font(.system(size: 13))
-                        .foregroundStyle(.secondary)
+                        .font(VuumType.caption)
+                        .foregroundStyle(VuumColor.secondaryText)
                         .multilineTextAlignment(.leading)
                         .lineLimit(2)
                 }
                 Spacer(minLength: 0)
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(VuumColor.secondaryText)
             }
-            .padding(.vertical, 4)
+            .padding(.vertical, 6)
         }
         .buttonStyle(.plain)
         .accessibilityHint(L10n.Destination.searchPlaces)
@@ -280,6 +309,8 @@ private enum BookingPlaceTarget: String, Identifiable {
 
 /// Compact map strip for Services booking forms (pins + optional straight preview).
 private struct BookingRoutePreviewMap: View {
+    @Environment(\.colorScheme) private var colorScheme
+
     var cameraTarget: GeoPoint
     var pins: [MapPin]
     var route: [GeoPoint]
@@ -300,9 +331,19 @@ private struct BookingRoutePreviewMap: View {
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
+                .strokeBorder(VuumColor.hairline(for: colorScheme), lineWidth: 1)
         }
         .allowsHitTesting(false)
+    }
+}
+
+extension View {
+    /// Shared chrome for Services product booking sheets (contrast + detent + handle).
+    func productSheetPresentation() -> some View {
+        self
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
+            .presentationBackground(VuumColor.groupedBackground)
     }
 }
 

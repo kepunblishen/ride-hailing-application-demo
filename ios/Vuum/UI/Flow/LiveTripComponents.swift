@@ -31,7 +31,7 @@ struct SearchingPulseView: View {
             }
             Image(systemName: "car.fill")
                 .font(.system(size: 22, weight: .semibold))
-                .foregroundStyle(VuumColor.brandInk)
+                .foregroundStyle(VuumColor.accentOn)
                 .frame(width: 52, height: 52)
                 .background(VuumColor.brand, in: Circle())
         }
@@ -127,10 +127,10 @@ struct LiveTripActionChip: View {
                     if badge > 0 {
                         Text(badge > 9 ? "9+" : "\(badge)")
                             .font(.system(size: 10, weight: .bold))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(VuumColor.accentOn)
                             .padding(.horizontal, 5)
                             .padding(.vertical, 2)
-                            .background(Color.red, in: Capsule())
+                            .background(VuumColor.danger, in: Capsule())
                             .offset(x: 6, y: -4)
                     }
                 }
@@ -158,13 +158,13 @@ struct LiveTripSOSButton: View {
             Text(helpSent ? "HELP SENT" : "SOS")
                 .font(.system(size: 14, weight: .heavy, design: .rounded))
                 .tracking(1)
-                .foregroundStyle(.white)
+                .foregroundStyle(VuumColor.accentOn)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 11)
                 .background(
                     Capsule(style: .continuous)
-                        .fill(helpSent ? Color.orange : Color.red)
-                        .shadow(color: Color.red.opacity(0.3), radius: 8, y: 3)
+                        .fill(helpSent ? VuumColor.brand : VuumColor.danger)
+                        .shadow(color: VuumColor.danger.opacity(0.3), radius: 8, y: 3)
                 )
         }
         .buttonStyle(.plain)
@@ -216,7 +216,7 @@ struct BoardingPINPanel: View {
                 if rejected {
                     Text("PIN doesn’t match — check with your driver")
                         .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(.red)
+                        .foregroundStyle(VuumColor.danger)
                 }
             }
 

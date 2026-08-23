@@ -185,7 +185,7 @@ struct DriverChatView: View {
             .padding(.bottom, 12)
         }
         .padding(.top, 10)
-        .background(.ultraThinMaterial)
+        .VuumChromeMaterialBackground()
     }
 
     private var typingIndicator: some View {
@@ -218,11 +218,11 @@ struct DriverChatView: View {
                 }
                 Text(message.text)
                     .font(.system(size: 15))
-                    .foregroundStyle(message.isRider ? Color.white : VuumColor.primaryText)
+                    .foregroundStyle(message.isRider ? VuumColor.accentOn : VuumColor.primaryText)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 10)
                     .background(
-                        message.isRider ? VuumColor.brandInk : VuumColor.chipBackground,
+                        message.isRider ? VuumColor.emphasizedFill : VuumColor.chipBackground,
                         in: RoundedRectangle(cornerRadius: 16, style: .continuous)
                     )
                 Text(message.createdAt.formatted(date: .omitted, time: .shortened))

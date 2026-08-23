@@ -65,6 +65,9 @@ enum MapBootstrap {
         #if canImport(GoogleMaps)
         GMSServices.provideAPIKey(key)
         isConfigured = true
+        #if DEBUG
+        print("[Vuum] Maps SDK configured (usable key length=\(key.count); never log the key value).")
+        #endif
         #else
         #if DEBUG
         print("[Vuum] GoogleMaps package not linked — map UI unavailable.")

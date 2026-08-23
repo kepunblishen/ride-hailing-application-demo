@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ServicesHubView: View {
     @EnvironmentObject private var tripSession: TripSession
+    @Environment(\.colorScheme) private var colorScheme
     /// Opens Home destination search, optionally pre-selecting a ride tier.
     var onRequestRide: (_ preferredTierID: String?) -> Void
 
@@ -22,18 +23,20 @@ struct ServicesHubView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 28) {
+                VStack(alignment: .leading, spacing: VuumLayout.sectionSpacing) {
                     goAnywhereSection
                     deliverySection
-                    if !tripSession.reservedTrips.isEmpty {
+                    if tripSession.reservedTrips.isEmpty {
+                        emptyReservationsSection
+                    } else {
                         reservationsSection
                     }
                 }
-                .padding(.horizontal, 16)
+                .padding(.horizontal, VuumLayout.pageInset)
                 .padding(.top, 8)
-                .padding(.bottom, 28)
+                .padding(.bottom, VuumLayout.sectionSpacing)
             }
-            .background(Color(.systemGroupedBackground).ignoresSafeArea())
+            .VuumGroupedBackground()
             .navigationTitle(L10n.t("services.title"))
             .sheet(isPresented: $showSchedule) {
                 ScheduleRideSheet()
@@ -80,15 +83,13 @@ struct ServicesHubView: View {
     // MARK: - Go anywhere
 
     private var goAnywhereSection: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: VuumLayout.stackSpacing) {
             sectionHeader(L10n.t("services.go_anywhere"))
 
-            HStack(spacing: 10) {
+            HStack(spacing: VuumLayout.chipSpacing + 2) {
                 largeTile(
                     title: L10n.t("services.rides"),
-                    symbol: "car.fill",
-                    tint: VuumColor.chipBackground,
-                    iconTint: VuumColor.brand
+                    symbol: "car.fill"
                 ) {
                     onRequestRide("vuum")
                 }
@@ -96,9 +97,7 @@ struct ServicesHubView: View {
                 if tripSession.isServiceAvailable(ServiceProductID.twoWheels) {
                     largeTile(
                         title: L10n.t("services.two_wheels"),
-                        symbol: "bicycle",
-                        tint: VuumColor.chipBackground,
-                        iconTint: VuumColor.brand
+                        symbol: "bicycle"
                     ) {
                         showTwoWheels = true
                     }
@@ -108,18 +107,14 @@ struct ServicesHubView: View {
                     || tripSession.zoneContext.isAirportArea {
                     largeTile(
                         title: "Airport",
-                        symbol: "airplane",
-                        tint: VuumColor.chipBackground,
-                        iconTint: VuumColor.brand
+                        symbol: "airplane"
                     ) {
                         showAirport = true
                     }
                 } else {
                     largeTile(
                         title: L10n.t("services.rental"),
-                        symbol: "key.fill",
-                        tint: VuumColor.chipBackground,
-                        iconTint: VuumColor.brand
+                        symbol: "key.fill"
                     ) {
                         showHourly = true
                     }
@@ -128,10 +123,10 @@ struct ServicesHubView: View {
 
             LazyVGrid(
                 columns: [
-                    GridItem(.flexible(), spacing: 10),
-                    GridItem(.flexible(), spacing: 10),
+                    GridItem(.flexible(), spacing: VuumLayout.chipSpacing + 2),
+                    GridItem(.flexible(), spacing: VuumLayout.chipSpacing + 2),
                 ],
-                spacing: 10
+                spacing: VuumLayout.chipSpacing + 2
             ) {
                 if tripSession.isServiceAvailable(ServiceProductID.comfort) {
                     smallTile(title: L10n.t("services.comfort"), symbol: "car.side.fill") {
@@ -156,36 +151,7 @@ struct ServicesHubView: View {
                 NavigationLink {
                     BusinessProfileView()
                 } label: {
-                    HStack(spacing: 12) {
-                        Image(systemName: "briefcase.fill")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(VuumColor.brandInk)
-                            .frame(width: 40, height: 40)
-                            .background(
-                                LinearGradient(
-                                    colors: [VuumColor.brand.opacity(0.35), VuumColor.brand.opacity(0.18)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                in: RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            )
-
-                        Text(L10n.t("services.corporate"))
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundStyle(VuumColor.primaryText)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.85)
-
-                        Spacer(minLength: 0)
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 14)
-                    .frame(maxWidth: .infinity, minHeight: 68, alignment: .leading)
-                    .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .strokeBorder(Color.primary.opacity(0.05), lineWidth: 1)
-                    }
+                    rowTileLabel(title: L10n.t("services.corporate"), symbol: "briefcase.fill")
                 }
                 .buttonStyle(.plain)
                 if tripSession.isServiceAvailable(ServiceProductID.hourly) {
@@ -208,15 +174,15 @@ struct ServicesHubView: View {
     // MARK: - Delivery
 
     private var deliverySection: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: VuumLayout.stackSpacing) {
             sectionHeader(L10n.t("services.get_delivered"))
 
             LazyVGrid(
                 columns: [
-                    GridItem(.flexible(), spacing: 10),
-                    GridItem(.flexible(), spacing: 10),
+                    GridItem(.flexible(), spacing: VuumLayout.chipSpacing + 2),
+                    GridItem(.flexible(), spacing: VuumLayout.chipSpacing + 2),
                 ],
-                spacing: 10
+                spacing: VuumLayout.chipSpacing + 2
             ) {
                 ForEach(Self.deliveryItems.filter { item in
                     item.id != "packages" || tripSession.isServiceAvailable(ServiceProductID.courier)
@@ -237,38 +203,79 @@ struct ServicesHubView: View {
         }
     }
 
+    private var emptyReservationsSection: some View {
+        VStack(alignment: .leading, spacing: VuumLayout.rowSpacing) {
+            sectionHeader(L10n.t("services.upcoming_reservations"))
+
+            Button {
+                showSchedule = true
+            } label: {
+                VuumInlineEmptyRow(
+                    systemImage: "calendar",
+                    title: L10n.t("status.empty_upcoming_title"),
+                    message: L10n.t("status.empty_upcoming_detail")
+                )
+                .padding(.horizontal, 14)
+                .padding(.vertical, 12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    VuumColor.cardBackground,
+                    in: RoundedRectangle(cornerRadius: VuumLayout.radiusCard, style: .continuous)
+                )
+                .overlay {
+                    RoundedRectangle(cornerRadius: VuumLayout.radiusCard, style: .continuous)
+                        .strokeBorder(VuumColor.hairline(for: colorScheme), lineWidth: 1)
+                }
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint(L10n.t("services.reserve"))
+        }
+    }
+
     private var reservationsSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: VuumLayout.rowSpacing) {
             sectionHeader(L10n.t("services.upcoming_reservations"))
 
             VStack(spacing: 0) {
                 ForEach(Array(tripSession.reservedTrips.enumerated()), id: \.element.id) { index, trip in
-                    HStack(spacing: 12) {
+                    HStack(spacing: VuumLayout.rowSpacing) {
                         Image(systemName: "calendar.badge.clock")
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(VuumColor.brandInk)
-                            .frame(width: 36, height: 36)
-                            .background(VuumColor.brand.opacity(0.22), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                            .foregroundStyle(VuumColor.brand)
+                            .frame(width: VuumLayout.iconBadge, height: VuumLayout.iconBadge)
+                            .background(
+                                VuumColor.brand.opacity(colorScheme == .dark ? 0.28 : 0.16),
+                                in: RoundedRectangle(cornerRadius: VuumLayout.radiusChip, style: .continuous)
+                            )
 
                         VStack(alignment: .leading, spacing: 3) {
                             Text("\(trip.pickupName) → \(trip.dropoffName)")
-                                .font(.system(size: 15, weight: .semibold))
+                                .font(VuumType.bodySemibold)
                                 .foregroundStyle(VuumColor.primaryText)
                             Text("\(trip.tierName) · \(trip.when.formatted(date: .abbreviated, time: .shortened))")
-                                .font(.system(size: 13))
+                                .font(VuumType.caption)
                                 .foregroundStyle(VuumColor.secondaryText)
                         }
                         Spacer(minLength: 0)
                     }
                     .padding(.horizontal, 14)
-                    .padding(.vertical, 12)
+                    .padding(.vertical, VuumLayout.rowSpacing)
 
                     if index < tripSession.reservedTrips.count - 1 {
-                        Divider().padding(.leading, 62)
+                        Divider()
+                            .overlay(VuumColor.divider)
+                            .padding(.leading, 62)
                     }
                 }
             }
-            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .background(
+                VuumColor.cardBackground,
+                in: RoundedRectangle(cornerRadius: VuumLayout.radiusCard, style: .continuous)
+            )
+            .overlay {
+                RoundedRectangle(cornerRadius: VuumLayout.radiusCard, style: .continuous)
+                    .strokeBorder(VuumColor.hairline(for: colorScheme), lineWidth: 1)
+            }
         }
     }
 
@@ -276,26 +283,28 @@ struct ServicesHubView: View {
 
     private func sectionHeader(_ title: String) -> some View {
         Text(title)
-            .font(.system(size: 22, weight: .bold))
+            .font(VuumType.section)
             .foregroundStyle(VuumColor.primaryText)
     }
 
-        private func largeTile(
+    private func largeTile(
         title: String,
         symbol: String,
-        tint: Color,
-        iconTint: Color,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
-            VStack(alignment: .leading, spacing: 18) {
+            VStack(alignment: .leading, spacing: 16) {
                 Image(systemName: symbol)
-                    .font(.system(size: 22, weight: .regular))
-                    .foregroundStyle(iconTint)
-                    .frame(width: 44, height: 44, alignment: .leading)
+                    .font(.system(size: 22, weight: .semibold))
+                    .foregroundStyle(VuumColor.brand)
+                    .frame(width: 44, height: 44)
+                    .background(
+                        VuumColor.brand.opacity(colorScheme == .dark ? 0.28 : 0.14),
+                        in: RoundedRectangle(cornerRadius: VuumLayout.radiusControl, style: .continuous)
+                    )
 
                 Text(title)
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(VuumType.bodySemibold)
                     .foregroundStyle(VuumColor.primaryText)
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
@@ -303,12 +312,12 @@ struct ServicesHubView: View {
             .padding(14)
             .frame(maxWidth: .infinity, minHeight: 118, alignment: .topLeading)
             .background(
-                tint,
+                VuumColor.cardBackground,
                 in: RoundedRectangle(cornerRadius: 18, style: .continuous)
             )
             .overlay {
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .strokeBorder(Color.primary.opacity(0.06), lineWidth: 1)
+                    .strokeBorder(VuumColor.hairline(for: colorScheme), lineWidth: 1)
             }
         }
         .buttonStyle(VuumPressStyle())
@@ -317,73 +326,78 @@ struct ServicesHubView: View {
 
     private func smallTile(title: String, symbol: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            HStack(spacing: 12) {
-                Image(systemName: symbol)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(VuumColor.brandInk)
-                    .frame(width: 40, height: 40)
-                    .background(
-                        LinearGradient(
-                            colors: [VuumColor.brand.opacity(0.35), VuumColor.brand.opacity(0.18)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        in: RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    )
-
-                Text(title)
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(VuumColor.primaryText)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.85)
-
-                Spacer(minLength: 0)
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 14)
-            .frame(maxWidth: .infinity, minHeight: 68, alignment: .leading)
-            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .overlay {
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .strokeBorder(Color.primary.opacity(0.05), lineWidth: 1)
-            }
+            rowTileLabel(title: title, symbol: symbol)
         }
         .buttonStyle(VuumPressStyle())
         .accessibilityLabel(title)
     }
 
+    private func rowTileLabel(title: String, symbol: String) -> some View {
+        HStack(spacing: VuumLayout.rowSpacing) {
+            Image(systemName: symbol)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(VuumColor.brand)
+                .frame(width: VuumLayout.iconBadgeLarge, height: VuumLayout.iconBadgeLarge)
+                .background(
+                    VuumColor.brand.opacity(colorScheme == .dark ? 0.28 : 0.14),
+                    in: RoundedRectangle(cornerRadius: VuumLayout.radiusControl, style: .continuous)
+                )
+
+            Text(title)
+                .font(VuumType.bodySemibold)
+                .foregroundStyle(VuumColor.primaryText)
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
+
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, VuumLayout.rowSpacing)
+        .padding(.vertical, 14)
+        .frame(maxWidth: .infinity, minHeight: 68, alignment: .leading)
+        .background(
+            VuumColor.cardBackground,
+            in: RoundedRectangle(cornerRadius: VuumLayout.radiusCard, style: .continuous)
+        )
+        .overlay {
+            RoundedRectangle(cornerRadius: VuumLayout.radiusCard, style: .continuous)
+                .strokeBorder(VuumColor.hairline(for: colorScheme), lineWidth: 1)
+        }
+    }
+
     private func deliveryTile(_ item: DeliveryServiceItem, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: VuumLayout.rowSpacing) {
                 HStack(alignment: .top) {
                     Image(systemName: item.symbol)
-                        .font(.system(size: 22, weight: .regular))
+                        .font(.system(size: 20, weight: .semibold))
                         .foregroundStyle(VuumColor.brand)
-                        .frame(width: 48, height: 48, alignment: .leading)
+                        .frame(width: 44, height: 44)
+                        .background(
+                            VuumColor.brand.opacity(colorScheme == .dark ? 0.28 : 0.14),
+                            in: RoundedRectangle(cornerRadius: VuumLayout.radiusControl, style: .continuous)
+                        )
 
                     Spacer(minLength: 0)
 
                     if let badge = item.badge {
-                        Text(badge)
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(VuumColor.brand, in: Capsule())
+                        VuumOfferBadge(title: badge, kind: .promo)
                     }
                 }
 
                 Text(item.title)
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(VuumType.bodySemibold)
                     .foregroundStyle(VuumColor.primaryText)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding(14)
             .frame(maxWidth: .infinity, minHeight: 108, alignment: .topLeading)
-            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .background(
+                VuumColor.cardBackground,
+                in: RoundedRectangle(cornerRadius: VuumLayout.radiusCard, style: .continuous)
+            )
             .overlay {
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .strokeBorder(Color.primary.opacity(0.05), lineWidth: 1)
+                RoundedRectangle(cornerRadius: VuumLayout.radiusCard, style: .continuous)
+                    .strokeBorder(VuumColor.hairline(for: colorScheme), lineWidth: 1)
             }
         }
         .buttonStyle(VuumPressStyle())
@@ -391,12 +405,12 @@ struct ServicesHubView: View {
     }
 
     private static let deliveryItems: [DeliveryServiceItem] = [
-        .init(id: "food", title: "Food", symbol: "fork.knife", tileColor: VuumColor.brand, badge: "Promo"),
-        .init(id: "grocery", title: "Grocery", symbol: "cart.fill", tileColor: VuumColor.brand, badge: "Promo"),
-        .init(id: "convenience", title: "Convenience", symbol: "bag.fill", tileColor: VuumColor.brand, badge: nil),
-        .init(id: "alcohol", title: "Alcohol", symbol: "wineglass.fill", tileColor: VuumColor.brand, badge: nil),
-        .init(id: "health", title: "Health", symbol: "cross.case.fill", tileColor: VuumColor.brand, badge: "Promo"),
-        .init(id: "packages", title: "Packages", symbol: "shippingbox.fill", tileColor: VuumColor.brand, badge: nil),
+        .init(id: "food", title: "Food", symbol: "fork.knife", badge: "Promo"),
+        .init(id: "grocery", title: "Grocery", symbol: "cart.fill", badge: "Promo"),
+        .init(id: "convenience", title: "Convenience", symbol: "bag.fill", badge: nil),
+        .init(id: "alcohol", title: "Alcohol", symbol: "wineglass.fill", badge: nil),
+        .init(id: "health", title: "Health", symbol: "cross.case.fill", badge: "Promo"),
+        .init(id: "packages", title: "Packages", symbol: "shippingbox.fill", badge: nil),
     ]
 }
 
@@ -406,7 +420,5 @@ private struct DeliveryServiceItem: Identifiable {
     let id: String
     let title: String
     let symbol: String
-    let tileColor: Color
     let badge: String?
 }
-

@@ -22,19 +22,18 @@ struct AccountHubView: View {
                     NavigationLink {
                         NotificationInboxView()
                     } label: {
-                        HStack {
+                        HStack(spacing: VuumLayout.rowSpacing) {
                             accountRow(
                                 L10n.Settings.inbox,
                                 "tray.full.fill",
                                 L10n.Settings.inboxDetail
                             )
-                            Spacer(minLength: 8)
                             if notifications.unreadCount > 0 {
                                 Text("\(notifications.unreadCount)")
-                                    .font(.system(size: 12, weight: .bold))
-                                    .foregroundStyle(.white)
+                                    .font(VuumType.micro)
+                                    .foregroundStyle(VuumColor.accentOn)
                                     .padding(.horizontal, 8)
-                                    .padding(.vertical, 3)
+                                    .padding(.vertical, 4)
                                     .background(VuumColor.brand, in: Capsule())
                                     .accessibilityLabel("\(notifications.unreadCount) unread")
                             }
@@ -162,32 +161,36 @@ struct AccountHubView: View {
                     }
                 }
             }
+            .listStyle(.insetGrouped)
+            .scrollContentBackground(.hidden)
+            .background(VuumColor.groupedBackground.ignoresSafeArea())
             .navigationTitle(L10n.Account.title)
         }
     }
 
     private var profileHeader: some View {
-        HStack(spacing: 14) {
+        HStack(spacing: VuumLayout.rowSpacing) {
             Circle()
                 .fill(VuumColor.brand)
                 .frame(width: 64, height: 64)
                 .overlay(
                     Text(String(session.firstName.prefix(1)).uppercased())
                         .font(.system(size: 26, weight: .bold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(VuumColor.accentOn)
                 )
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 6) {
                 Text(session.displayName)
-                    .font(.system(size: 20, weight: .semibold))
+                    .font(VuumType.titleSmall)
+                    .foregroundStyle(VuumColor.primaryText)
                 Text(session.maskedMobile)
-                    .font(.system(size: 14))
-                    .foregroundStyle(.secondary)
+                    .font(VuumType.callout)
+                    .foregroundStyle(VuumColor.secondaryText)
                 Text(L10n.Account.personalInfo)
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(VuumColor.brandInk)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 3)
-                    .background(VuumColor.brand.opacity(0.25), in: Capsule())
+                    .font(VuumType.micro)
+                    .foregroundStyle(VuumColor.accent)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(VuumColor.accent.opacity(0.16), in: Capsule())
             }
             Spacer(minLength: 0)
         }
@@ -195,22 +198,27 @@ struct AccountHubView: View {
     }
 
     private func accountRow(_ title: String, _ icon: String, _ subtitle: String) -> some View {
-        HStack(spacing: 14) {
+        HStack(spacing: VuumLayout.rowSpacing) {
             Image(systemName: icon)
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(VuumColor.brandInk)
-                .frame(width: 34, height: 34)
-                .background(VuumColor.brand.opacity(0.22), in: RoundedRectangle(cornerRadius: 9))
-            VStack(alignment: .leading, spacing: 2) {
+                .foregroundStyle(VuumColor.accent)
+                .frame(width: VuumLayout.iconBadge, height: VuumLayout.iconBadge)
+                .background(
+                    VuumColor.accent.opacity(0.16),
+                    in: RoundedRectangle(cornerRadius: VuumLayout.radiusChip, style: .continuous)
+                )
+            VStack(alignment: .leading, spacing: 3) {
                 Text(title)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.primary)
+                    .font(VuumType.rowTitle)
+                    .foregroundStyle(VuumColor.primaryText)
                 Text(subtitle)
-                    .font(.system(size: 13))
-                    .foregroundStyle(.secondary)
+                    .font(VuumType.caption)
+                    .foregroundStyle(VuumColor.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(.vertical, 2)
+        .padding(.vertical, 4)
     }
 }
 
@@ -227,10 +235,12 @@ struct TripHistoryLinkView: View {
     var body: some View {
         Group {
             if tripSession.tripHistory.isEmpty {
-                ContentUnavailableView(
-                    L10n.Activity.emptyTitle,
+                VuumEmptyStateView(
                     systemImage: "clock",
-                    description: Text(L10n.Activity.emptyDetail)
+                    title: L10n.Activity.emptyTitle,
+                    message: L10n.Activity.emptyDetail,
+                    actionTitle: L10n.t("status.empty_trips_action"),
+                    action: { MainTabNavigation.openHome(beginBooking: true) }
                 )
             } else {
                 List(tripSession.tripHistory) { receipt in
@@ -239,14 +249,15 @@ struct TripHistoryLinkView: View {
                     } label: {
                         VStack(alignment: .leading, spacing: 6) {
                             Text(receipt.dropoffName)
-                                .font(.system(size: 16, weight: .semibold))
+                                .font(VuumType.rowTitle)
+                                .foregroundStyle(VuumColor.primaryText)
                             Text("\(receipt.pickupName) · \(receipt.tierName)")
-                                .font(.system(size: 13))
-                                .foregroundStyle(.secondary)
+                                .font(VuumType.caption)
+                                .foregroundStyle(VuumColor.secondaryText)
                             HStack {
                                 Text(receipt.date.formatted(date: .abbreviated, time: .shortened))
-                                    .font(.system(size: 12))
-                                    .foregroundStyle(.secondary)
+                                    .font(VuumType.caption)
+                                    .foregroundStyle(VuumColor.secondaryText)
                                 Spacer()
                                 Text(
                                     AppLocale.formatFareTotal(
@@ -255,7 +266,8 @@ struct TripHistoryLinkView: View {
                                         market: market
                                     )
                                 )
-                                .font(.system(size: 13, weight: .semibold))
+                                .font(VuumType.captionSemibold)
+                                .foregroundStyle(VuumColor.primaryText)
                             }
                         }
                         .padding(.vertical, 4)
@@ -276,15 +288,16 @@ struct LoyaltyRewardsView: View {
             Section {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("1,240 points")
-                        .font(.system(size: 28, weight: .bold))
+                        .font(VuumType.hero)
+                        .foregroundStyle(VuumColor.primaryText)
                     Text("Silver member")
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(VuumColor.brandInk)
+                        .font(VuumType.bodySemibold)
+                        .foregroundStyle(VuumColor.accent)
                     ProgressView(value: 0.42)
                         .tint(VuumColor.brand)
                     Text("760 points to Gold")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
+                        .font(VuumType.caption)
+                        .foregroundStyle(VuumColor.secondaryText)
                 }
                 .padding(.vertical, 6)
             }
@@ -295,8 +308,8 @@ struct LoyaltyRewardsView: View {
             }
             Section {
                 Text("Points update after each completed trip. Partner mining & corporate programs can unlock higher tiers.")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .font(VuumType.caption)
+                    .foregroundStyle(VuumColor.secondaryText)
             }
         }
         .navigationTitle(L10n.Account.rewards)

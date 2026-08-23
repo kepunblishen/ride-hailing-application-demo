@@ -253,6 +253,11 @@ struct ReferFriendsView: View {
 
     var body: some View {
         listContent
+            .listStyle(.insetGrouped)
+            .scrollContentBackground(.hidden)
+            .background(VuumColor.groupedBackground.ignoresSafeArea())
+            .listRowSeparatorTint(VuumColor.divider)
+            .tint(VuumColor.brand)
             .navigationTitle("Refer friends")
             .navigationBarTitleDisplayMode(.inline)
     }
@@ -263,7 +268,7 @@ struct ReferFriendsView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Share your code")
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(VuumColor.secondaryText)
                     HStack {
                         Text(store.inviteCode)
                             .font(.system(size: 28, weight: .bold, design: .rounded))
@@ -276,7 +281,7 @@ struct ReferFriendsView: View {
                         } label: {
                             Image(systemName: codeCopied ? "checkmark" : "doc.on.doc")
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundStyle(VuumColor.brandInk)
+                                .foregroundStyle(VuumColor.brand)
                                 .frame(width: 40, height: 40)
                                 .background(VuumColor.brand.opacity(0.2), in: RoundedRectangle(cornerRadius: 10))
                         }
@@ -285,7 +290,7 @@ struct ReferFriendsView: View {
                     }
                     Text("Friends enter this code when they create an account. Rewards unlock only after their first completed, paid ride.")
                         .font(.system(size: 13))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(VuumColor.secondaryText)
                 }
                 .padding(.vertical, 4)
 
@@ -296,7 +301,7 @@ struct ReferFriendsView: View {
                         .padding(.vertical, 10)
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(VuumColor.brandInk)
+                .tint(VuumColor.brand)
                 .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 12, trailing: 16))
             }
 
@@ -311,7 +316,7 @@ struct ReferFriendsView: View {
                     }
                     Text(attr.highestMilestone.title)
                         .font(.footnote)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(VuumColor.secondaryText)
                 }
             }
 
@@ -323,13 +328,13 @@ struct ReferFriendsView: View {
                 LabeledContent("Pending invites", value: "\(store.pendingCount)")
                 Text("Eligible ride: first genuine completed trip with successful payment. Opening this screen does not grant credit.")
                     .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(VuumColor.secondaryText)
             }
 
             Section("Your invites") {
                 if store.invites.isEmpty {
                     Text("No invites yet. Share your code to get started.")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(VuumColor.secondaryText)
                 } else {
                     ForEach(store.invites) { invite in
                         inviteRow(invite)
@@ -374,25 +379,25 @@ struct ReferFriendsView: View {
             HStack(alignment: .top, spacing: 12) {
                 Image(systemName: invite.systemImage)
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(invite.lifecycle.isRewardEarned ? Color.green : VuumColor.brandInk)
+                    .foregroundStyle(invite.lifecycle.isRewardEarned ? Color.green : VuumColor.brand)
                     .frame(width: 28)
                 VStack(alignment: .leading, spacing: 4) {
                     Text(invite.displayName)
                         .font(.system(size: 16, weight: .semibold))
                     Text(invite.statusTitle)
                         .font(.system(size: 13))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(VuumColor.secondaryText)
                     Text(invite.source.title)
                         .font(.system(size: 12))
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(VuumColor.secondaryText)
                     if let salesId = invite.salesExecutiveId {
                         Text("Sales · \(salesId)")
                             .font(.system(size: 11))
-                            .foregroundStyle(.tertiary)
+                            .foregroundStyle(VuumColor.secondaryText)
                     }
                     Text(invite.createdAt.formatted(date: .abbreviated, time: .omitted))
                         .font(.system(size: 12))
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(VuumColor.secondaryText)
                 }
                 Spacer(minLength: 0)
                 if invite.lifecycle.isRewardEarned {
@@ -411,7 +416,7 @@ struct ReferFriendsView: View {
             } else if invite.lifecycle == .activated {
                 Text("Waiting for first paid ride")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(VuumColor.secondaryText)
             }
         }
         .padding(.vertical, 4)

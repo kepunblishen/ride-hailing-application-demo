@@ -18,11 +18,11 @@ struct SecuritySettingsView: View {
                         Text(L10n.Settings.thisDevice)
                         Text(session.maskedMobile)
                             .font(.footnote)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(VuumColor.secondaryText)
                     }
                 } icon: {
                     Image(systemName: "iphone")
-                        .foregroundStyle(VuumColor.brandInk)
+                        .foregroundStyle(VuumColor.brand)
                 }
                 Button(L10n.Settings.signOutOthers) {
                     signedOutOthers = true
@@ -36,12 +36,17 @@ struct SecuritySettingsView: View {
                             .font(.system(size: 15, weight: .semibold))
                         Text(entry.detail)
                             .font(.footnote)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(VuumColor.secondaryText)
                     }
                     .padding(.vertical, 2)
                 }
             }
         }
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
+        .background(VuumColor.groupedBackground.ignoresSafeArea())
+        .listRowSeparatorTint(VuumColor.divider)
+        .tint(VuumColor.brand)
         .navigationTitle(L10n.Settings.security)
         .navigationBarTitleDisplayMode(.inline)
         .alert(L10n.Settings.signOutOthers, isPresented: $signedOutOthers) {

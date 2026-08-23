@@ -46,12 +46,12 @@
   {
     "featureType": "road",
     "elementType": "geometry",
-    "stylers": [{ "color": "#ffffff" }]
+    "stylers": [{ "color": "#e6eaef" }]
   },
   {
     "featureType": "road",
     "elementType": "geometry.stroke",
-    "stylers": [{ "color": "#d5dae0" }]
+    "stylers": [{ "color": "#c9d0d6" }]
   },
   {
     "featureType": "road.arterial",

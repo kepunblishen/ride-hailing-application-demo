@@ -16,7 +16,7 @@ struct USSDBookingView: View {
             Section {
                 Text("When mobile data is slow or unavailable, dial a Vuum short code. Your carrier may charge standard USSD rates.")
                     .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(VuumColor.secondaryText)
             }
 
             Section("Short codes") {
@@ -34,10 +34,10 @@ struct USSDBookingView: View {
                                     .foregroundStyle(VuumColor.primaryText)
                                 Text(row.code)
                                     .font(.system(.subheadline, design: .monospaced))
-                                    .foregroundStyle(VuumColor.brandInk)
+                                    .foregroundStyle(VuumColor.brand)
                                 Text(row.detail)
                                     .font(.caption)
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(VuumColor.secondaryText)
                             }
                             Spacer(minLength: 0)
                         }
@@ -45,6 +45,11 @@ struct USSDBookingView: View {
                 }
             }
         }
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
+        .background(VuumColor.groupedBackground.ignoresSafeArea())
+        .listRowSeparatorTint(VuumColor.divider)
+        .tint(VuumColor.brand)
         .navigationTitle("USSD booking")
         .navigationBarTitleDisplayMode(.inline)
     }

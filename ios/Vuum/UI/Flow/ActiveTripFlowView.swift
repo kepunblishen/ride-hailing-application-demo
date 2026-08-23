@@ -1,6 +1,6 @@
-﻿import SwiftUI
+import SwiftUI
 
-/// Driver matched / en-route / arrived (PIN) / in-trip — map stays dominant.
+/// Driver matched / en-route / arrived (PIN) / in-trip � map stays dominant.
 struct ActiveTripScaffoldView: View {
     @EnvironmentObject private var tripSession: TripSession
     @EnvironmentObject private var session: SessionStore
@@ -37,7 +37,7 @@ struct ActiveTripScaffoldView: View {
                 VuumSheetChrome(title: nil) {
                     if let trip = tripSession.activeTrip {
                         ScrollView(.vertical, showsIndicators: false) {
-                            VStack(alignment: .leading, spacing: 12) {
+                            VStack(alignment: .leading, spacing: VuumLayout.rowSpacing) {
                                 if tripSession.sosRequested {
                                     sosBanner
                                 }
@@ -72,7 +72,7 @@ struct ActiveTripScaffoldView: View {
                                     HStack(spacing: 8) {
                                         ProgressView()
                                             .tint(VuumColor.brand)
-                                        Text("Updating route & fare…")
+                                        Text("Updating route & fare�")
                                             .font(.system(size: 13, weight: .semibold))
                                             .foregroundStyle(VuumColor.secondaryText)
                                     }
@@ -162,7 +162,7 @@ struct ActiveTripScaffoldView: View {
                                         showCancel = true
                                     }
                                     .font(.system(size: 14, weight: .semibold))
-                                    .foregroundStyle(.red)
+                                    .foregroundStyle(VuumColor.danger)
                                     .frame(maxWidth: .infinity)
                                     .padding(.top, 2)
                                 }
@@ -236,7 +236,7 @@ struct ActiveTripScaffoldView: View {
                             .font(.system(size: 15, weight: .semibold))
                             .foregroundStyle(VuumColor.primaryText)
                             .frame(width: 44, height: 44)
-                            .background(.ultraThinMaterial, in: Circle())
+                            .VuumChromeMaterialBackground(in: Circle())
                     }
                     .accessibilityLabel("Share trip")
                 }
@@ -262,10 +262,11 @@ struct ActiveTripScaffoldView: View {
     private var sosBanner: some View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: "checkmark.shield.fill")
-                .foregroundStyle(.red)
+                .foregroundStyle(VuumColor.danger)
             VStack(alignment: .leading, spacing: 2) {
                 Text("Emergency help requested")
                     .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(VuumColor.primaryText)
                 Text("Vuum Safety is contacting you. Stay on the line if they call.")
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(VuumColor.secondaryText)
@@ -273,11 +274,11 @@ struct ActiveTripScaffoldView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(12)
-        .background(Color.red.opacity(0.12), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .background(VuumColor.danger.opacity(0.12), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
     private var recordingBanner: some View {
-        Text("Recording trip audio · your driver is notified")
+        Text("Recording trip audio - your driver is notified")
             .font(.system(size: 13, weight: .semibold))
             .foregroundStyle(VuumColor.brand)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -332,13 +333,14 @@ struct ActiveTripScaffoldView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Driver waiting")
                     .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(VuumColor.primaryText)
                 if tripSession.pickupWaitGraceRemaining > 0 {
-                    Text("Free wait · \(tripSession.pickupWaitGraceRemaining)s left")
+                    Text("Free wait - \(tripSession.pickupWaitGraceRemaining)s left")
                         .font(.system(size: 12, weight: .medium))
                         .foregroundStyle(VuumColor.secondaryText)
                 } else {
                     Text(
-                        "Wait time · \(AppLocale.formatPrimary(local: tripSession.pickupWaitChargeLocal, market: market))"
+                        "Wait time - \(AppLocale.formatPrimary(local: tripSession.pickupWaitChargeLocal, market: market))"
                     )
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(VuumColor.secondaryText)
@@ -360,7 +362,7 @@ struct ActiveTripScaffoldView: View {
                     .font(.system(size: 14, weight: .medium))
                     .foregroundStyle(VuumColor.secondaryText)
                 if let passenger = trip.passengerName {
-                    Text("Passenger · \(passenger)")
+                    Text("Passenger � \(passenger)")
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(VuumColor.secondaryText)
                 }
@@ -409,7 +411,7 @@ struct ActiveTripScaffoldView: View {
             Text(trip.stops.count == 1 ? "1 stop" : "\(trip.stops.count) stops")
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(VuumColor.secondaryText)
-            Text(trip.stops.map(\.name).joined(separator: " · "))
+            Text(trip.stops.map(\.name).joined(separator: " � "))
                 .font(.system(size: 13, weight: .medium))
                 .foregroundStyle(VuumColor.primaryText)
                 .lineLimit(2)
@@ -510,19 +512,19 @@ struct ActiveTripScaffoldView: View {
                     .padding(.vertical, 12)
                     .background(
                         tripSession.isRecordingTripAudio
-                            ? Color.red.opacity(0.12)
+                            ? VuumColor.danger.opacity(0.12)
                             : VuumColor.chipBackground,
                         in: RoundedRectangle(cornerRadius: 12, style: .continuous)
                     )
                 }
                 .buttonStyle(.plain)
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(tripSession.isRecordingTripAudio ? Color.red : VuumColor.primaryText)
+                .foregroundStyle(tripSession.isRecordingTripAudio ? VuumColor.danger : VuumColor.primaryText)
 
                 if let message = tripSession.audioRecorder.lastErrorMessage {
                     Text(message)
                         .font(.system(size: 11))
-                        .foregroundStyle(.red)
+                        .foregroundStyle(VuumColor.danger)
                 } else {
                     Text("Audio stays on this device. Your driver is notified while recording is on.")
                         .font(.system(size: 11))

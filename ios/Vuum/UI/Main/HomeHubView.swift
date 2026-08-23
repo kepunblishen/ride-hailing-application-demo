@@ -9,6 +9,7 @@ struct HomeHubView: View {
     @EnvironmentObject private var appLocale: AppLocale
     @EnvironmentObject private var notifications: NotificationStore
     @Environment(\.openURL) private var openURL
+    @Environment(\.colorScheme) private var colorScheme
 
     @State private var hubTab: HubTopTab = .rides
     @State private var showSchedule = false
@@ -69,39 +70,39 @@ struct HomeHubView: View {
             ScrollView(.vertical, showsIndicators: false) {
                 LazyVStack(alignment: .leading, spacing: 0) {
                     statusBanners
-                        .padding(.top, 4)
+                        .padding(.top, 6)
 
                     if let firstRecent = recentPlaces.first {
                         featuredRecentCard(firstRecent)
-                            .padding(.top, 14)
+                            .padding(.top, 16)
                     }
 
                     servicesSection
-                        .padding(.top, 26)
+                        .padding(.top, VuumLayout.sectionSpacing)
 
                     savedPlacesSection
-                        .padding(.top, 26)
+                        .padding(.top, VuumLayout.sectionSpacing)
 
                     if !additionalRecentPlaces.isEmpty {
                         recentRows
-                            .padding(.top, 22)
+                            .padding(.top, 24)
                     }
 
                     if !tripSession.reservedTrips.isEmpty {
                         upcomingSection
-                            .padding(.top, 26)
+                            .padding(.top, VuumLayout.sectionSpacing)
                     }
 
                     if hubTab == .courier {
                         courierHero
-                            .padding(.top, 26)
+                            .padding(.top, VuumLayout.sectionSpacing)
                     } else {
                         ridePromo
-                            .padding(.top, 26)
+                            .padding(.top, VuumLayout.sectionSpacing)
                     }
                 }
                 .padding(.horizontal, 20)
-                .padding(.bottom, 36)
+                .padding(.bottom, 40)
             }
         }
         .background(VuumColor.pageBackground.ignoresSafeArea())
@@ -163,13 +164,13 @@ struct HomeHubView: View {
         VStack(alignment: .leading, spacing: 0) {
             topBar
             categoryTabs
-                .padding(.top, 14)
+                .padding(.top, 12)
             searchBar
-                .padding(.top, 16)
+                .padding(.top, 14)
         }
         .padding(.horizontal, 20)
-        .padding(.top, 10)
-        .padding(.bottom, 12)
+        .padding(.top, 8)
+        .padding(.bottom, 14)
         .background(VuumColor.pageBackground)
     }
 
@@ -178,7 +179,7 @@ struct HomeHubView: View {
     private var topBar: some View {
         HStack(spacing: 12) {
             Text("Vuum")
-                .font(.system(size: 32, weight: .bold))
+                .font(VuumType.hero)
                 .foregroundStyle(VuumColor.primaryText)
 
             Spacer()
@@ -190,13 +191,13 @@ struct HomeHubView: View {
                     Image(systemName: "bell")
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(VuumColor.primaryText)
-                        .frame(width: 42, height: 42)
+                        .frame(width: 40, height: 40)
                         .background(VuumColor.chipBackground, in: Circle())
 
                     if notifications.unreadCount > 0 {
                         Text(notifications.unreadCount > 9 ? "9+" : "\(notifications.unreadCount)")
                             .font(.system(size: 9, weight: .bold))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(VuumColor.accentOn)
                             .padding(.horizontal, 5)
                             .padding(.vertical, 2)
                             .background(VuumColor.brand, in: Capsule())
@@ -213,7 +214,7 @@ struct HomeHubView: View {
                 Image(systemName: "shield")
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(VuumColor.primaryText)
-                    .frame(width: 42, height: 42)
+                    .frame(width: 40, height: 40)
                     .background(VuumColor.chipBackground, in: Circle())
             }
             .buttonStyle(.plain)
@@ -229,7 +230,7 @@ struct HomeHubView: View {
         }
         .overlay(alignment: .bottom) {
             Rectangle()
-                .fill(VuumColor.secondaryText.opacity(0.18))
+                .fill(VuumColor.divider)
                 .frame(height: 1)
                 .offset(y: 1)
         }
@@ -323,7 +324,11 @@ struct HomeHubView: View {
                     .buttonStyle(.plain)
                 }
                 .padding(14)
-                .background(VuumColor.chipBackground, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .background(VuumColor.cardBackground, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .strokeBorder(VuumColor.hairline(for: colorScheme), lineWidth: 1)
+                )
             }
         }
     }
@@ -339,7 +344,7 @@ struct HomeHubView: View {
                     Image(systemName: "magnifyingglass")
                         .font(.system(size: 17, weight: .semibold))
                     Text(L10n.Home.whereTo)
-                        .font(.system(size: 17, weight: .semibold))
+                        .font(VuumType.button)
                     Spacer(minLength: 8)
                 }
                 .foregroundStyle(VuumColor.primaryText)
@@ -350,8 +355,8 @@ struct HomeHubView: View {
             .accessibilityHint(L10n.Home.whereToHint)
 
             Rectangle()
-                .fill(VuumColor.secondaryText.opacity(0.22))
-                .frame(width: 1, height: 26)
+                .fill(VuumColor.divider)
+                .frame(width: 1, height: 28)
 
             Button {
                 showSchedule = true
@@ -360,18 +365,22 @@ struct HomeHubView: View {
                     Image(systemName: "calendar")
                         .font(.system(size: 14, weight: .semibold))
                     Text(L10n.Home.later)
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(VuumType.captionSemibold)
                 }
                 .foregroundStyle(VuumColor.primaryText)
-                .padding(.horizontal, 14)
+                .padding(.horizontal, 16)
                 .frame(height: 52)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .accessibilityLabel(L10n.Home.schedulePickup)
         }
-        .frame(height: 54)
+        .frame(height: 56)
         .background(VuumColor.chipBackground, in: Capsule())
+        .overlay(
+            Capsule()
+                .strokeBorder(VuumColor.hairline(for: colorScheme), lineWidth: 1)
+        )
     }
 
     private func featuredRecentCard(_ place: Place) -> some View {
@@ -387,11 +396,11 @@ struct HomeHubView: View {
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(savedPlaces.displayTitle(for: place))
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(VuumType.rowTitle)
                         .foregroundStyle(VuumColor.primaryText)
                         .lineLimit(1)
                     Text(place.subtitle)
-                        .font(.system(size: 13))
+                        .font(VuumType.caption)
                         .foregroundStyle(VuumColor.secondaryText)
                         .lineLimit(1)
                 }
@@ -402,14 +411,14 @@ struct HomeHubView: View {
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(VuumColor.secondaryText)
             }
-            .padding(14)
+            .padding(16)
             .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(VuumColor.pageBackground)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .stroke(VuumColor.secondaryText.opacity(0.22), lineWidth: 1)
-                    )
+                RoundedRectangle(cornerRadius: VuumLayout.radiusCard, style: .continuous)
+                    .fill(VuumColor.cardBackground)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: VuumLayout.radiusCard, style: .continuous)
+                    .strokeBorder(VuumColor.hairline(for: colorScheme), lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
@@ -417,13 +426,13 @@ struct HomeHubView: View {
     }
 
     private var savedPlacesSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: VuumLayout.rowSpacing) {
             Text("Saved places")
-                .font(.system(size: 18, weight: .bold))
+                .font(VuumType.titleSmall)
                 .foregroundStyle(VuumColor.primaryText)
 
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 10) {
+                HStack(spacing: VuumLayout.chipSpacing + 2) {
                     savedSlotChip(kind: .home, place: savedPlaces.home, emptyTitle: L10n.Home.addHome)
                     savedSlotChip(kind: .work, place: savedPlaces.work, emptyTitle: L10n.Home.addWork)
 
@@ -436,11 +445,15 @@ struct HomeHubView: View {
                                 Text(savedPlaces.displayTitle(for: place))
                                     .lineLimit(1)
                             }
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(VuumType.captionSemibold)
                             .foregroundStyle(VuumColor.primaryText)
-                            .padding(.horizontal, 13)
+                            .padding(.horizontal, 14)
                             .frame(height: 40)
                             .background(VuumColor.chipBackground, in: Capsule())
+                            .overlay(
+                                Capsule()
+                                    .strokeBorder(VuumColor.hairline(for: colorScheme), lineWidth: 1)
+                            )
                         }
                         .buttonStyle(.plain)
                     }
@@ -459,11 +472,15 @@ struct HomeHubView: View {
                     Image(systemName: kind.systemImage)
                     Text(kind.title)
                 }
-                .font(.system(size: 13, weight: .semibold))
+                .font(VuumType.captionSemibold)
                 .foregroundStyle(VuumColor.primaryText)
-                .padding(.horizontal, 13)
+                .padding(.horizontal, 14)
                 .frame(height: 40)
                 .background(VuumColor.chipBackground, in: Capsule())
+                .overlay(
+                    Capsule()
+                        .strokeBorder(VuumColor.hairline(for: colorScheme), lineWidth: 1)
+                )
             }
             .buttonStyle(.plain)
             .accessibilityLabel("\(kind.title), \(place.name)")
@@ -475,11 +492,15 @@ struct HomeHubView: View {
                     Image(systemName: kind == .home ? "house" : "briefcase")
                     Text(emptyTitle)
                 }
-                .font(.system(size: 13, weight: .semibold))
+                .font(VuumType.captionSemibold)
                 .foregroundStyle(VuumColor.secondaryText)
-                .padding(.horizontal, 13)
+                .padding(.horizontal, 14)
                 .frame(height: 40)
                 .background(VuumColor.chipBackground, in: Capsule())
+                .overlay(
+                    Capsule()
+                        .strokeBorder(VuumColor.hairline(for: colorScheme), lineWidth: 1)
+                )
             }
             .buttonStyle(.plain)
         }
@@ -488,9 +509,9 @@ struct HomeHubView: View {
     private var recentRows: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text(L10n.Home.recent)
-                .font(.system(size: 18, weight: .bold))
+                .font(VuumType.titleSmall)
                 .foregroundStyle(VuumColor.primaryText)
-                .padding(.bottom, 8)
+                .padding(.bottom, 10)
 
             ForEach(Array(additionalRecentPlaces.enumerated()), id: \.element.id) { index, place in
                 Button {
@@ -505,11 +526,11 @@ struct HomeHubView: View {
 
                         VStack(alignment: .leading, spacing: 3) {
                             Text(savedPlaces.displayTitle(for: place))
-                                .font(.system(size: 15, weight: .semibold))
+                                .font(VuumType.bodySemibold)
                                 .foregroundStyle(VuumColor.primaryText)
                                 .lineLimit(1)
                             Text(place.subtitle)
-                                .font(.system(size: 13))
+                                .font(VuumType.caption)
                                 .foregroundStyle(VuumColor.secondaryText)
                                 .lineLimit(1)
                         }
@@ -520,13 +541,15 @@ struct HomeHubView: View {
                             .font(.system(size: 12, weight: .semibold))
                             .foregroundStyle(VuumColor.secondaryText)
                     }
-                    .padding(.vertical, 10)
+                    .padding(.vertical, 12)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
 
                 if index < additionalRecentPlaces.count - 1 {
-                    Divider()
+                    Rectangle()
+                        .fill(VuumColor.divider)
+                        .frame(height: 1)
                         .padding(.leading, 52)
                 }
             }
@@ -541,17 +564,17 @@ struct HomeHubView: View {
     // MARK: - Services
 
     private var servicesSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: VuumLayout.stackSpacing) {
             Button {
                 MainTabNavigation.openServices()
             } label: {
                 HStack {
                     Text("For you")
-                        .font(.system(size: 22, weight: .bold))
+                        .font(VuumType.section)
                         .foregroundStyle(VuumColor.primaryText)
                     Spacer()
                     Image(systemName: "arrow.right")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(VuumColor.primaryText)
                 }
             }
@@ -559,7 +582,7 @@ struct HomeHubView: View {
             .accessibilityLabel("Open all services")
 
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(alignment: .top, spacing: 18) {
+                HStack(alignment: .top, spacing: 16) {
                     ForEach(visibleSuggestions) { item in
                         Button {
                             handleSuggestion(item)
@@ -570,7 +593,7 @@ struct HomeHubView: View {
                         .accessibilityLabel(item.title)
                     }
                 }
-                .padding(.vertical, 2)
+                .padding(.vertical, 4)
             }
         }
     }
@@ -608,11 +631,15 @@ struct HomeHubView: View {
     }
 
     private func serviceIcon(_ item: HomeSuggestion) -> some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 10) {
             ZStack(alignment: .topTrailing) {
                 Circle()
-                    .fill(VuumColor.chipBackground)
+                    .fill(item.tileColor)
                     .frame(width: 64, height: 64)
+                    .overlay(
+                        Circle()
+                            .strokeBorder(VuumColor.hairline(for: colorScheme), lineWidth: 1)
+                    )
                     .overlay(
                         Image(systemName: item.systemImage)
                             .font(.system(size: 24, weight: .medium))
@@ -620,18 +647,13 @@ struct HomeHubView: View {
                     )
 
                 if let badge = item.promoBadge {
-                    Text(badge)
-                        .font(.system(size: 9, weight: .bold))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 3)
-                        .background(VuumColor.brand, in: Capsule())
+                    VuumOfferBadge(title: badge, kind: .plan, compact: true)
                         .offset(x: 8, y: -3)
                 }
             }
 
             Text(item.title)
-                .font(.system(size: 12, weight: .semibold))
+                .font(VuumType.captionSemibold)
                 .foregroundStyle(VuumColor.primaryText)
                 .lineLimit(1)
                 .frame(width: 72)
@@ -679,16 +701,16 @@ struct HomeHubView: View {
     // MARK: - Upcoming and promotions
 
     private var upcomingSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: VuumLayout.rowSpacing) {
             HStack {
                 Text(L10n.Home.upcoming)
-                    .font(.system(size: 20, weight: .bold))
+                    .font(VuumType.titleSmall)
                     .foregroundStyle(VuumColor.primaryText)
                 Spacer()
                 Button("Manage") {
                     MainTabNavigation.openActivity()
                 }
-                .font(.system(size: 13, weight: .semibold))
+                .font(VuumType.captionSemibold)
                 .foregroundStyle(VuumColor.brand)
             }
 
@@ -705,7 +727,8 @@ struct HomeHubView: View {
 
                         VStack(alignment: .leading, spacing: 4) {
                             Text("\(trip.pickupName) → \(trip.dropoffName)")
-                                .font(.system(size: 14, weight: .semibold))
+                                .font(VuumType.callout)
+                                .fontWeight(.semibold)
                                 .foregroundStyle(VuumColor.primaryText)
                                 .lineLimit(1)
                             Text(trip.when.formatted(date: .abbreviated, time: .shortened))
@@ -720,7 +743,14 @@ struct HomeHubView: View {
                             .foregroundStyle(VuumColor.secondaryText)
                     }
                     .padding(14)
-                    .background(VuumColor.chipBackground, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .background(
+                        VuumColor.cardBackground,
+                        in: RoundedRectangle(cornerRadius: VuumLayout.radiusCard, style: .continuous)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: VuumLayout.radiusCard, style: .continuous)
+                            .strokeBorder(VuumColor.hairline(for: colorScheme), lineWidth: 1)
+                    )
                 }
                 .buttonStyle(.plain)
             }
@@ -734,15 +764,16 @@ struct HomeHubView: View {
             HStack(spacing: 18) {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Send it with Vuum")
-                        .font(.system(size: 20, weight: .bold))
+                        .font(VuumType.titleSmall)
                         .foregroundStyle(VuumColor.primaryText)
                     Text("On-demand pickup and delivery for packages across town.")
-                        .font(.system(size: 14))
+                        .font(VuumType.callout)
                         .foregroundStyle(VuumColor.secondaryText)
                         .fixedSize(horizontal: false, vertical: true)
                     Text("Start a delivery")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundStyle(.white)
+                        .font(VuumType.callout)
+                        .fontWeight(.bold)
+                        .foregroundStyle(VuumColor.accentOn)
                         .padding(.horizontal, 14)
                         .frame(height: 38)
                         .background(VuumColor.brand, in: Capsule())
@@ -759,12 +790,12 @@ struct HomeHubView: View {
             }
             .padding(18)
             .background(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .fill(VuumColor.pageBackground)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .stroke(VuumColor.secondaryText.opacity(0.2), lineWidth: 1)
-                    )
+                RoundedRectangle(cornerRadius: VuumLayout.radiusPanel, style: .continuous)
+                    .fill(VuumColor.cardBackground)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: VuumLayout.radiusPanel, style: .continuous)
+                    .strokeBorder(VuumColor.hairline(for: colorScheme), lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
@@ -783,10 +814,10 @@ struct HomeHubView: View {
 
                 VStack(alignment: .leading, spacing: 5) {
                     Text("Ride your way")
-                        .font(.system(size: 18, weight: .bold))
+                        .font(VuumType.titleSmall)
                         .foregroundStyle(VuumColor.primaryText)
                     Text(appLocale.homeTagline)
-                        .font(.system(size: 13))
+                        .font(VuumType.caption)
                         .foregroundStyle(VuumColor.secondaryText)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -798,7 +829,14 @@ struct HomeHubView: View {
                     .foregroundStyle(VuumColor.brand)
             }
             .padding(18)
-            .background(VuumColor.chipBackground, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .background(
+                VuumColor.cardBackground,
+                in: RoundedRectangle(cornerRadius: 18, style: .continuous)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .strokeBorder(VuumColor.hairline(for: colorScheme), lineWidth: 1)
+            )
         }
         .buttonStyle(.plain)
     }
@@ -832,7 +870,7 @@ struct HomeSuggestion: Identifiable, Equatable {
             id: "ride",
             title: "Ride",
             systemImage: "car",
-            tileColor: Color(white: 0.94),
+            tileColor: VuumColor.chipBackground,
             promoBadge: nil,
             blurb: "Go anywhere in the city with a standard ride.",
             action: .bookRide(preferredTierID: ServiceProductID.vuum)
@@ -841,7 +879,7 @@ struct HomeSuggestion: Identifiable, Equatable {
             id: ServiceProductID.twoWheels,
             title: "2-Wheels",
             systemImage: "bicycle",
-            tileColor: Color(white: 0.94),
+            tileColor: VuumColor.chipBackground,
             promoBadge: nil,
             blurb: "Quick boda-style trips on two wheels when traffic is heavy.",
             action: .openServices
@@ -850,7 +888,7 @@ struct HomeSuggestion: Identifiable, Equatable {
             id: ServiceProductID.courier,
             title: "Send",
             systemImage: "shippingbox",
-            tileColor: Color(white: 0.94),
+            tileColor: VuumColor.chipBackground,
             promoBadge: nil,
             blurb: "Send packages across town with on-demand pickup.",
             action: .openServices
@@ -859,7 +897,7 @@ struct HomeSuggestion: Identifiable, Equatable {
             id: ServiceProductID.reserve,
             title: "Reserve",
             systemImage: "calendar",
-            tileColor: Color(white: 0.94),
+            tileColor: VuumColor.chipBackground,
             promoBadge: "Plan",
             blurb: "Schedule a pickup for later today or another day.",
             action: .schedule
@@ -868,7 +906,7 @@ struct HomeSuggestion: Identifiable, Equatable {
             id: "comfort",
             title: "Comfort",
             systemImage: "car.side",
-            tileColor: Color(white: 0.94),
+            tileColor: VuumColor.chipBackground,
             promoBadge: nil,
             blurb: "Newer cars with extra space and top-rated drivers.",
             action: .bookRide(preferredTierID: ServiceProductID.comfort)
@@ -877,7 +915,7 @@ struct HomeSuggestion: Identifiable, Equatable {
             id: "xl",
             title: "XL",
             systemImage: "car.2",
-            tileColor: Color(white: 0.94),
+            tileColor: VuumColor.chipBackground,
             promoBadge: nil,
             blurb: "Room for groups of up to six passengers.",
             action: .bookRide(preferredTierID: ServiceProductID.xl)
@@ -886,7 +924,7 @@ struct HomeSuggestion: Identifiable, Equatable {
             id: "executive",
             title: "Executive",
             systemImage: "car.side",
-            tileColor: Color(white: 0.94),
+            tileColor: VuumColor.chipBackground,
             promoBadge: nil,
             blurb: "Premium cars with highly rated professional drivers.",
             action: .bookRide(preferredTierID: ServiceProductID.executive)
@@ -898,14 +936,19 @@ private struct HomeSuggestionSheet: View {
     let suggestion: HomeSuggestion
     let onPrimary: () -> Void
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 20) {
                 HStack(spacing: 14) {
                     Circle()
-                        .fill(VuumColor.chipBackground)
+                        .fill(suggestion.tileColor)
                         .frame(width: 72, height: 72)
+                        .overlay(
+                            Circle()
+                                .strokeBorder(VuumColor.hairline(for: colorScheme), lineWidth: 1)
+                        )
                         .overlay(
                             Image(systemName: suggestion.systemImage)
                                 .font(.system(size: 28, weight: .medium))
@@ -914,21 +957,16 @@ private struct HomeSuggestionSheet: View {
 
                     VStack(alignment: .leading, spacing: 6) {
                         Text(suggestion.title)
-                            .font(.system(size: 22, weight: .bold))
+                            .font(VuumType.title)
                             .foregroundStyle(VuumColor.primaryText)
                         if let badge = suggestion.promoBadge {
-                            Text(badge)
-                                .font(.system(size: 11, weight: .bold))
-                                .foregroundStyle(.white)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 3)
-                                .background(VuumColor.brand, in: Capsule())
+                            VuumOfferBadge(title: badge, kind: .plan)
                         }
                     }
                 }
 
                 Text(suggestion.blurb)
-                    .font(.system(size: 15, weight: .medium))
+                    .font(VuumType.bodySemibold)
                     .foregroundStyle(VuumColor.secondaryText)
 
                 Spacer()

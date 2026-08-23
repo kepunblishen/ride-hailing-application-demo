@@ -29,8 +29,8 @@ struct TwoWheelsProductSheet: View {
             ) {
                 Section {
                     Text(L10n.Products.twoWheelsNote)
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
+                        .font(VuumType.caption)
+                        .foregroundStyle(VuumColor.secondaryText)
                 }
             } onConfirm: {
                 tripSession.startLocalProductBooking(
@@ -51,7 +51,7 @@ struct TwoWheelsProductSheet: View {
             }
             .onAppear { seedPlaces() }
         }
-        .presentationDetents([.medium, .large])
+        .productSheetPresentation()
     }
 
     private func seedPlaces() {

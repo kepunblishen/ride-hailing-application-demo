@@ -20,7 +20,7 @@ struct CorporateOnboardingView: View {
                     LabeledContent("Corporate code", value: joinedCode)
                     Text("Your account is linked for company-wallet trips and spend limits.")
                         .font(.footnote)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(VuumColor.secondaryText)
                 }
             }
 
@@ -70,10 +70,15 @@ struct CorporateOnboardingView: View {
                 Section {
                     Text(statusMessage)
                         .font(.footnote)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(VuumColor.secondaryText)
                 }
             }
         }
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
+        .background(VuumColor.groupedBackground.ignoresSafeArea())
+        .listRowSeparatorTint(VuumColor.divider)
+        .tint(VuumColor.brand)
         .navigationTitle("Join company")
         .navigationBarTitleDisplayMode(.inline)
     }

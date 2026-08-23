@@ -66,8 +66,8 @@ struct FoodProductSheet: View {
                     }
 
                     Text(restaurant.blurb)
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
+                        .font(VuumType.caption)
+                        .foregroundStyle(VuumColor.secondaryText)
                 }
 
                 Section("Menu") {
@@ -84,10 +84,11 @@ struct FoodProductSheet: View {
                         ), in: 0...9) {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(item.title)
-                                    .font(.system(size: 15, weight: .semibold))
+                                    .font(VuumType.bodySemibold)
+                                    .foregroundStyle(VuumColor.primaryText)
                                 Text(item.category)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+                                    .font(VuumType.caption)
+                                    .foregroundStyle(VuumColor.secondaryText)
                             }
                         }
                     }
@@ -116,7 +117,7 @@ struct FoodProductSheet: View {
             }
             .onAppear { seedPlaces() }
         }
-        .presentationDetents([.medium, .large])
+        .productSheetPresentation()
     }
 
     private func seedPlaces() {

@@ -31,6 +31,8 @@ struct VuumMapView: UIViewRepresentable {
     }
 
     func makeUIView(context: Context) -> UIView {
+        // Ensure key resolution ran even if this representable is created before `VuumApp.init`.
+        MapBootstrap.configureIfNeeded()
         #if canImport(GoogleMaps)
         if MapBootstrap.isConfigured {
             let map = GMSMapView(
@@ -46,8 +48,15 @@ struct VuumMapView: UIViewRepresentable {
             map.settings.compassButton = false
             map.isTrafficEnabled = showsTraffic
             map.mapType = .normal
+            // Avoid a solid white flash before tiles / brand style apply.
+            map.backgroundColor = UIColor { traits in
+                traits.userInterfaceStyle == .dark
+                    ? UIColor(red: 0.11, green: 0.13, blue: 0.16, alpha: 1)
+                    : UIColor(red: 0.90, green: 0.91, blue: 0.93, alpha: 1)
+            }
             map.padding = uiEdgeInsets(from: contentPadding)
             map.delegate = context.coordinator
+            map.overrideUserInterfaceStyle = colorScheme == .dark ? .dark : .light
             context.coordinator.applyBrandMapStyleIfNeeded(
                 to: map,
                 lowDataMode: lowDataMode,
@@ -118,7 +127,7 @@ struct VuumMapView: UIViewRepresentable {
         /// True after the rider pans/zooms; cleared on programmatic recenter / fit.
         fileprivate var userAdjustedCamera = false
 
-        /// Quiet POI / desaturated road styles from bundle JSON. Requires a configured Maps key.
+        /// Quiet POI / day–night basemap styles from bundle JSON. Requires a configured Maps key.
         func applyBrandMapStyleIfNeeded(
             to map: GMSMapView,
             lowDataMode: Bool,
@@ -126,29 +135,54 @@ struct VuumMapView: UIViewRepresentable {
             force: Bool
         ) {
             guard MapBootstrap.isConfigured, MapBootstrap.hasAPIKey else { return }
+            map.overrideUserInterfaceStyle = colorScheme == .dark ? .dark : .light
+
             let resource = Self.styleResourceName(lowDataMode: lowDataMode, colorScheme: colorScheme)
             guard force || resource != lastAppliedStyleResource else { return }
-            lastAppliedStyleResource = resource
 
-            guard let url = Self.resolveStyleURL(named: resource),
-                  let style = try? GMSMapStyle(contentsOfFileURL: url)
-            else { return }
-            map.mapStyle = style
+            guard let url = Self.resolveStyleURL(named: resource) else {
+                #if DEBUG
+                print("[Vuum] Map style resource missing: \(resource).json — using default tiles.")
+                #endif
+                map.mapStyle = nil
+                // Do not cache failure — allow retry once the bundle resource is available.
+                return
+            }
+            do {
+                map.mapStyle = try GMSMapStyle(contentsOfFileURL: url)
+                lastAppliedStyleResource = resource
+            } catch {
+                #if DEBUG
+                print("[Vuum] Map style failed (\(resource)): \(error.localizedDescription) — using default tiles.")
+                #endif
+                map.mapStyle = nil
+            }
         }
 
         private static func styleResourceName(lowDataMode: Bool, colorScheme: ColorScheme) -> String {
-            if lowDataMode { return "VuumMapStyleLite" }
-            return colorScheme == .dark ? "VuumMapStyleNight" : "VuumMapStyle"
+            // Never apply light day/lite JSON under dark appearance — those sheets paint
+            // roads `#ffffff` and read as a blank white map against dark chrome.
+            switch (colorScheme, lowDataMode) {
+            case (.dark, true): return "VuumMapStyleNightLite"
+            case (.dark, false): return "VuumMapStyleNight"
+            case (_, true): return "VuumMapStyleLite"
+            case (_, false): return "VuumMapStyle"
+            }
         }
 
+        /// Resolve style JSON. Night styles must never fall back to the light day sheet.
         private static func resolveStyleURL(named resource: String) -> URL? {
             if let url = Bundle.main.url(forResource: resource, withExtension: "json") {
                 return url
             }
-            if resource == "VuumMapStyleNight" || resource == "VuumMapStyleLite" {
+            switch resource {
+            case "VuumMapStyleNightLite":
+                return Bundle.main.url(forResource: "VuumMapStyleNight", withExtension: "json")
+            case "VuumMapStyleLite":
                 return Bundle.main.url(forResource: "VuumMapStyle", withExtension: "json")
+            default:
+                return nil
             }
-            return nil
         }
 
         func sync(
@@ -212,17 +246,22 @@ struct VuumMapView: UIViewRepresentable {
                 marker.icon = icon(for: pin)
                 marker.zIndex = pinZIndex(pin.kind)
                 marker.title = pinTitle(for: pin)
+                // Static UIImage icons — avoid per-frame iconView re-rasterization.
+                marker.tracksViewChanges = false
                 if isVehicle {
                     let previous = renderedHeadings[pin.id] ?? pin.heading
                     let smoothed = isNew
                         ? pin.heading
                         : TripGeo.lerpHeading(from: previous, to: pin.heading, fraction: 0.55)
                     renderedHeadings[pin.id] = smoothed
+                    // Flat + center anchor: rotation is degrees clockwise from north (Maps SDK).
                     marker.rotation = smoothed
                     marker.isFlat = true
+                    marker.opacity = pin.kind == .nearby ? 0.94 : 1.0
                 } else {
                     marker.rotation = 0
                     marker.isFlat = false
+                    marker.opacity = 1.0
                 }
                 marker.map = map
                 markers[pin.id] = marker
@@ -232,12 +271,13 @@ struct VuumMapView: UIViewRepresentable {
         }
 
         private func pinZIndex(_ kind: MapPinKind) -> Int32 {
+            // Nearby under stops/anchors; assigned driver above route + place pins.
             switch kind {
-            case .nearby: return 10
+            case .nearby: return 12
             case .stop: return 20
             case .pickup: return 30
             case .dropoff: return 40
-            case .driver: return 50
+            case .driver: return 60
             }
         }
 
@@ -441,16 +481,17 @@ struct VuumMapView: UIViewRepresentable {
                     diameter: 22
                 )
             case .driver:
-                image = vehicleIcon(
-                    color: UIColor(red: 245 / 255, green: 165 / 255, blue: 36 / 255, alpha: 1),
-                    size: 34,
-                    vehicleClass: pin.vehicleClass ?? .standard
+                // Top-down fleet glyph (nose = north). Flat + rotation apply heading.
+                image = VehicleMapMarkerIcon.image(
+                    vehicleClass: pin.vehicleClass ?? .standard,
+                    role: .assigned,
+                    pointSize: 44
                 )
             case .nearby:
-                image = vehicleIcon(
-                    color: UIColor.darkGray,
-                    size: 26,
-                    vehicleClass: pin.vehicleClass ?? .standard
+                image = VehicleMapMarkerIcon.image(
+                    vehicleClass: pin.vehicleClass ?? .standard,
+                    role: .nearby,
+                    pointSize: 34
                 )
             }
             iconCache[cacheKey] = image
@@ -487,28 +528,6 @@ struct VuumMapView: UIViewRepresentable {
                 UIColor.white.setFill()
                 let inner = circle.insetBy(dx: diameter * 0.28, dy: diameter * 0.28)
                 UIBezierPath(ovalIn: inner).fill()
-            }
-        }
-
-        /// SF Symbol overlays on a disc — upright = map north so `rotation` is travel heading.
-        private func vehicleIcon(color: UIColor, size: CGFloat, vehicleClass: VehicleClass) -> UIImage {
-            let config = UIImage.SymbolConfiguration(pointSize: size * 0.48, weight: .bold)
-            let symbol = UIImage(systemName: vehicleClass.systemImage, withConfiguration: config)
-            let renderer = UIGraphicsImageRenderer(size: CGSize(width: size, height: size))
-            return renderer.image { _ in
-                let rect = CGRect(x: 0, y: 0, width: size, height: size)
-                UIColor.white.setFill()
-                UIBezierPath(ovalIn: rect.insetBy(dx: 1, dy: 1)).fill()
-                color.setFill()
-                UIBezierPath(ovalIn: rect.insetBy(dx: 3, dy: 3)).fill()
-                if let symbol {
-                    let tinted = symbol.withTintColor(.white, renderingMode: .alwaysOriginal)
-                    let origin = CGPoint(
-                        x: (size - tinted.size.width) / 2,
-                        y: (size - tinted.size.height) / 2
-                    )
-                    tinted.draw(at: origin)
-                }
             }
         }
         #endif

@@ -25,30 +25,30 @@ struct PaymentMethodsView: View {
                     } label: {
                         HStack(spacing: 12) {
                             Image(systemName: method.systemImage)
-                                .foregroundStyle(VuumColor.brandInk)
+                                .foregroundStyle(VuumColor.accent)
                                 .frame(width: 28)
                             VStack(alignment: .leading, spacing: 2) {
                                 HStack(spacing: 6) {
                                     Text(method.title)
-                                        .font(.system(size: 16, weight: .semibold))
+                                        .font(VuumType.rowTitle)
                                         .foregroundStyle(VuumColor.primaryText)
                                     if payments.selectedMethod == method {
                                         Text("Default")
-                                            .font(.system(size: 11, weight: .bold))
-                                            .foregroundStyle(VuumColor.brandInk)
+                                            .font(VuumType.micro)
+                                            .foregroundStyle(VuumColor.accent)
                                             .padding(.horizontal, 6)
                                             .padding(.vertical, 2)
-                                            .background(VuumColor.brand.opacity(0.25), in: Capsule())
+                                            .background(VuumColor.accent.opacity(0.16), in: Capsule())
                                     }
                                 }
                                 Text(payments.methodSubtitle(method))
-                                    .font(.footnote)
-                                    .foregroundStyle(.secondary)
+                                    .font(VuumType.caption)
+                                    .foregroundStyle(VuumColor.secondaryText)
                             }
                             Spacer()
                             if payments.selectedMethod == method {
                                 Image(systemName: "checkmark.circle.fill")
-                                    .foregroundStyle(VuumColor.brand)
+                                    .foregroundStyle(VuumColor.accent)
                             } else if !payments.canSelect(method) {
                                 Image(systemName: "plus.circle")
                                     .foregroundStyle(VuumColor.secondaryText)
@@ -100,6 +100,11 @@ struct PaymentMethodsView: View {
                 }
             }
         }
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
+        .background(VuumColor.groupedBackground.ignoresSafeArea())
+        .listRowSeparatorTint(VuumColor.divider)
+        .tint(VuumColor.brand)
         .navigationTitle("Payment methods")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {

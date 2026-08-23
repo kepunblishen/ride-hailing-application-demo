@@ -103,7 +103,7 @@ struct LegalDocumentView: View {
         ScrollView {
             Text(bodyText)
                 .font(.body)
-                .foregroundStyle(.primary)
+                .foregroundStyle(VuumColor.primaryText)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding()
         }

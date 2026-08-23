@@ -32,8 +32,8 @@ struct GroupRideProductSheet: View {
                         Text(L10n.format("products.seats", seats))
                     }
                     Text(L10n.Products.groupNote)
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
+                        .font(VuumType.caption)
+                        .foregroundStyle(VuumColor.secondaryText)
                 }
             } onConfirm: {
                 tripSession.startLocalProductBooking(
@@ -53,7 +53,7 @@ struct GroupRideProductSheet: View {
             }
             .onAppear { seedPlaces() }
         }
-        .presentationDetents([.medium, .large])
+        .productSheetPresentation()
     }
 
     private func seedPlaces() {

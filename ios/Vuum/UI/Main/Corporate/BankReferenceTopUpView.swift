@@ -30,7 +30,7 @@ struct BankReferenceTopUpView: View {
                 LabeledContent("Account", value: "00012 3456789 01")
                 Text("Include your employee ID in the transfer memo.")
                     .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(VuumColor.secondaryText)
             }
 
             Section("Record a transfer") {
@@ -50,7 +50,7 @@ struct BankReferenceTopUpView: View {
                 Section {
                     Text(statusMessage)
                         .font(.footnote)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(VuumColor.secondaryText)
                 }
             }
 
@@ -62,12 +62,15 @@ struct BankReferenceTopUpView: View {
                                 .font(.system(.body, design: .monospaced))
                             Text("CDF \(item.amountCDF.formatted()) · \(item.credited ? "Credited" : "Pending match")")
                                 .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(VuumColor.secondaryText)
                         }
                     }
                 }
             }
         }
+        .scrollContentBackground(.hidden)
+        .background(VuumColor.groupedBackground.ignoresSafeArea())
+        .tint(VuumColor.brand)
         .navigationTitle("Bank top-up")
         .navigationBarTitleDisplayMode(.inline)
     }

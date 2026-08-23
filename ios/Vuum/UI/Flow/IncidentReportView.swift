@@ -96,49 +96,64 @@ struct IncidentReportView: View {
                 Section {
                     Text("Tell us what happened. Our Trust & Safety team will review your report and follow up if needed.")
                         .font(.footnote)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(VuumColor.secondaryText)
                 }
 
                 if let tripID = relatedTripID {
-                    Section("Related trip") {
+                    Section {
                         LabeledContent("Trip ID", value: tripID)
+                    } header: {
+                        Text("Related trip")
+                            .foregroundStyle(VuumColor.secondaryText)
                     }
                 }
 
                 if step == 0 {
-                    Section("Incident type") {
+                    Section {
                         ForEach(IncidentCategory.allCases) { item in
                             Button {
                                 category = item
                                 step = 1
                             } label: {
-                                HStack(spacing: 12) {
+                                HStack(spacing: VuumLayout.rowSpacing) {
                                     Image(systemName: item.systemImage)
-                                        .foregroundStyle(VuumColor.brandInk)
+                                        .foregroundStyle(VuumColor.accent)
                                         .frame(width: 28)
                                     Text(item.rawValue)
-                                        .foregroundStyle(.primary)
+                                        .foregroundStyle(VuumColor.primaryText)
                                     Spacer()
                                     if category == item {
                                         Image(systemName: "checkmark")
-                                            .foregroundStyle(VuumColor.brand)
+                                            .foregroundStyle(VuumColor.accent)
                                     }
                                 }
+                                .padding(.vertical, 2)
                             }
                         }
+                    } header: {
+                        Text("Incident type")
+                            .foregroundStyle(VuumColor.secondaryText)
                     }
                 } else {
-                    Section("Category") {
+                    Section {
                         Button {
                             step = 0
                         } label: {
                             Label(category.rawValue, systemImage: category.systemImage)
+                                .foregroundStyle(VuumColor.primaryText)
                         }
+                    } header: {
+                        Text("Category")
+                            .foregroundStyle(VuumColor.secondaryText)
                     }
 
-                    Section("Description") {
+                    Section {
                         TextField("What happened?", text: $descriptionText, axis: .vertical)
                             .lineLimit(4...10)
+                            .foregroundStyle(VuumColor.primaryText)
+                    } header: {
+                        Text("Description")
+                            .foregroundStyle(VuumColor.secondaryText)
                     }
 
                     Section {
@@ -146,15 +161,17 @@ struct IncidentReportView: View {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("Keep trip audio")
                                     .font(.body)
+                                    .foregroundStyle(VuumColor.primaryText)
                                 Text(
                                     canKeepAudio
                                         ? "Trip audio will be kept on this device for Safety review."
                                         : "No trip audio is available to keep with this report."
                                 )
                                 .font(.footnote)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(VuumColor.secondaryText)
                             }
                         }
+                        .tint(VuumColor.accent)
                         .disabled(!canKeepAudio)
                     }
 
@@ -162,7 +179,7 @@ struct IncidentReportView: View {
                         Section {
                             Label("Trip audio retained for Safety review", systemImage: "waveform.badge.mic")
                                 .font(.footnote)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(VuumColor.secondaryText)
                         }
                     }
 
@@ -172,18 +189,23 @@ struct IncidentReportView: View {
                         }
                         .disabled(!canSubmit)
                         .fontWeight(.semibold)
+                        .foregroundStyle(canSubmit ? VuumColor.accent : VuumColor.secondaryText)
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(VuumColor.groupedBackground.ignoresSafeArea())
             .navigationTitle("Report an incident")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") { dismiss() }
+                        .foregroundStyle(VuumColor.primaryText)
                 }
                 if step == 1 {
                     ToolbarItem(placement: .topBarTrailing) {
                         Button("Types") { step = 0 }
+                            .foregroundStyle(VuumColor.accent)
                     }
                 }
             }

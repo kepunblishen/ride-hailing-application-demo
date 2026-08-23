@@ -16,7 +16,7 @@ struct TrustedContactsView: View {
             Section {
                 Text("Trusted contacts can receive your live trip link and appear in emergency help. Add family or colleagues you travel with often.")
                     .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(VuumColor.secondaryText)
             }
 
             Section("Contacts") {
@@ -34,26 +34,27 @@ struct TrustedContactsView: View {
                             HStack(spacing: 12) {
                                 Image(systemName: "person.crop.circle.fill")
                                     .font(.system(size: 28))
-                                    .foregroundStyle(VuumColor.brandInk)
+                                    .foregroundStyle(VuumColor.accent)
                                 VStack(alignment: .leading, spacing: 4) {
                                     HStack(spacing: 6) {
                                         Text(contact.name)
                                             .font(.system(size: 16, weight: .semibold))
-                                            .foregroundStyle(.primary)
+                                            .foregroundStyle(VuumColor.primaryText)
                                         if contact.isDefault {
                                             Text("Default")
-                                                .font(.caption2.weight(.semibold))
+                                                .font(VuumType.micro)
+                                                .foregroundStyle(VuumColor.accent)
                                                 .padding(.horizontal, 6)
                                                 .padding(.vertical, 2)
-                                                .background(VuumColor.brand.opacity(0.18), in: Capsule())
+                                                .background(VuumColor.accent.opacity(0.16), in: Capsule())
                                         }
                                     }
                                     Text(contact.displayPhone)
                                         .font(.footnote)
-                                        .foregroundStyle(.secondary)
+                                        .foregroundStyle(VuumColor.secondaryText)
                                     Text(contact.relationship)
                                         .font(.caption)
-                                        .foregroundStyle(.tertiary)
+                                        .foregroundStyle(VuumColor.secondaryText)
                                     HStack(spacing: 8) {
                                         if contact.isEmergency {
                                             Label("Emergency", systemImage: "cross.circle.fill")
@@ -68,7 +69,7 @@ struct TrustedContactsView: View {
                                 Spacer(minLength: 0)
                                 Image(systemName: "chevron.right")
                                     .font(.system(size: 12, weight: .semibold))
-                                    .foregroundStyle(.tertiary)
+                                    .foregroundStyle(VuumColor.secondaryText)
                             }
                             .padding(.vertical, 2)
                         }
@@ -87,7 +88,7 @@ struct TrustedContactsView: View {
                                 } label: {
                                     Label("Default", systemImage: "star")
                                 }
-                                .tint(VuumColor.brandInk)
+                                .tint(VuumColor.brand)
                             }
                         }
                     }
@@ -106,6 +107,11 @@ struct TrustedContactsView: View {
                 Text("You can save up to \(TrustedContactsStore.maxContacts) trusted contacts. Default contacts are prompted first when sharing a trip.")
             }
         }
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
+        .background(VuumColor.groupedBackground.ignoresSafeArea())
+        .listRowSeparatorTint(VuumColor.divider)
+        .tint(VuumColor.brand)
         .navigationTitle("Trusted contacts")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showEditor) {
@@ -132,14 +138,19 @@ struct TrustedContactsView: View {
                     Toggle("Remind me to share trips", isOn: $draftNotifyOnTripShare)
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(VuumColor.groupedBackground.ignoresSafeArea())
+            .tint(VuumColor.brand)
             .navigationTitle(editing == nil ? "Add contact" : "Edit contact")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { showEditor = false }
+                        .foregroundStyle(VuumColor.primaryText)
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") { saveDraft() }
+                        .foregroundStyle(VuumColor.accent)
                         .disabled(!canSaveDraft)
                 }
                 if editing != nil {

@@ -41,7 +41,7 @@ struct PrivacySettingsView: View {
                 if permissions.isLocationDenied || !location.locationServicesEnabled {
                     Text(L10n.Settings.preciseLocationNote)
                         .font(.footnote)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(VuumColor.secondaryText)
                     Button(L10n.Settings.openSystemSettings) {
                         if let url = permissions.systemSettingsURL {
                             openURL(url)
@@ -68,7 +68,7 @@ struct PrivacySettingsView: View {
                     .disabled(!permissions.isLocationAuthorized)
                 Text(L10n.Settings.preciseLocationNote)
                     .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(VuumColor.secondaryText)
             }
 
             Section(L10n.Settings.dataSection) {
@@ -99,6 +99,11 @@ struct PrivacySettingsView: View {
                 }
             }
         }
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
+        .background(VuumColor.groupedBackground.ignoresSafeArea())
+        .listRowSeparatorTint(VuumColor.divider)
+        .tint(VuumColor.brand)
         .navigationTitle(L10n.Account.privacy)
         .navigationBarTitleDisplayMode(.inline)
         .task {
@@ -117,7 +122,7 @@ private struct PrivacyActionView: View {
             Section {
                 Text(message)
                     .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(VuumColor.secondaryText)
             }
             Section {
                 Button(submitted ? L10n.Settings.requestSent : L10n.Settings.submitRequest) {
@@ -126,6 +131,11 @@ private struct PrivacyActionView: View {
                 .disabled(submitted)
             }
         }
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
+        .background(VuumColor.groupedBackground.ignoresSafeArea())
+        .listRowSeparatorTint(VuumColor.divider)
+        .tint(VuumColor.brand)
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -146,7 +156,7 @@ private struct DeleteAccountView: View {
             Section {
                 Text(L10n.Settings.deleteAccountBody)
                     .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(VuumColor.secondaryText)
             }
             Section {
                 TextField(L10n.Settings.deleteConfirmHint, text: $confirmText)
@@ -160,6 +170,11 @@ private struct DeleteAccountView: View {
                 .disabled(!canDelete)
             }
         }
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
+        .background(VuumColor.groupedBackground.ignoresSafeArea())
+        .listRowSeparatorTint(VuumColor.divider)
+        .tint(VuumColor.brand)
         .navigationTitle(L10n.Settings.deleteAccount)
         .navigationBarTitleDisplayMode(.inline)
         .alert(L10n.Settings.deleteConfirmTitle, isPresented: $showConfirm) {

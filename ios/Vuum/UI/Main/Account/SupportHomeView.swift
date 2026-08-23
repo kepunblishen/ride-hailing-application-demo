@@ -14,13 +14,13 @@ struct SupportHomeView: View {
             Section {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Help & support")
-                        .font(.system(size: 22, weight: .bold))
+                        .font(VuumType.title)
+                        .foregroundStyle(VuumColor.primaryText)
                     Text("FAQs, trip reports, lost items, and Congo Mobility contact options.")
-                        .font(.system(size: 14))
-                        .foregroundStyle(.secondary)
+                        .font(VuumType.callout)
+                        .foregroundStyle(VuumColor.secondaryText)
                 }
                 .padding(.vertical, 4)
-                .listRowBackground(Color.clear)
             }
 
             Section("Quick actions") {
@@ -51,14 +51,11 @@ struct SupportHomeView: View {
 
             Section("Active tickets") {
                 if activeTickets.isEmpty {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("No open or pending tickets")
-                            .font(.system(size: 15, weight: .semibold))
-                        Text("Submitted requests appear here until you mark them resolved.")
-                            .font(.system(size: 13))
-                            .foregroundStyle(.secondary)
-                    }
-                    .padding(.vertical, 2)
+                    VuumInlineEmptyRow(
+                        systemImage: "ticket",
+                        title: L10n.t("status.empty_support_title"),
+                        message: L10n.t("status.empty_support_detail")
+                    )
                 } else {
                     ForEach(activeTickets.prefix(5)) { ticket in
                         NavigationLink {
@@ -70,17 +67,20 @@ struct SupportHomeView: View {
                     NavigationLink("View all in Help Center") {
                         SupportCenterView()
                     }
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(VuumType.callout)
                 }
             }
 
             Section("Contact") {
                 LabeledContent("Hours", value: SupportContact.hours)
                 Text(SupportContact.operatorName)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .font(VuumType.caption)
+                    .foregroundStyle(VuumColor.secondaryText)
             }
         }
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
+        .background(VuumColor.groupedBackground.ignoresSafeArea())
         .navigationTitle("Support")
         .navigationBarTitleDisplayMode(.large)
     }

@@ -1,17 +1,54 @@
 import ComponentsKit
 import SwiftUI
+import UIKit
 
 // MARK: - Color
 
+/// Semantic palette for signed-in + shared chrome. Prefer these over raw `Color.black` / `Color.white`.
+///
+/// **Use for body UI**
+/// - `pageBackground` / `groupedBackground` — screen roots
+/// - `primaryText` / `secondaryText` / `fieldPlaceholder` — copy
+/// - `cardBackground` / `sheetBackground` / `fieldBackground` / `chipBackground` — surfaces
+/// - `border` / `divider` / `separator` — rules
+/// - `brand` — interactive accent, tab tint, links, primary CTA fill
+/// - `accentOn` — label on solid `brand` / `emphasizedFill`
+/// - `brandInk` — ink on brand *washes* (e.g. `brand.opacity(0.2)` chips); adaptive
+/// - `emphasizedFill` — solid dark/blue fill that pairs with `accentOn` (not adaptive ink)
+/// - `danger` / `destructive` / `success` — status
 enum VuumColor {
-    /// Interactive blue-600 — primary actions and emphasis (replaces amber).
-    static let brand = Color(red: 37 / 255, green: 99 / 255, blue: 235 / 255) // blue-600 — primary actions
-    static let brandInk = Color(red: 15 / 255, green: 20 / 255, blue: 25 / 255)
+    // MARK: Brand (readable in light + dark)
 
-    /// Tailwind blue-600 — primary accents, links, focus rings.
-    static let accent = Color(red: 37 / 255, green: 99 / 255, blue: 235 / 255) // #2563EB
-    static let accentBright = Color(red: 59 / 255, green: 130 / 255, blue: 246 / 255) // #3B82F6 blue-500
+    /// Interactive blue — primary actions, tab tint, links. Prefer over `brandInk` for chrome tint.
+    static let brand = dynamic(
+        light: UIColor(red: 37 / 255, green: 99 / 255, blue: 235 / 255, alpha: 1),  // #2563EB
+        dark: UIColor(red: 59 / 255, green: 130 / 255, blue: 246 / 255, alpha: 1)   // #3B82F6 — slightly brighter on dark
+    )
+
+    /// High-contrast ink for text/icons on brand washes. Light: near-black. Dark: cool near-white.
+    /// Do **not** use as a solid button fill with white labels — use `emphasizedFill` + `accentOn`.
+    static let brandInk = dynamic(
+        light: UIColor(red: 15 / 255, green: 20 / 255, blue: 25 / 255, alpha: 1),
+        dark: UIColor(red: 232 / 255, green: 238 / 255, blue: 248 / 255, alpha: 1)
+    )
+
+    /// Solid fill for primary/emphasis controls that expect `accentOn` (white) labels.
+    /// Light: charcoal. Dark: brand blue (keeps white labels readable).
+    static let emphasizedFill = dynamic(
+        light: UIColor(red: 15 / 255, green: 20 / 255, blue: 25 / 255, alpha: 1),
+        dark: UIColor(red: 37 / 255, green: 99 / 255, blue: 235 / 255, alpha: 1)
+    )
+
+    /// Tailwind blue-600 / blue-500 — accents, links, focus rings (aliases of brand family).
+    static let accent = brand
+    static let accentBright = dynamic(
+        light: UIColor(red: 59 / 255, green: 130 / 255, blue: 246 / 255, alpha: 1),  // #3B82F6
+        dark: UIColor(red: 96 / 255, green: 165 / 255, blue: 250 / 255, alpha: 1)   // #60A5FA
+    )
+    /// Label color on solid brand / emphasized fills.
     static let accentOn = Color.white
+
+    // MARK: Surfaces (system dynamic)
 
     static let pageBackground = Color(.systemBackground)
     /// Grouped hubs (Services / Activity) — one surface language across tabs.
@@ -19,14 +56,36 @@ enum VuumColor {
     static let sheetBackground = Color(.secondarySystemBackground)
     static let fieldBackground = Color(.secondarySystemBackground)
     static let cardBackground = Color(.secondarySystemGroupedBackground)
+    static let chipBackground = Color(.tertiarySystemFill)
+
+    // MARK: Text
+
     static let primaryText = Color(.label)
     static let secondaryText = Color(.secondaryLabel)
-    static let divider = Color(.separator)
+    static let tertiaryText = Color(.tertiaryLabel)
     static let fieldPlaceholder = Color(.placeholderText)
-    static let chipBackground = Color(.tertiarySystemFill)
+
+    // MARK: Borders / separators
+
+    static let divider = Color(.separator)
+    static let separator = divider
+    static let border = Color(.separator)
+    static let opaqueSeparator = Color(.opaqueSeparator)
+
+    // MARK: Status
+
+    static let danger = dynamic(
+        light: UIColor(red: 0.86, green: 0.22, blue: 0.28, alpha: 1),
+        dark: UIColor(red: 1.00, green: 0.42, blue: 0.42, alpha: 1)
+    )
+    static let destructive = danger
+    static let success = dynamic(
+        light: UIColor(red: 0.20, green: 0.62, blue: 0.38, alpha: 1),
+        dark: UIColor(red: 0.40, green: 0.84, blue: 0.57, alpha: 1)
+    )
+
+    /// Map overlay dimmer — intentionally non-adaptive (sits on map imagery).
     static let mapScrim = Color.black.opacity(0.35)
-    static let danger = Color(red: 0.86, green: 0.22, blue: 0.28)
-    static let success = Color(red: 0.20, green: 0.62, blue: 0.38)
 
     static var glassBorder: Color {
         Color.primary.opacity(0.08)
@@ -42,6 +101,16 @@ enum VuumColor {
         colorScheme == .dark
             ? Color.white.opacity(0.10)
             : Color.primary.opacity(0.06)
+    }
+
+    // MARK: Dynamic helper
+
+    private static func dynamic(light: UIColor, dark: UIColor) -> Color {
+        Color(
+            UIColor { traits in
+                traits.userInterfaceStyle == .dark ? dark : light
+            }
+        )
     }
 }
 
@@ -97,7 +166,10 @@ enum VuumTheme {
     static func configureComponentsKit() {
         Theme.current.update {
             $0.colors.accent = .init(
-                main: .universal(.hex(accentHex)),
+                main: .themed(
+                    light: .hex(accentHex),
+                    dark: .hex(accentBrightHex)
+                ),
                 contrast: .universal(.hex("#FFFFFF")),
                 background: .themed(
                     light: .hex("#F4F5F7"),

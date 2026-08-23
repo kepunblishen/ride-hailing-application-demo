@@ -18,7 +18,7 @@ struct DiagnosticsToolsView: View {
             Section {
                 Text("Internal tools for QA and presentation prep. Keep locked for client walkthroughs.")
                     .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(VuumColor.secondaryText)
             }
 
             Section("Maps credentials") {
@@ -34,7 +34,7 @@ struct DiagnosticsToolsView: View {
                 if let rider = mapsDiagnostics.lastRiderMessage {
                     Text(rider)
                         .font(.footnote)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(VuumColor.secondaryText)
                 }
                 #if DEBUG
                 if !mapsDiagnostics.recentRequests.isEmpty {
@@ -47,7 +47,7 @@ struct DiagnosticsToolsView: View {
                                     + (entry.httpStatus.map { " · HTTP \($0)" } ?? "")
                             )
                             .font(.caption2)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(VuumColor.secondaryText)
                         }
                     }
                     Button("Clear Maps request log") {
@@ -57,7 +57,7 @@ struct DiagnosticsToolsView: View {
                 } else {
                     Text("No Google HTTPS calls logged yet (DEBUG).")
                         .font(.footnote)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(VuumColor.secondaryText)
                 }
                 #endif
             }
@@ -101,7 +101,7 @@ struct DiagnosticsToolsView: View {
                     )
                 } else {
                     Text("No fix yet")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(VuumColor.secondaryText)
                 }
                 Button("Refresh location") {
                     location.refreshCurrentLocation()
@@ -152,7 +152,7 @@ struct DiagnosticsToolsView: View {
                             Text("Field sales checklist")
                             Text("\(fieldSales.checklistProgress.done)/\(fieldSales.checklistProgress.total) ready")
                                 .font(.footnote)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(VuumColor.secondaryText)
                         }
                     } icon: {
                         Image(systemName: "checklist")
@@ -166,7 +166,7 @@ struct DiagnosticsToolsView: View {
                             Text("Suspicious trip flags")
                             Text("\(fieldSales.suspiciousFlags.count) internal")
                                 .font(.footnote)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(VuumColor.secondaryText)
                         }
                     } icon: {
                         Image(systemName: "exclamationmark.shield")
@@ -195,6 +195,11 @@ struct DiagnosticsToolsView: View {
                 }
             }
         }
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
+        .background(VuumColor.groupedBackground.ignoresSafeArea())
+        .listRowSeparatorTint(VuumColor.divider)
+        .tint(VuumColor.brand)
         .navigationTitle("Diagnostics")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
@@ -221,7 +226,7 @@ struct FieldSalesChecklistView: View {
             Section {
                 Text("Use before a growth / field-sales conversation. Items stay on this device.")
                     .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(VuumColor.secondaryText)
             }
             Section("Walkthrough") {
                 ForEach(fieldSales.checklist) { item in
@@ -234,7 +239,7 @@ struct FieldSalesChecklistView: View {
                                 .font(.body.weight(.medium))
                             Text(item.detail)
                                 .font(.footnote)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(VuumColor.secondaryText)
                         }
                     }
                 }
@@ -258,12 +263,12 @@ struct SuspiciousTripFlagsView: View {
             Section {
                 Text("Internal risk signals only. Not shown on rider trip screens.")
                     .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(VuumColor.secondaryText)
             }
             if fieldSales.suspiciousFlags.isEmpty {
                 Section {
                     Text("No flags yet.")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(VuumColor.secondaryText)
                 }
             } else {
                 Section("Flags") {
@@ -279,10 +284,10 @@ struct SuspiciousTripFlagsView: View {
                             }
                             Text(flag.reasons.map(\.title).joined(separator: " · "))
                                 .font(.footnote)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(VuumColor.secondaryText)
                             Text(flag.createdAt.formatted(date: .abbreviated, time: .shortened))
                                 .font(.caption2)
-                                .foregroundStyle(.tertiary)
+                                .foregroundStyle(VuumColor.secondaryText)
                         }
                         .padding(.vertical, 4)
                     }
@@ -300,7 +305,7 @@ struct SuspiciousTripFlagsView: View {
 
     private func severityColor(_ severity: SuspiciousFlagSeverity) -> Color {
         switch severity {
-        case .info: return .secondary
+        case .info: return VuumColor.secondaryText
         case .watch: return .orange
         case .high: return .red
         }
@@ -338,11 +343,11 @@ struct FieldSalesPipelineView: View {
                         }
                         Text("\(item.kind.title) · \(item.source.title)")
                             .font(.footnote)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(VuumColor.secondaryText)
                         if let exec = fieldSales.executive(for: item.salesExecutiveId) {
                             Text("Sales: \(exec.displayName) (\(exec.salesCode))")
                                 .font(.caption)
-                                .foregroundStyle(.tertiary)
+                                .foregroundStyle(VuumColor.secondaryText)
                         }
                         eligibilityStrip(item.highestMilestone)
                         if let reason = item.blockReason {
@@ -396,10 +401,10 @@ struct FieldSalesPipelineView: View {
                         .background(
                             step <= milestone
                                 ? VuumColor.brand.opacity(0.35)
-                                : Color.secondary.opacity(0.12),
+                                : VuumColor.chipBackground,
                             in: Capsule()
                         )
-                        .foregroundStyle(step <= milestone ? VuumColor.brandInk : .secondary)
+                        .foregroundStyle(step <= milestone ? VuumColor.brand : VuumColor.secondaryText)
                 }
             }
         }
@@ -409,7 +414,7 @@ struct FieldSalesPipelineView: View {
         switch state {
         case .awarded, .eligible: return .green
         case .blocked, .voided: return .red
-        case .pending: return .secondary
+        case .pending: return VuumColor.secondaryText
         }
     }
 }

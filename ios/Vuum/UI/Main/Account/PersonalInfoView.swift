@@ -84,6 +84,11 @@ struct PersonalInfoView: View {
                 Text(L10n.Settings.profileFooter)
             }
         }
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
+        .background(VuumColor.groupedBackground.ignoresSafeArea())
+        .listRowSeparatorTint(VuumColor.divider)
+        .tint(VuumColor.brand)
         .navigationTitle(L10n.Account.personalInfo)
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {

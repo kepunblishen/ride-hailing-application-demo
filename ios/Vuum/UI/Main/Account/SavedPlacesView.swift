@@ -39,11 +39,11 @@ struct SavedPlacesView: View {
                                 Text(place.name)
                                 Text(place.subtitle)
                                     .font(.footnote)
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(VuumColor.secondaryText)
                             }
                         } icon: {
                             Image(systemName: "star.fill")
-                                .foregroundStyle(VuumColor.brandInk)
+                                .foregroundStyle(VuumColor.brand)
                         }
                     }
                     .onDelete { indexSet in
@@ -68,11 +68,11 @@ struct SavedPlacesView: View {
                                 Text(place.name)
                                 Text(place.subtitle)
                                     .font(.footnote)
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(VuumColor.secondaryText)
                             }
                         } icon: {
                             Image(systemName: "clock")
-                                .foregroundStyle(VuumColor.brandInk)
+                                .foregroundStyle(VuumColor.secondaryText)
                         }
                         .swipeActions {
                             Button {
@@ -80,7 +80,7 @@ struct SavedPlacesView: View {
                             } label: {
                                 Label(L10n.Settings.addFavorite, systemImage: "star")
                             }
-                            .tint(VuumColor.brandInk)
+                            .tint(VuumColor.brand)
                         }
                     }
                     .onDelete { indexSet in
@@ -98,6 +98,11 @@ struct SavedPlacesView: View {
                 }
             }
         }
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
+        .background(VuumColor.groupedBackground.ignoresSafeArea())
+        .listRowSeparatorTint(VuumColor.divider)
+        .tint(VuumColor.brand)
         .navigationTitle(L10n.Settings.savedPlaces)
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $pickTarget) { target in
@@ -116,20 +121,20 @@ struct SavedPlacesView: View {
         Button(action: action) {
             HStack(spacing: 12) {
                 Image(systemName: icon)
-                    .foregroundStyle(VuumColor.brandInk)
+                    .foregroundStyle(VuumColor.brand)
                     .frame(width: 28)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(VuumColor.primaryText)
                     Text(place?.name ?? L10n.Settings.setLocation)
                         .font(.footnote)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(VuumColor.secondaryText)
                 }
                 Spacer()
                 Image(systemName: "chevron.right")
                     .font(.caption.weight(.semibold))
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(VuumColor.secondaryText)
             }
         }
         .buttonStyle(.plain)
@@ -192,23 +197,19 @@ struct PlaceSearchPickerSheet: View {
         NavigationStack {
             List {
                 Section {
-                    HStack(spacing: 10) {
-                        Image(systemName: "magnifyingglass")
-                            .foregroundStyle(.secondary)
-                        TextField(L10n.Settings.searchPlaces, text: $query)
-                            .textInputAutocapitalization(.words)
-                            .autocorrectionDisabled()
-                        if placesSearch.isQueryPending || placesSearch.isResolving {
-                            ProgressView()
-                                .controlSize(.small)
-                        }
-                    }
+                    VuumDestinationSearchField(
+                        placeholder: L10n.Settings.searchPlaces,
+                        text: $query,
+                        isBusy: placesSearch.isQueryPending || placesSearch.isResolving
+                    )
+                    .listRowInsets(EdgeInsets(top: 8, leading: 12, bottom: 8, trailing: 12))
+                    .listRowBackground(Color.clear)
                 }
 
                 if let status = placesSearch.statusMessage {
                     Section {
                         Text(status)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(VuumColor.secondaryText)
                     }
                 }
 
@@ -217,13 +218,13 @@ struct PlaceSearchPickerSheet: View {
                    !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     Section {
                         Text(L10n.Destination.searchingPlaces)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(VuumColor.secondaryText)
                     }
                 } else if placesSearch.suggestions.isEmpty,
                           !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     Section {
                         Text(L10n.Destination.noMatchingPlaces)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(VuumColor.secondaryText)
                     }
                 }
 
@@ -239,11 +240,11 @@ struct PlaceSearchPickerSheet: View {
                                         .frame(width: 22)
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text(suggestion.primaryText)
-                                            .foregroundStyle(.primary)
+                                            .foregroundStyle(VuumColor.primaryText)
                                         if !suggestion.compactSubtitle.isEmpty {
                                             Text(suggestion.compactSubtitle)
                                                 .font(.footnote)
-                                                .foregroundStyle(.secondary)
+                                                .foregroundStyle(VuumColor.secondaryText)
                                         }
                                     }
                                 }
@@ -264,10 +265,10 @@ struct PlaceSearchPickerSheet: View {
                                         .frame(width: 22)
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text(place.name)
-                                            .foregroundStyle(.primary)
+                                            .foregroundStyle(VuumColor.primaryText)
                                         Text(place.subtitle)
                                             .font(.footnote)
-                                            .foregroundStyle(.secondary)
+                                            .foregroundStyle(VuumColor.secondaryText)
                                         Text(
                                             TripGeo.formatDistance(
                                                 TripGeo.distanceMeters(
@@ -277,7 +278,7 @@ struct PlaceSearchPickerSheet: View {
                                             )
                                         )
                                         .font(.caption2.weight(.medium))
-                                        .foregroundStyle(.tertiary)
+                                        .foregroundStyle(VuumColor.secondaryText)
                                     }
                                 }
                             }
@@ -285,6 +286,11 @@ struct PlaceSearchPickerSheet: View {
                     }
                 }
             }
+            .listStyle(.insetGrouped)
+            .scrollContentBackground(.hidden)
+            .background(VuumColor.groupedBackground.ignoresSafeArea())
+            .listRowSeparatorTint(VuumColor.divider)
+            .tint(VuumColor.brand)
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -293,6 +299,7 @@ struct PlaceSearchPickerSheet: View {
                         placesSearch.abandonSession()
                         dismiss()
                     }
+                    .foregroundStyle(VuumColor.primaryText)
                 }
                 if allowClear, let onClear {
                     ToolbarItem(placement: .destructiveAction) {
@@ -300,6 +307,7 @@ struct PlaceSearchPickerSheet: View {
                             onClear()
                             dismiss()
                         }
+                        .foregroundStyle(VuumColor.danger)
                     }
                 }
             }
@@ -307,7 +315,7 @@ struct PlaceSearchPickerSheet: View {
                 if placesSearch.isResolving {
                     ProgressView()
                         .padding(20)
-                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                        .VuumChromeMaterialBackground(in: RoundedRectangle(cornerRadius: 12))
                 }
             }
             .onAppear { placesSearch.beginSession() }

@@ -31,30 +31,36 @@ struct NotificationInboxView: View {
 
             Section {
                 ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
+                    HStack(spacing: VuumLayout.chipSpacing) {
                         ForEach(NotificationFilterGroup.allCases) { group in
-                            filterChip(group)
+                            VuumFilterChip(title: group.title, selected: filter == group) {
+                                filter = group
+                            }
                         }
                     }
-                    .padding(.vertical, 4)
+                    .padding(.vertical, 2)
                 }
-                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                .listRowInsets(EdgeInsets(
+                    top: 6,
+                    leading: VuumLayout.pageInset,
+                    bottom: 6,
+                    trailing: VuumLayout.pageInset
+                ))
                 .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
             }
 
             if filteredItems.isEmpty {
                 Section {
-                    VuumEmptyStateView(
-                        systemImage: "bell.slash",
-                        title: notifications.items.isEmpty
-                            ? L10n.t("status.empty_notifications_title")
-                            : "Nothing in this filter",
-                        message: notifications.items.isEmpty
-                            ? L10n.t("status.empty_notifications_detail")
-                            : "Try another category or mark new alerts as you ride."
-                    )
-                    .listRowBackground(Color.clear)
-                    .listRowInsets(EdgeInsets())
+                    inboxEmptyState
+                        .listRowBackground(Color.clear)
+                        .listRowInsets(EdgeInsets(
+                            top: 12,
+                            leading: VuumLayout.pageInset,
+                            bottom: 12,
+                            trailing: VuumLayout.pageInset
+                        ))
+                        .listRowSeparator(.hidden)
                 }
             } else {
                 Section {
@@ -65,6 +71,12 @@ struct NotificationInboxView: View {
                             notificationRow(item)
                         }
                         .buttonStyle(.plain)
+                        .listRowInsets(EdgeInsets(
+                            top: 8,
+                            leading: VuumLayout.pageInset,
+                            bottom: 8,
+                            trailing: VuumLayout.pageInset
+                        ))
                         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                             Button(role: .destructive) {
                                 notifications.remove(item.id)
@@ -77,15 +89,19 @@ struct NotificationInboxView: View {
                                 } label: {
                                     Label("Read", systemImage: "envelope.open")
                                 }
-                                .tint(.blue)
+                                .tint(VuumColor.accent)
                             }
                         }
                     }
                 } header: {
                     Text("\(filteredItems.count) · \(notifications.unreadCount) unread")
+                        .foregroundStyle(VuumColor.secondaryText)
                 }
             }
         }
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
+        .background(VuumColor.groupedBackground.ignoresSafeArea())
         .navigationTitle("Inbox")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -101,6 +117,7 @@ struct NotificationInboxView: View {
                     }
                 } label: {
                     Image(systemName: "ellipsis.circle")
+                        .foregroundStyle(VuumColor.primaryText)
                 }
                 .accessibilityLabel("Inbox actions")
             }
@@ -110,32 +127,51 @@ struct NotificationInboxView: View {
         }
     }
 
-    private func filterChip(_ group: NotificationFilterGroup) -> some View {
-        Button {
-            filter = group
-        } label: {
-            Text(group.title)
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(filter == group ? VuumColor.brandInk : VuumColor.primaryText)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(
-                    filter == group ? VuumColor.brand.opacity(0.9) : VuumColor.chipBackground,
-                    in: Capsule()
+    private var inboxEmptyState: some View {
+        VStack(spacing: VuumLayout.stackSpacing) {
+            Image(systemName: "bell.slash")
+                .font(.system(size: 32, weight: .medium))
+                .foregroundStyle(VuumColor.accent)
+                .frame(width: 64, height: 64)
+                .background(VuumColor.accent.opacity(0.16), in: RoundedRectangle(cornerRadius: VuumLayout.radiusCard, style: .continuous))
+
+            VStack(spacing: 6) {
+                Text(
+                    notifications.items.isEmpty
+                        ? L10n.t("status.empty_notifications_title")
+                        : "Nothing in this filter"
                 )
+                .font(VuumType.titleSmall)
+                .foregroundStyle(VuumColor.primaryText)
+                .multilineTextAlignment(.center)
+
+                Text(
+                    notifications.items.isEmpty
+                        ? L10n.t("status.empty_notifications_detail")
+                        : "Try another category or mark new alerts as you ride."
+                )
+                .font(VuumType.body)
+                .foregroundStyle(VuumColor.secondaryText)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+            }
         }
-        .buttonStyle(.plain)
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 20)
+        .accessibilityElement(children: .combine)
     }
 
     private var permissionCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: VuumLayout.rowSpacing) {
             Label("Stay updated on trips", systemImage: "bell.badge.fill")
-                .font(.system(size: 16, weight: .semibold))
+                .font(VuumType.rowTitle)
                 .foregroundStyle(VuumColor.primaryText)
+                .symbolRenderingMode(.hierarchical)
+                .tint(VuumColor.accent)
 
             Text("Get driver arrival, trip, receipt, and safety updates on this device.")
-                .font(.system(size: 14))
-                .foregroundStyle(.secondary)
+                .font(VuumType.callout)
+                .foregroundStyle(VuumColor.secondaryText)
                 .fixedSize(horizontal: false, vertical: true)
 
             Button {
@@ -150,55 +186,56 @@ struct NotificationInboxView: View {
                 }
             } label: {
                 Text(permissions.notificationAuthorization == .denied ? "Open Settings" : "Enable notifications")
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(VuumType.bodySemibold)
+                    .foregroundStyle(VuumColor.accentOn)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
-                    .background(VuumColor.brandInk, in: RoundedRectangle(cornerRadius: 12))
-                    .foregroundStyle(.white)
+                    .background(VuumColor.brand, in: RoundedRectangle(cornerRadius: VuumLayout.radiusControl, style: .continuous))
             }
             .buttonStyle(.plain)
         }
-        .padding(.vertical, 6)
+        .padding(.vertical, 4)
     }
 
     private func notificationRow(_ item: AppNotification) -> some View {
-        HStack(alignment: .top, spacing: 12) {
+        HStack(alignment: .top, spacing: VuumLayout.rowSpacing) {
             Image(systemName: item.kind.systemImage)
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(.white)
-                .frame(width: 36, height: 36)
-                .background(iconBackground(for: item.kind), in: RoundedRectangle(cornerRadius: 10))
+                .foregroundStyle(VuumColor.accentOn)
+                .frame(width: VuumLayout.iconBadge, height: VuumLayout.iconBadge)
+                .background(iconBackground(for: item.kind), in: RoundedRectangle(cornerRadius: VuumLayout.radiusChip, style: .continuous))
 
             VStack(alignment: .leading, spacing: 4) {
-                HStack(alignment: .firstTextBaseline) {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
                     Text(item.title)
                         .font(.system(size: 15, weight: item.isRead ? .semibold : .bold))
                         .foregroundStyle(VuumColor.primaryText)
+                        .multilineTextAlignment(.leading)
                     Spacer(minLength: 8)
                     Text(relativeTime(item.createdAt))
-                        .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
+                        .font(VuumType.caption)
+                        .foregroundStyle(VuumColor.secondaryText)
                 }
 
                 Text(item.kind.label)
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(Color(red: 0.2, green: 0.45, blue: 0.95))
+                    .font(VuumType.captionSemibold)
+                    .foregroundStyle(VuumColor.accent)
 
                 Text(item.body)
-                    .font(.system(size: 14))
-                    .foregroundStyle(.secondary)
+                    .font(VuumType.callout)
+                    .foregroundStyle(VuumColor.secondaryText)
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
             if !item.isRead {
                 Circle()
-                    .fill(Color(red: 0.2, green: 0.45, blue: 0.95))
+                    .fill(VuumColor.accent)
                     .frame(width: 8, height: 8)
                     .padding(.top, 6)
+                    .accessibilityHidden(true)
             }
         }
-        .padding(.vertical, 6)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(item.title). \(item.kind.label). \(item.body)")
@@ -210,13 +247,13 @@ struct NotificationInboxView: View {
         case .promo:
             return VuumColor.brand
         case .payment:
-            return Color(red: 0.15, green: 0.55, blue: 0.35)
+            return VuumColor.success
         case .safety:
-            return Color(red: 0.85, green: 0.35, blue: 0.2)
+            return VuumColor.danger
         case .system:
-            return Color(white: 0.35)
+            return VuumColor.secondaryText
         case .trip:
-            return Color(red: 0.2, green: 0.45, blue: 0.95)
+            return VuumColor.accent
         }
     }
 

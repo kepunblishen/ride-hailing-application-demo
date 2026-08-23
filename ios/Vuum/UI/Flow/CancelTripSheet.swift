@@ -1,4 +1,4 @@
-import SwiftUI
+﻿import SwiftUI
 
 /// Cancellation reasons with free-window vs fee messaging.
 struct CancelTripSheet: View {
@@ -24,16 +24,16 @@ struct CancelTripSheet: View {
                 Section {
                     if isFree || feeLocal <= 0 {
                         Label("Free cancellation", systemImage: "checkmark.circle.fill")
-                            .foregroundStyle(.green)
-                        Text("You won’t be charged for cancelling now.")
+                            .foregroundStyle(VuumColor.success)
+                        Text("You won't be charged for cancelling now.")
                             .font(.footnote)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(VuumColor.secondaryText)
                     } else {
                         Label("Cancellation fee may apply", systemImage: "exclamationmark.circle.fill")
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(VuumColor.brand)
                         Text("A fee of \(AppLocale.formatPrimary(local: feeLocal, market: market)) may be charged for this cancellation.")
                             .font(.footnote)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(VuumColor.secondaryText)
                     }
                 }
 
@@ -47,14 +47,21 @@ struct CancelTripSheet: View {
                     }
                 }
             }
+            .listStyle(.insetGrouped)
+            .scrollContentBackground(.hidden)
+            .background(VuumColor.groupedBackground.ignoresSafeArea())
+            .listRowSeparatorTint(VuumColor.divider)
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Keep trip") { dismiss() }
+                        .foregroundStyle(VuumColor.accent)
                 }
             }
+            .tint(VuumColor.brand)
         }
         .presentationDetents([.medium, .large])
+        .presentationBackground(VuumColor.sheetBackground)
     }
 }

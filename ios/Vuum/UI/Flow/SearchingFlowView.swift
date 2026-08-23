@@ -28,7 +28,7 @@ struct SearchingScaffoldView: View {
 
                 VuumSheetChrome(title: nil) {
                     ScrollView(.vertical, showsIndicators: false) {
-                        VStack(spacing: 14) {
+                        VStack(spacing: VuumLayout.stackSpacing) {
                             if isNoDrivers {
                                 Image(systemName: "car.slash.fill")
                                     .font(.system(size: 34, weight: .semibold))
@@ -40,6 +40,7 @@ struct SearchingScaffoldView: View {
 
                             Text(tripSession.searchMessage)
                                 .font(.system(size: 20, weight: .bold, design: .rounded))
+                                .foregroundStyle(VuumColor.primaryText)
                                 .multilineTextAlignment(.center)
                                 .frame(maxWidth: .infinity)
                                 .animation(.easeInOut(duration: 0.25), value: tripSession.searchMessage)
@@ -47,7 +48,7 @@ struct SearchingScaffoldView: View {
                             if isDelayed {
                                 Label("Weak connection — still searching", systemImage: "wifi.exclamationmark")
                                     .font(.system(size: 13, weight: .semibold))
-                                    .foregroundStyle(.orange)
+                                    .foregroundStyle(VuumColor.brand)
                             } else if isNoDrivers {
                                 Text("No partners accepted nearby. Try again or change ride category.")
                                     .font(.system(size: 13, weight: .medium))
@@ -104,14 +105,14 @@ struct SearchingScaffoldView: View {
                                 showCancel = true
                             }
                             .font(.system(size: 15, weight: .semibold))
-                            .foregroundStyle(.red)
-                            .padding(.top, 2)
+                            .foregroundStyle(VuumColor.danger)
+                            .padding(.top, VuumLayout.chipSpacing)
                             .accessibilityHint("Opens cancellation reasons")
                         }
                     }
                     .frame(maxHeight: min(geo.size.height * 0.48, 380))
                 }
-                .padding(.horizontal, 12)
+                .padding(.horizontal, VuumLayout.pageInset - 4)
                 .padding(.bottom, 8)
             }
         }

@@ -107,7 +107,7 @@ struct ActivityHubView: View {
                     content
                 }
             }
-            .background(Color(.systemGroupedBackground).ignoresSafeArea())
+            .background(VuumColor.groupedBackground.ignoresSafeArea())
             .navigationTitle(L10n.t("activity.title"))
             .navigationDestination(for: TripReceipt.self) { receipt in
                 ActivityReceiptDetailView(
@@ -146,7 +146,7 @@ struct ActivityHubView: View {
     // MARK: Chrome
 
     private var filterChrome: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: VuumLayout.rowSpacing) {
             Picker("Activity", selection: $segment) {
                 ForEach(ActivitySegment.allCases) { item in
                     Text(item.title).tag(item)
@@ -155,7 +155,7 @@ struct ActivityHubView: View {
             .pickerStyle(.segmented)
 
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
+                HStack(spacing: VuumLayout.chipSpacing) {
                     ForEach(ActivityTimeFilter.allCases) { filter in
                         filterChip(
                             title: filter.title,
@@ -173,15 +173,15 @@ struct ActivityHubView: View {
                         } label: {
                             HStack(spacing: 4) {
                                 Text(productFilter == "All" ? "Product" : productFilter)
-                                    .font(.system(size: 13, weight: .semibold))
+                                    .font(VuumType.captionSemibold)
                                 Image(systemName: "chevron.down")
                                     .font(.system(size: 10, weight: .bold))
                             }
-                            .foregroundStyle(productFilter == "All" ? VuumColor.primaryText : VuumColor.brandInk)
+                            .foregroundStyle(productFilter == "All" ? VuumColor.primaryText : VuumColor.accentOn)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 8)
                             .background(
-                                productFilter == "All" ? VuumColor.chipBackground : VuumColor.brand.opacity(0.35),
+                                productFilter == "All" ? VuumColor.chipBackground : VuumColor.brand,
                                 in: Capsule()
                             )
                         }
@@ -190,21 +190,21 @@ struct ActivityHubView: View {
                 .padding(.vertical, 2)
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.top, 8)
-        .padding(.bottom, 12)
+        .padding(.horizontal, VuumLayout.pageInset)
+        .padding(.top, 10)
+        .padding(.bottom, 14)
         .background(VuumColor.pageBackground)
     }
 
     private func filterChip(title: String, selected: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(title)
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(selected ? VuumColor.brandInk : VuumColor.primaryText)
+                .font(VuumType.captionSemibold)
+                .foregroundStyle(selected ? VuumColor.accentOn : VuumColor.primaryText)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
                 .background(
-                    selected ? VuumColor.brand.opacity(0.9) : VuumColor.chipBackground,
+                    selected ? VuumColor.brand : VuumColor.chipBackground,
                     in: Capsule()
                 )
         }
@@ -250,6 +250,8 @@ struct ActivityHubView: View {
                 }
             }
             .listStyle(.insetGrouped)
+            .scrollContentBackground(.hidden)
+            .background(VuumColor.groupedBackground)
         }
     }
 
@@ -265,19 +267,21 @@ struct ActivityHubView: View {
             )
         } else {
             List {
-                    Section {
-                        ForEach(filteredReservations) { trip in
-                            NavigationLink {
-                                ReservedTripDetailView(trip: trip, market: market)
-                            } label: {
-                                UpcomingTripRow(trip: trip, market: market)
-                            }
+                Section {
+                    ForEach(filteredReservations) { trip in
+                        NavigationLink {
+                            ReservedTripDetailView(trip: trip, market: market)
+                        } label: {
+                            UpcomingTripRow(trip: trip, market: market)
                         }
-                    } header: {
-                        Text("\(filteredReservations.count) reserved")
                     }
+                } header: {
+                    Text("\(filteredReservations.count) reserved")
+                }
             }
             .listStyle(.insetGrouped)
+            .scrollContentBackground(.hidden)
+            .background(VuumColor.groupedBackground)
         }
     }
 
@@ -313,6 +317,8 @@ struct ActivityHubView: View {
                 }
             }
             .listStyle(.insetGrouped)
+            .scrollContentBackground(.hidden)
+            .background(VuumColor.groupedBackground)
         }
     }
 
@@ -320,7 +326,7 @@ struct ActivityHubView: View {
         let showBook = tripSession.tripHistory.isEmpty
             && (segment == .all || segment == .completed || segment == .cancelled)
         let showServices = tripSession.reservedTrips.isEmpty && segment == .upcoming
-        return VuumEmptyStateView(
+        return ActivityEmptyStateView(
             systemImage: systemImage,
             title: title,
             message: message,
@@ -372,34 +378,39 @@ private struct PastTripRow: View {
     let market: AppLocale.Market
 
     var body: some View {
-        HStack(alignment: .top, spacing: 14) {
+        HStack(alignment: .top, spacing: VuumLayout.rowSpacing) {
             Image(systemName: receipt.status == .cancelled ? "xmark.circle.fill" : "car.fill")
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(receipt.status == .cancelled ? Color.secondary : VuumColor.brandInk)
-                .frame(width: 40, height: 40)
+                .foregroundStyle(receipt.status == .cancelled ? VuumColor.secondaryText : VuumColor.brand)
+                .frame(width: VuumLayout.iconBadgeLarge, height: VuumLayout.iconBadgeLarge)
                 .background(
-                    (receipt.status == .cancelled ? Color.secondary.opacity(0.15) : VuumColor.brand.opacity(0.22)),
-                    in: RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    (receipt.status == .cancelled
+                        ? VuumColor.secondaryText.opacity(0.14)
+                        : VuumColor.brand.opacity(0.18)),
+                    in: RoundedRectangle(cornerRadius: VuumLayout.radiusChip, style: .continuous)
                 )
 
             VStack(alignment: .leading, spacing: 6) {
-                HStack {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
                     Text(receipt.dropoffName)
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(VuumType.rowTitle)
                         .foregroundStyle(VuumColor.primaryText)
+                        .lineLimit(2)
                     Spacer(minLength: 8)
                     Text(receipt.status.title)
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(receipt.status == .cancelled ? Color.secondary : VuumColor.brandInk)
+                        .font(VuumType.micro)
+                        .foregroundStyle(receipt.status == .cancelled ? VuumColor.secondaryText : VuumColor.brand)
                         .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
+                        .padding(.vertical, 4)
                         .background(
-                            (receipt.status == .cancelled ? Color.secondary.opacity(0.12) : VuumColor.brand.opacity(0.25)),
+                            (receipt.status == .cancelled
+                                ? VuumColor.secondaryText.opacity(0.12)
+                                : VuumColor.brand.opacity(0.16)),
                             in: Capsule()
                         )
                 }
                 Text("\(receipt.pickupName) · \(receipt.tierName)")
-                    .font(.system(size: 13))
+                    .font(VuumType.caption)
                     .foregroundStyle(VuumColor.secondaryText)
                     .lineLimit(1)
                 if !receipt.vehicleLabel.isEmpty {
@@ -412,14 +423,14 @@ private struct PastTripRow: View {
                         .font(.system(size: 12))
                         .foregroundStyle(VuumColor.secondaryText)
                 }
-                HStack {
+                HStack(alignment: .firstTextBaseline) {
                     Text(receipt.date.formatted(date: .abbreviated, time: .shortened))
                         .font(.system(size: 12))
                         .foregroundStyle(VuumColor.secondaryText)
-                    Spacer()
+                    Spacer(minLength: 8)
                     if receipt.status == .cancelled {
                         Text("No charge")
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(VuumType.callout)
                             .foregroundStyle(VuumColor.secondaryText)
                     } else {
                         Text(
@@ -429,21 +440,21 @@ private struct PastTripRow: View {
                                 market: market
                             )
                         )
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(VuumType.callout)
                         .foregroundStyle(VuumColor.primaryText)
                     }
                 }
-                HStack(spacing: 8) {
+                HStack(spacing: VuumLayout.chipSpacing) {
                     Label(receipt.paymentMethod.title, systemImage: receipt.paymentMethod.systemImage)
                     if let rating = receipt.rating {
                         Label("\(rating)", systemImage: "star.fill")
                     }
                 }
-                .font(.system(size: 11, weight: .medium))
+                .font(VuumType.micro)
                 .foregroundStyle(VuumColor.secondaryText)
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 6)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(receipt.dropoffName), \(receipt.status.title), \(receipt.date.formatted(date: .abbreviated, time: .shortened))")
     }
@@ -456,25 +467,30 @@ private struct UpcomingTripRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .top, spacing: 14) {
+            HStack(alignment: .top, spacing: VuumLayout.rowSpacing) {
                 Image(systemName: trip.status == .driverAssigned ? "car.fill" : "calendar")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(VuumColor.brandInk)
-                    .frame(width: 40, height: 40)
-                    .background(VuumColor.brand.opacity(0.22), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .foregroundStyle(VuumColor.brand)
+                    .frame(width: VuumLayout.iconBadgeLarge, height: VuumLayout.iconBadgeLarge)
+                    .background(
+                        VuumColor.brand.opacity(0.18),
+                        in: RoundedRectangle(cornerRadius: VuumLayout.radiusChip, style: .continuous)
+                    )
 
                 VStack(alignment: .leading, spacing: 6) {
                     Text("\(trip.pickupName) → \(trip.dropoffName)")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(VuumType.rowTitle)
+                        .foregroundStyle(VuumColor.primaryText)
+                        .lineLimit(2)
                     Text(trip.when.formatted(date: .complete, time: .shortened))
-                        .font(.system(size: 13))
+                        .font(VuumType.caption)
                         .foregroundStyle(VuumColor.secondaryText)
                     Text("\(trip.tierName) · \(AppLocale.formatFareTotal(cdf: trip.priceCDF, usd: trip.priceUSD, market: market))")
-                        .font(.system(size: 13, weight: .medium))
+                        .font(VuumType.callout)
                         .foregroundStyle(VuumColor.primaryText)
                     Text(trip.statusDetailLine)
                         .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(VuumColor.brandInk)
+                        .foregroundStyle(VuumColor.brand)
                     if !trip.stopNames.isEmpty {
                         Text("Stops: \(trip.stopNames.joined(separator: ", "))")
                             .font(.system(size: 12))
@@ -493,7 +509,7 @@ private struct UpcomingTripRow: View {
 
             if let onCancel {
                 Button("Cancel reservation", role: .destructive, action: onCancel)
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(VuumType.bodySemibold)
             }
         }
         .padding(.vertical, 6)
@@ -567,6 +583,7 @@ struct ReservedTripDetailView: View {
                         .trimmingCharacters(in: .whitespacesAndNewlines)
                     if !notes.isEmpty {
                         Text(notes)
+                            .foregroundStyle(VuumColor.primaryText)
                     }
                 }
             }
@@ -581,7 +598,8 @@ struct ReservedTripDetailView: View {
                 Button("Save new time") {
                     tripSession.updateReservationTime(liveTrip, to: editDate)
                 }
-                .font(.system(size: 16, weight: .semibold))
+                .font(VuumType.bodySemibold)
+                .foregroundStyle(VuumColor.brand)
                 Toggle(
                     "Remind me before pickup",
                     isOn: Binding(
@@ -599,6 +617,9 @@ struct ReservedTripDetailView: View {
                 Text(liveTrip.statusDetailLine)
             }
         }
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
+        .background(VuumColor.groupedBackground.ignoresSafeArea())
         .navigationTitle("Upcoming ride")
         .navigationBarTitleDisplayMode(.inline)
         .confirmationDialog(
@@ -617,6 +638,7 @@ struct ReservedTripDetailView: View {
 // MARK: - Receipt detail (PDF-like)
 
 struct ActivityReceiptDetailView: View {
+    @Environment(\.colorScheme) private var colorScheme
     let receipt: TripReceipt
     let market: AppLocale.Market
     let onRebook: () -> Void
@@ -628,32 +650,36 @@ struct ActivityReceiptDetailView: View {
             VStack(spacing: 20) {
                 receiptCard
 
-                VStack(spacing: 10) {
+                VStack(spacing: VuumLayout.stackSpacing) {
                     if receipt.status == .completed {
                         VuumPrimaryButton(title: "Rebook this trip", action: onRebook)
                     }
                     Button(action: onHelp) {
                         Label("Get help with this trip", systemImage: "questionmark.circle")
-                            .font(.system(size: 16, weight: .semibold))
+                            .font(VuumType.bodySemibold)
                             .frame(maxWidth: .infinity)
                             .frame(height: 50)
                             .foregroundStyle(VuumColor.primaryText)
-                            .background(VuumColor.chipBackground, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                            .background(
+                                VuumColor.chipBackground,
+                                in: RoundedRectangle(cornerRadius: VuumLayout.radiusControl, style: .continuous)
+                            )
                     }
                     .buttonStyle(.plain)
                     Button(action: onShare) {
                         Label("Share receipt", systemImage: "square.and.arrow.up")
-                            .font(.system(size: 15, weight: .medium))
+                            .font(VuumType.callout)
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 8)
+                            .padding(.vertical, 10)
+                            .foregroundStyle(VuumColor.brand)
                     }
                     .buttonStyle(.plain)
                 }
-                .padding(.horizontal, 16)
+                .padding(.horizontal, VuumLayout.pageInset)
             }
-            .padding(.vertical, 16)
+            .padding(.vertical, VuumLayout.pageInset)
         }
-        .background(Color(.systemGroupedBackground).ignoresSafeArea())
+        .background(VuumColor.groupedBackground.ignoresSafeArea())
         .navigationTitle("Receipt")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -663,10 +689,10 @@ struct ActivityReceiptDetailView: View {
             HStack {
                 Text("VUUM")
                     .font(.system(size: 22, weight: .black, design: .rounded))
-                    .foregroundStyle(VuumColor.brandInk)
+                    .foregroundStyle(VuumColor.brand)
                 Spacer()
                 Text(receipt.status.title)
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(VuumType.micro)
                     .foregroundStyle(VuumColor.secondaryText)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 5)
@@ -675,18 +701,18 @@ struct ActivityReceiptDetailView: View {
             .padding(.bottom, 16)
 
             Text(receipt.date.formatted(date: .complete, time: .shortened))
-                .font(.system(size: 13))
+                .font(VuumType.caption)
                 .foregroundStyle(VuumColor.secondaryText)
                 .padding(.bottom, 18)
 
             routeBlock(title: "From", value: receipt.pickupName)
             if !receipt.stopNames.isEmpty {
-                Divider().padding(.vertical, 12)
+                Divider().padding(.vertical, VuumLayout.rowSpacing)
                 routeBlock(title: "Stops", value: receipt.stopNames.joined(separator: " → "))
             }
-            Divider().padding(.vertical, 12)
+            Divider().padding(.vertical, VuumLayout.rowSpacing)
             routeBlock(title: "To", value: receipt.dropoffName)
-            Divider().padding(.vertical, 12)
+            Divider().padding(.vertical, VuumLayout.rowSpacing)
 
             metaRow("Driver", receipt.driverName)
             if !receipt.vehicleLabel.isEmpty {
@@ -712,7 +738,7 @@ struct ActivityReceiptDetailView: View {
             Divider().padding(.vertical, 14)
 
             Text("Fare breakdown")
-                .font(.system(size: 13, weight: .semibold))
+                .font(VuumType.captionSemibold)
                 .foregroundStyle(VuumColor.secondaryText)
                 .padding(.bottom, 8)
 
@@ -747,14 +773,15 @@ struct ActivityReceiptDetailView: View {
 
             Text(TripEmissions.displayLabel(distanceKm: receipt.fare.distanceKm, vehicleClass: .standard))
                 .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(.secondary)
-                .padding(.top, 4)
+                .foregroundStyle(VuumColor.secondaryText)
+                .padding(.top, 6)
 
             Divider().padding(.vertical, 14)
 
             HStack(alignment: .firstTextBaseline) {
                 Text(receipt.status == .cancelled ? "Total" : "Total charged")
                     .font(.system(size: 17, weight: .bold))
+                    .foregroundStyle(VuumColor.primaryText)
                 Spacer()
                 Text(
                     receipt.status == .cancelled
@@ -766,6 +793,7 @@ struct ActivityReceiptDetailView: View {
                         )
                 )
                 .font(.system(size: 18, weight: .bold))
+                .foregroundStyle(VuumColor.primaryText)
                 .multilineTextAlignment(.trailing)
             }
 
@@ -776,53 +804,53 @@ struct ActivityReceiptDetailView: View {
         }
         .padding(20)
         .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(VuumColor.pageBackground)
-                .shadow(color: .black.opacity(0.06), radius: 12, y: 4)
+            RoundedRectangle(cornerRadius: VuumLayout.radiusCard, style: .continuous)
+                .fill(VuumColor.cardBackground)
+                .shadow(color: VuumColor.glassShadow(for: colorScheme), radius: 12, y: 4)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .strokeBorder(VuumColor.divider.opacity(0.6), lineWidth: 1)
+            RoundedRectangle(cornerRadius: VuumLayout.radiusCard, style: .continuous)
+                .strokeBorder(VuumColor.divider.opacity(0.7), lineWidth: 1)
         )
-        .padding(.horizontal, 16)
+        .padding(.horizontal, VuumLayout.pageInset)
     }
 
     private func routeBlock(title: String, value: String) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title.uppercased())
-                .font(.system(size: 11, weight: .semibold))
+                .font(VuumType.micro)
                 .foregroundStyle(VuumColor.secondaryText)
             Text(value)
-                .font(.system(size: 16, weight: .semibold))
+                .font(VuumType.rowTitle)
                 .foregroundStyle(VuumColor.primaryText)
         }
     }
 
     private func metaRow(_ title: String, _ value: String) -> some View {
-        HStack {
+        HStack(alignment: .firstTextBaseline) {
             Text(title)
-                .font(.system(size: 14))
+                .font(VuumType.body)
                 .foregroundStyle(VuumColor.secondaryText)
-            Spacer()
+            Spacer(minLength: 12)
             Text(value)
-                .font(.system(size: 14, weight: .medium))
+                .font(VuumType.callout)
                 .foregroundStyle(VuumColor.primaryText)
                 .multilineTextAlignment(.trailing)
         }
-        .padding(.vertical, 3)
+        .padding(.vertical, 4)
     }
 
     private func fareLine(_ title: String, _ cdf: Int, _ usdHint: Double?) -> some View {
         HStack {
             Text(title)
-                .font(.system(size: 14))
+                .font(VuumType.body)
                 .foregroundStyle(VuumColor.secondaryText)
             Spacer()
             Text(lineAmount(cdf: cdf, usdHint: usdHint))
-                .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(cdf < 0 ? Color.green : VuumColor.primaryText)
+                .font(VuumType.callout)
+                .foregroundStyle(cdf < 0 ? VuumColor.success : VuumColor.primaryText)
         }
-        .padding(.vertical, 2)
+        .padding(.vertical, 3)
     }
 
     private func lineAmount(cdf: Int, usdHint: Double?) -> String {
@@ -855,10 +883,11 @@ private struct TripHelpSheet: View {
                 Section {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(receipt.dropoffName)
-                            .font(.system(size: 16, weight: .semibold))
+                            .font(VuumType.rowTitle)
+                            .foregroundStyle(VuumColor.primaryText)
                         Text(receipt.date.formatted(date: .abbreviated, time: .shortened))
-                            .font(.system(size: 13))
-                            .foregroundStyle(.secondary)
+                            .font(VuumType.caption)
+                            .foregroundStyle(VuumColor.secondaryText)
                     }
                     .padding(.vertical, 4)
                 } header: {
@@ -868,10 +897,10 @@ private struct TripHelpSheet: View {
                 if let submittedTopic {
                     Section {
                         Label("Request received for “\(submittedTopic)”", systemImage: "checkmark.circle.fill")
-                            .foregroundStyle(.green)
+                            .foregroundStyle(VuumColor.success)
                         Text("Support will follow up using your account phone number.")
                             .font(.footnote)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(VuumColor.secondaryText)
                     }
                 } else {
                     Section("How can we help?") {
@@ -886,6 +915,9 @@ private struct TripHelpSheet: View {
                     }
                 }
             }
+            .listStyle(.insetGrouped)
+            .scrollContentBackground(.hidden)
+            .background(VuumColor.groupedBackground.ignoresSafeArea())
             .navigationTitle("Trip help")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -895,6 +927,65 @@ private struct TripHelpSheet: View {
             }
         }
         .presentationDetents([.medium, .large])
+    }
+}
+
+// MARK: - Activity empty state (semantic colors; Activity-scoped)
+
+private struct ActivityEmptyStateView: View {
+    @Environment(\.colorScheme) private var colorScheme
+
+    let systemImage: String
+    let title: String
+    let message: String
+    var actionTitle: String?
+    var action: (() -> Void)?
+
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: systemImage)
+                .font(.system(size: 30, weight: .semibold))
+                .foregroundStyle(VuumColor.brand)
+                .symbolRenderingMode(.hierarchical)
+                .frame(width: 64, height: 64)
+                .background(
+                    VuumColor.brand.opacity(colorScheme == .dark ? 0.28 : 0.14),
+                    in: RoundedRectangle(cornerRadius: 16, style: .continuous)
+                )
+
+            VStack(spacing: 5) {
+                Text(title)
+                    .font(.system(size: 18, weight: .semibold, design: .rounded))
+                    .foregroundStyle(VuumColor.primaryText)
+                    .multilineTextAlignment(.center)
+                Text(message)
+                    .font(VuumType.callout)
+                    .foregroundStyle(VuumColor.secondaryText)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            if let actionTitle, let action {
+                Button(action: action) {
+                    Text(actionTitle)
+                        .font(VuumType.button)
+                        .foregroundStyle(VuumColor.accentOn)
+                        .frame(maxWidth: 260)
+                        .frame(height: 46)
+                        .background(
+                            VuumColor.brand,
+                            in: RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        )
+                }
+                .buttonStyle(.plain)
+                .padding(.top, 2)
+            }
+        }
+        .padding(.horizontal, 24)
+        .padding(.vertical, 20)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(VuumColor.groupedBackground)
+        .accessibilityElement(children: .contain)
     }
 }
 

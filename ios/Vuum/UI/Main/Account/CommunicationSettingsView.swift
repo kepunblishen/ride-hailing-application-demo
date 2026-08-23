@@ -77,9 +77,14 @@ struct CommunicationSettingsView: View {
             Section {
                 Text(L10n.Settings.notifyFooter)
                     .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(VuumColor.secondaryText)
             }
         }
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
+        .background(VuumColor.groupedBackground.ignoresSafeArea())
+        .listRowSeparatorTint(VuumColor.divider)
+        .tint(VuumColor.brand)
         .navigationTitle(L10n.Account.notifications)
         .navigationBarTitleDisplayMode(.inline)
         .task {

@@ -73,6 +73,11 @@ struct WalletSettingsView: View {
                 }
             }
         }
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
+        .background(VuumColor.groupedBackground.ignoresSafeArea())
+        .listRowSeparatorTint(VuumColor.divider)
+        .tint(VuumColor.brand)
         .navigationTitle("Wallet")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {

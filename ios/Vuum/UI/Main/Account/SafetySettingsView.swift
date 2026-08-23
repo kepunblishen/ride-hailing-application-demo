@@ -87,11 +87,11 @@ struct SafetySettingsView: View {
                 LabeledContent("Microphone", value: microphoneStatusLabel)
                 Text("Safety recording is available only during an active trip when you turn it on.")
                     .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(VuumColor.secondaryText)
                 if permissions.microphoneDenied {
                     Text("Recording stays unavailable until microphone access is turned on.")
                         .font(.footnote)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(VuumColor.secondaryText)
                     Button("Open Settings") {
                         permissions.openSystemSettings()
                     }
@@ -109,7 +109,7 @@ struct SafetySettingsView: View {
                         Text("Auto-start recording on night / long trips")
                         Text("Applies when a trip is matched or underway.")
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(VuumColor.secondaryText)
                     }
                 }
                 Picker("Recording quality", selection: $audioQuality) {
@@ -132,7 +132,7 @@ struct SafetySettingsView: View {
                                     : "\(trustedContacts.contacts.count) saved"
                             )
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(VuumColor.secondaryText)
                         }
                     } icon: {
                         Image(systemName: "person.2.fill")
@@ -168,6 +168,11 @@ struct SafetySettingsView: View {
                 }
             }
         }
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
+        .background(VuumColor.groupedBackground.ignoresSafeArea())
+        .listRowSeparatorTint(VuumColor.divider)
+        .tint(VuumColor.brand)
         .navigationTitle("Safety")
         .navigationBarTitleDisplayMode(.inline)
         .task {

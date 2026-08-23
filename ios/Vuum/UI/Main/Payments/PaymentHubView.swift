@@ -356,7 +356,7 @@ struct PaymentTransactionRow: View {
         case .successful: return .secondary
         case .failed, .cancelled: return .red
         case .refunded, .partiallyRefunded: return .orange
-        case .pending, .processing: return VuumColor.brandInk
+        case .pending, .processing: return VuumColor.brand
         }
     }
 }

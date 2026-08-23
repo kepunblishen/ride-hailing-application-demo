@@ -39,7 +39,7 @@ struct VuumOfflineBanner: View {
                     icon: "wifi.slash",
                     title: L10n.t("status.offline_title"),
                     detail: L10n.t("status.offline_detail"),
-                    tint: Color(red: 0.75, green: 0.2, blue: 0.2),
+                    tint: VuumColor.danger,
                     showsRetry: true
                 )
             }
@@ -57,15 +57,15 @@ struct VuumOfflineBanner: View {
         HStack(alignment: .center, spacing: 12) {
             Image(systemName: icon)
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(.white)
+                .foregroundStyle(VuumColor.accentOn)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(VuumColor.accentOn)
                 Text(detail)
                     .font(.system(size: 12))
-                    .foregroundStyle(.white.opacity(0.9))
+                    .foregroundStyle(VuumColor.accentOn.opacity(0.9))
                     .fixedSize(horizontal: false, vertical: true)
             }
 
@@ -83,7 +83,7 @@ struct VuumOfflineBanner: View {
                         .foregroundStyle(tint)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 7)
-                        .background(.white, in: Capsule())
+                        .background(VuumColor.accentOn, in: Capsule())
                 }
                 .buttonStyle(.plain)
                 .disabled(network.isConnecting)
@@ -110,7 +110,7 @@ struct VuumConnectingView: View {
         VStack(spacing: 16) {
             ProgressView()
                 .controlSize(.large)
-                .tint(VuumColor.brandInk)
+                .tint(VuumColor.brand)
             Text(message)
                 .font(.system(size: 15, weight: .medium))
                 .foregroundStyle(VuumColor.secondaryText)
@@ -126,6 +126,8 @@ struct VuumConnectingView: View {
 // MARK: - Empty state (with optional action)
 
 struct VuumEmptyStateView: View {
+    @Environment(\.colorScheme) private var colorScheme
+
     let systemImage: String
     let title: String
     let message: String
@@ -133,20 +135,24 @@ struct VuumEmptyStateView: View {
     var action: (() -> Void)?
 
     var body: some View {
-        VStack(spacing: 18) {
+        VStack(spacing: 12) {
             Image(systemName: systemImage)
-                .font(.system(size: 40, weight: .medium))
-                .foregroundStyle(VuumColor.brandInk)
-                .frame(width: 80, height: 80)
-                .background(VuumColor.brand.opacity(0.22), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                .font(.system(size: 30, weight: .semibold))
+                .foregroundStyle(VuumColor.brand)
+                .symbolRenderingMode(.hierarchical)
+                .frame(width: 64, height: 64)
+                .background(
+                    VuumColor.brand.opacity(colorScheme == .dark ? 0.28 : 0.14),
+                    in: RoundedRectangle(cornerRadius: 16, style: .continuous)
+                )
 
-            VStack(spacing: 8) {
+            VStack(spacing: 5) {
                 Text(title)
-                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .font(.system(size: 18, weight: .semibold, design: .rounded))
                     .foregroundStyle(VuumColor.primaryText)
                     .multilineTextAlignment(.center)
                 Text(message)
-                    .font(.system(size: 15))
+                    .font(VuumType.callout)
                     .foregroundStyle(VuumColor.secondaryText)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
@@ -155,17 +161,18 @@ struct VuumEmptyStateView: View {
             if let actionTitle, let action {
                 Button(action: action) {
                     Text(actionTitle)
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(VuumColor.brandInk)
-                        .frame(maxWidth: 280)
-                        .frame(height: 48)
-                        .background(VuumColor.brand, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        .font(VuumType.button)
+                        .foregroundStyle(VuumColor.accentOn)
+                        .frame(maxWidth: 260)
+                        .frame(height: 46)
+                        .background(VuumColor.brand, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                 }
                 .buttonStyle(.plain)
-                .padding(.top, 4)
+                .padding(.top, 2)
             }
         }
-        .padding(28)
+        .padding(.horizontal, 24)
+        .padding(.vertical, 20)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .accessibilityElement(children: .contain)
     }
@@ -214,10 +221,10 @@ struct VuumErrorStateView: View {
             Button(action: onRetry) {
                 Text(retryTitle)
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(VuumColor.accentOn)
                     .frame(maxWidth: 280)
                     .frame(height: 48)
-                    .background(VuumColor.brandInk, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .background(VuumColor.brand, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
             }
             .buttonStyle(.plain)
             .padding(.top, 4)
@@ -230,28 +237,34 @@ struct VuumErrorStateView: View {
 // MARK: - Compact inline empty (for List sections)
 
 struct VuumInlineEmptyRow: View {
+    @Environment(\.colorScheme) private var colorScheme
+
     let systemImage: String
     let title: String
     let message: String
 
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
+        HStack(alignment: .top, spacing: 10) {
             Image(systemName: systemImage)
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(VuumColor.brandInk)
-                .frame(width: 36, height: 36)
-                .background(VuumColor.brand.opacity(0.2), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-            VStack(alignment: .leading, spacing: 4) {
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(VuumColor.brand)
+                .symbolRenderingMode(.hierarchical)
+                .frame(width: VuumLayout.iconBadge, height: VuumLayout.iconBadge)
+                .background(
+                    VuumColor.brand.opacity(colorScheme == .dark ? 0.28 : 0.14),
+                    in: RoundedRectangle(cornerRadius: VuumLayout.radiusChip, style: .continuous)
+                )
+            VStack(alignment: .leading, spacing: 3) {
                 Text(title)
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(VuumType.bodySemibold)
                     .foregroundStyle(VuumColor.primaryText)
                 Text(message)
-                    .font(.system(size: 13))
+                    .font(VuumType.caption)
                     .foregroundStyle(VuumColor.secondaryText)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .padding(.vertical, 6)
+        .padding(.vertical, 4)
         .accessibilityElement(children: .combine)
     }
 }

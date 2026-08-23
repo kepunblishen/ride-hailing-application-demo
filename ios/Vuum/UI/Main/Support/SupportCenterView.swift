@@ -594,7 +594,7 @@ struct SupportCenterView: View {
                             }
                         } icon: {
                             Image(systemName: category.systemImage)
-                                .foregroundStyle(VuumColor.brandInk)
+                                .foregroundStyle(VuumColor.brand)
                         }
                     }
                 }
@@ -722,9 +722,9 @@ struct SupportTicketRow: View {
 
     private var statusColor: Color {
         switch ticket.status.listBucket {
-        case .open: return VuumColor.brandInk
+        case .open: return VuumColor.brand
         case .pending: return Color.orange
-        case .resolved: return Color.green
+        case .resolved: return VuumColor.success
         }
     }
 }
@@ -866,7 +866,7 @@ struct SupportFAQDetailView: View {
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(VuumColor.brandInk)
+                .tint(VuumColor.brand)
                 .padding(.top, 8)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -967,7 +967,7 @@ struct SupportTicketComposerView: View {
                                         Spacer()
                                         if selectedTrip?.id == trip.id {
                                             Image(systemName: "checkmark.circle.fill")
-                                                .foregroundStyle(VuumColor.brandInk)
+                                                .foregroundStyle(VuumColor.brand)
                                         }
                                     }
                                 }
@@ -989,7 +989,7 @@ struct SupportTicketComposerView: View {
                                     Spacer()
                                     if issueLabel == option {
                                         Image(systemName: "checkmark.circle.fill")
-                                            .foregroundStyle(VuumColor.brandInk)
+                                            .foregroundStyle(VuumColor.brand)
                                     }
                                 }
                             }
@@ -1223,8 +1223,8 @@ struct SupportChatSheet: View {
                             .font(.system(size: 32))
                             .foregroundStyle(
                                 draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                                    ? Color.secondary
-                                    : VuumColor.brandInk
+                                    ? VuumColor.secondaryText
+                                    : VuumColor.brand
                             )
                     }
                     .disabled(draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
@@ -1255,11 +1255,11 @@ struct SupportChatSheet: View {
             VStack(alignment: isRider ? .trailing : .leading, spacing: 4) {
                 Text(message.text)
                     .font(.system(size: 15))
-                    .foregroundStyle(isRider ? Color.white : Color.primary)
+                    .foregroundStyle(isRider ? VuumColor.accentOn : VuumColor.primaryText)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 10)
                     .background(
-                        isRider ? VuumColor.brandInk : VuumColor.chipBackground,
+                        isRider ? VuumColor.emphasizedFill : VuumColor.chipBackground,
                         in: RoundedRectangle(cornerRadius: 16, style: .continuous)
                     )
                 Text(message.createdAt.formatted(date: .omitted, time: .shortened))

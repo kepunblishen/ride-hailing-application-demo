@@ -47,7 +47,7 @@ struct PostTripCompleteView: View {
             VuumColor.pageBackground.ignoresSafeArea()
 
             ScrollView {
-                VStack(alignment: .leading, spacing: 22) {
+                VStack(alignment: .leading, spacing: VuumLayout.stackSpacing + 8) {
                     header
                     if tripSession.incidentFlagged, tripSession.audioRecorder.hasRecordingFile {
                         audioRetainedBanner
@@ -62,16 +62,16 @@ struct PostTripCompleteView: View {
                             .font(.system(size: 14, weight: .medium))
                             .foregroundStyle(VuumColor.brandInk)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(12)
-                            .background(VuumColor.brand.opacity(0.12), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            .padding(VuumLayout.rowSpacing)
+                            .background(VuumColor.brand.opacity(0.14), in: RoundedRectangle(cornerRadius: VuumLayout.radiusControl, style: .continuous))
                     }
                     tagsSection
                     commentSection
                     incidentButton
                     actions
                 }
-                .padding(24)
-                .padding(.bottom, 28)
+                .padding(VuumLayout.pageInset + 8)
+                .padding(.bottom, VuumLayout.sectionSpacing)
             }
             .scrollDismissesKeyboard(.interactively)
         }
@@ -94,6 +94,7 @@ struct PostTripCompleteView: View {
                 .accessibilityHidden(true)
             Text("You've arrived")
                 .font(.system(size: 28, weight: .bold, design: .rounded))
+                .foregroundStyle(VuumColor.primaryText)
             if let driver = receipt?.driverName {
                 Text("How was your trip with \(driver)?")
                     .font(.system(size: 15, weight: .medium))
@@ -102,7 +103,7 @@ struct PostTripCompleteView: View {
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(.top, 12)
+        .padding(.top, VuumLayout.rowSpacing)
     }
 
     private var audioRetainedBanner: some View {
@@ -126,6 +127,7 @@ struct PostTripCompleteView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Add a tip")
                 .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(VuumColor.primaryText)
             Text("100% goes to your driver")
                 .font(.system(size: 13, weight: .medium))
                 .foregroundStyle(VuumColor.secondaryText)
@@ -139,9 +141,9 @@ struct PostTripCompleteView: View {
                             .font(.system(size: 13, weight: .semibold))
                             .frame(maxWidth: .infinity)
                             .frame(height: 40)
-                            .foregroundStyle(selected ? Color.white : VuumColor.primaryText)
+                            .foregroundStyle(selected ? VuumColor.accentOn : VuumColor.primaryText)
                             .background(
-                                selected ? VuumColor.brandInk : VuumColor.chipBackground,
+                                selected ? VuumColor.emphasizedFill : VuumColor.chipBackground,
                                 in: RoundedRectangle(cornerRadius: 12, style: .continuous)
                             )
                     }
@@ -156,6 +158,7 @@ struct PostTripCompleteView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Rate your trip")
                 .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(VuumColor.primaryText)
             HStack(spacing: 10) {
                 ForEach(1...5, id: \.self) { star in
                     Button {
@@ -181,6 +184,7 @@ struct PostTripCompleteView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text("What stood out?")
                 .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(VuumColor.primaryText)
             PostTripTagWrap(tags: feedbackTags, selected: tripSession.draftRatingTags) { tag in
                 tripSession.toggleDraftRatingTag(tag)
             }
@@ -191,10 +195,12 @@ struct PostTripCompleteView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Add a comment")
                 .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(VuumColor.primaryText)
             TextField("Optional — share more about the ride", text: $tripSession.draftRatingComment, axis: .vertical)
                 .lineLimit(3...5)
+                .foregroundStyle(VuumColor.primaryText)
                 .padding(12)
-                .background(VuumColor.chipBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .background(VuumColor.fieldBackground, in: RoundedRectangle(cornerRadius: VuumLayout.radiusControl, style: .continuous))
                 .focused($commentFocused)
         }
     }
@@ -267,7 +273,7 @@ struct PostTripReceiptCard: View {
             HStack {
                 Text("VUUM")
                     .font(.system(size: 20, weight: .black, design: .rounded))
-                    .foregroundStyle(VuumColor.brandInk)
+                    .foregroundStyle(VuumColor.primaryText)
                 Spacer()
                 Text("Receipt")
                     .font(.system(size: 12, weight: .semibold))
@@ -285,6 +291,7 @@ struct PostTripReceiptCard: View {
 
             Text("\(receipt.pickupName) → \(receipt.dropoffName)")
                 .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(VuumColor.primaryText)
                 .padding(.bottom, 8)
 
             metaRow("Driver", receipt.driverName)
@@ -348,10 +355,12 @@ struct PostTripReceiptCard: View {
             HStack(alignment: .firstTextBaseline) {
                 Text("Total")
                     .font(.system(size: 17, weight: .bold))
+                    .foregroundStyle(VuumColor.primaryText)
                 Spacer()
                 VStack(alignment: .trailing, spacing: 2) {
                     Text(AppLocale.formatPrimary(local: chargedCDF, market: market))
                         .font(.system(size: 17, weight: .bold))
+                        .foregroundStyle(VuumColor.primaryText)
                     if market != .kenya {
                         Text(AppLocale.formatUSDLabeled(chargedUSD))
                             .font(.system(size: 13, weight: .medium))
@@ -377,6 +386,7 @@ struct PostTripReceiptCard: View {
             Spacer()
             Text(value)
                 .font(.system(size: 14, weight: .medium))
+                .foregroundStyle(VuumColor.primaryText)
                 .multilineTextAlignment(.trailing)
         }
         .padding(.vertical, 2)
@@ -390,7 +400,7 @@ struct PostTripReceiptCard: View {
             Spacer()
             Text(lineAmount(cdf))
                 .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(cdf < 0 ? Color.green : VuumColor.primaryText)
+                .foregroundStyle(cdf < 0 ? VuumColor.success : VuumColor.primaryText)
         }
         .padding(.vertical, 2)
     }
@@ -420,8 +430,8 @@ private struct PostTripTagWrap: View {
                         .font(.system(size: 13, weight: .semibold))
                         .padding(.horizontal, 12)
                         .padding(.vertical, 8)
-                        .foregroundStyle(isOn ? Color.white : VuumColor.primaryText)
-                        .background(isOn ? VuumColor.brandInk : VuumColor.chipBackground, in: Capsule())
+                        .foregroundStyle(isOn ? VuumColor.accentOn : VuumColor.primaryText)
+                        .background(isOn ? VuumColor.emphasizedFill : VuumColor.chipBackground, in: Capsule())
                 }
                 .buttonStyle(.plain)
                 .accessibilityAddTraits(isOn ? .isSelected : [])
