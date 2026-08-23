@@ -337,7 +337,7 @@ struct PostTripReceiptCard: View {
 
             Text(TripEmissions.displayLabel(
                 distanceKm: receipt.fare.distanceKm,
-                vehicleClass: tripSession.activeTrip?.tier.vehicleClass ?? .standard
+                vehicleClass: VehicleClass.resolving(tierID: receipt.tierName)
             ))
                 .font(.system(size: 12, weight: .medium))
                 .foregroundStyle(VuumColor.secondaryText)
