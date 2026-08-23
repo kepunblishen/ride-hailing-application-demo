@@ -156,20 +156,37 @@ private enum SavedPickTarget: String, Identifiable {
     }
 }
 
-/// Searchable place picker used by Saved places and Home/Work assignment.
+/// Searchable place picker used by Saved places, Home/Work assignment, and Services booking.
 struct PlaceSearchPickerSheet: View {
     @EnvironmentObject private var appLocale: AppLocale
+    @EnvironmentObject private var location: RiderLocationManager
     @Environment(\.dismiss) private var dismiss
 
     let title: String
     var allowClear: Bool = false
     var onClear: (() -> Void)? = nil
+    /// Prefer GPS / trip bias when set; otherwise market default center.
+    var bias: GeoPoint? = nil
+    var excludePlaceIDs: Set<String> = []
     let onSelect: (Place) -> Void
 
+    @StateObject private var placesSearch = PlacesSearchController()
     @State private var query = ""
-    @State private var suggestions: [PlacesSearchService.PlaceSuggestion] = []
-    @State private var isResolving = false
-    @State private var searchTask: Task<Void, Never>?
+
+    private var resolvedBias: GeoPoint {
+        if let bias { return bias }
+        if let loc = location.latestLocation {
+            return GeoPoint(latitude: loc.coordinate.latitude, longitude: loc.coordinate.longitude)
+        }
+        return appLocale.defaultCenter.coordinate
+    }
+
+    private var catalogSuggestions: [Place] {
+        appLocale.destinations
+            .filter { !excludePlaceIDs.contains($0.id) }
+            .prefix(10)
+            .map { $0 }
+    }
 
     var body: some View {
         NavigationStack {
@@ -181,49 +198,87 @@ struct PlaceSearchPickerSheet: View {
                         TextField(L10n.Settings.searchPlaces, text: $query)
                             .textInputAutocapitalization(.words)
                             .autocorrectionDisabled()
+                        if placesSearch.isQueryPending || placesSearch.isResolving {
+                            ProgressView()
+                                .controlSize(.small)
+                        }
                     }
                 }
 
-                if suggestions.isEmpty,
-                   !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                if let status = placesSearch.statusMessage {
                     Section {
-                        Text(L10n.t("settings.no_matching_places"))
+                        Text(status)
                             .foregroundStyle(.secondary)
                     }
                 }
 
-                if !suggestions.isEmpty {
+                if placesSearch.isQueryPending,
+                   placesSearch.suggestions.isEmpty,
+                   !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    Section {
+                        Text(L10n.Destination.searchingPlaces)
+                            .foregroundStyle(.secondary)
+                    }
+                } else if placesSearch.suggestions.isEmpty,
+                          !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    Section {
+                        Text(L10n.Destination.noMatchingPlaces)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                if !placesSearch.suggestions.isEmpty {
                     Section(L10n.Settings.results) {
-                        ForEach(suggestions) { suggestion in
+                        ForEach(placesSearch.suggestions) { suggestion in
                             Button {
                                 select(suggestion)
                             } label: {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(suggestion.primaryText)
-                                        .foregroundStyle(.primary)
-                                    if !suggestion.secondaryText.isEmpty {
-                                        Text(suggestion.secondaryText)
-                                            .font(.footnote)
-                                            .foregroundStyle(.secondary)
+                                HStack(alignment: .top, spacing: 12) {
+                                    Image(systemName: suggestion.systemImage)
+                                        .foregroundStyle(VuumColor.brand)
+                                        .frame(width: 22)
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(suggestion.primaryText)
+                                            .foregroundStyle(.primary)
+                                        if !suggestion.compactSubtitle.isEmpty {
+                                            Text(suggestion.compactSubtitle)
+                                                .font(.footnote)
+                                                .foregroundStyle(.secondary)
+                                        }
                                     }
                                 }
                             }
-                            .disabled(isResolving)
+                            .disabled(placesSearch.isResolving)
                         }
                     }
                 } else if query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     Section(L10n.Settings.suggestions) {
-                        ForEach(appLocale.destinations.prefix(10)) { place in
+                        ForEach(catalogSuggestions) { place in
                             Button {
                                 onSelect(place)
                                 dismiss()
                             } label: {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(place.name)
-                                        .foregroundStyle(.primary)
-                                    Text(place.subtitle)
-                                        .font(.footnote)
-                                        .foregroundStyle(.secondary)
+                                HStack(alignment: .top, spacing: 12) {
+                                    Image(systemName: "mappin.circle.fill")
+                                        .foregroundStyle(VuumColor.brand)
+                                        .frame(width: 22)
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(place.name)
+                                            .foregroundStyle(.primary)
+                                        Text(place.subtitle)
+                                            .font(.footnote)
+                                            .foregroundStyle(.secondary)
+                                        Text(
+                                            TripGeo.formatDistance(
+                                                TripGeo.distanceMeters(
+                                                    from: resolvedBias,
+                                                    to: place.coordinate
+                                                )
+                                            )
+                                        )
+                                        .font(.caption2.weight(.medium))
+                                        .foregroundStyle(.tertiary)
+                                    }
                                 }
                             }
                         }
@@ -235,7 +290,7 @@ struct PlaceSearchPickerSheet: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button(L10n.Common.cancel) {
-                        PlacesSearchService.abandonSession()
+                        placesSearch.abandonSession()
                         dismiss()
                     }
                 }
@@ -249,52 +304,32 @@ struct PlaceSearchPickerSheet: View {
                 }
             }
             .overlay {
-                if isResolving {
+                if placesSearch.isResolving {
                     ProgressView()
                         .padding(20)
                         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
                 }
             }
-            .onAppear { PlacesSearchService.beginSession() }
+            .onAppear { placesSearch.beginSession() }
             .onChange(of: query) { _, newValue in
-                scheduleSearch(newValue)
+                placesSearch.scheduleSearch(
+                    newValue,
+                    bias: resolvedBias,
+                    market: appLocale.fareMarket,
+                    isPlaceAvailable: { !excludePlaceIDs.contains($0.id) }
+                )
             }
-            .onDisappear { searchTask?.cancel() }
+            .onDisappear { placesSearch.tearDown() }
         }
         .presentationDetents([.medium, .large])
     }
 
-    private func scheduleSearch(_ raw: String) {
-        searchTask?.cancel()
-        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else {
-            suggestions = []
-            return
-        }
-        searchTask = Task {
-            try? await Task.sleep(for: .milliseconds(280))
-            guard !Task.isCancelled else { return }
-            let results = await PlacesSearchService.autocomplete(
-                query: trimmed,
-                bias: appLocale.defaultCenter.coordinate,
-                market: appLocale.fareMarket
-            )
-            guard !Task.isCancelled else { return }
-            suggestions = results
-        }
-    }
-
     private func select(_ suggestion: PlacesSearchService.PlaceSuggestion) {
-        isResolving = true
         Task {
-            let place = await PlacesSearchService.resolve(suggestion)
-            await MainActor.run {
-                isResolving = false
-                if let place {
-                    onSelect(place)
-                    dismiss()
-                }
-            }
+            let place = await placesSearch.resolve(suggestion)
+            guard let place, !excludePlaceIDs.contains(place.id) else { return }
+            onSelect(place)
+            dismiss()
         }
     }
 }

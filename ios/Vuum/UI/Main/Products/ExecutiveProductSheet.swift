@@ -146,7 +146,7 @@ struct ExecutiveProductSheet: View {
     private func seedPlaces() {
         let market: AppLocale.Market = AppLocale.current == .kenya ? .kenya : .drc
         let account = MockCorporate.miningCo
-        pickup = MockPlaces.defaultCenter(for: market)
+        pickup = tripSession.pickup
         dropoff = MockPlaces.destinations(for: market).first ?? dropoff
         if travellerName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             travellerName = tripSession.passengerName.isEmpty

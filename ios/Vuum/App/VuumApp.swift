@@ -55,12 +55,16 @@ struct VuumApp: App {
                     network.setForcedOffline(offline)
                 }
                 .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+                    tripSession.handleAppWillEnterForeground()
                     Task {
                         await permissions.refreshStatuses()
                         if permissions.isLocationAuthorized {
                             location.refreshCurrentLocation()
                         }
                     }
+                }
+                .onReceive(NotificationCenter.default.publisher(for: UIApplication.didEnterBackgroundNotification)) { _ in
+                    tripSession.handleAppDidEnterBackground()
                 }
                 .task {
                     await permissions.refreshStatuses()

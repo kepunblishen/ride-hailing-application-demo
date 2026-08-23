@@ -14,8 +14,7 @@ struct RouteDeviationMonitor {
     static let defaultRecoverMeters: Double = 55
 
     /// Rider-facing copy (no internal / mock wording).
-    static let riderNotice =
-        "Your driver appears to be off the planned route. You can share your live trip with a trusted contact."
+    static var riderNotice: String { L10n.Route.deviationNotice }
 
     var corridorMeters: Double
     var persistSeconds: TimeInterval
@@ -50,6 +49,7 @@ struct RouteDeviationMonitor {
     }
 
     /// Evaluate vehicle position against the expected route corridor.
+    /// Pass the booked trip polyline (`ActiveTrip.tripRoute`) — including dense live Routes/Directions geometry.
     @discardableResult
     mutating func evaluate(
         position: GeoPoint,

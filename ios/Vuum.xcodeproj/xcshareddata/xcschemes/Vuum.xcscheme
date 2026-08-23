@@ -80,7 +80,7 @@
          <EnvironmentVariable
             key = "VUUM_GOOGLE_MAPS_API_KEY"
             value = "YOUR_GOOGLE_MAPS_API_KEY"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </EnvironmentVariable>
       </EnvironmentVariables>
    </LaunchAction>

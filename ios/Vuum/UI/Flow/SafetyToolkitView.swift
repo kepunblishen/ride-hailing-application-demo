@@ -57,7 +57,7 @@ struct SafetyToolkitView: View {
                         }
 
                         ShareLink(
-                            item: TripShare.message(for: trip, phase: tripSession.phase),
+                            item: TripShare.message(for: trip, phase: tripSession.phase, coordinate: location.latestLocation?.coordinate),
                             subject: Text("My Vuum trip"),
                             message: Text("Follow my live trip on Vuum")
                         ) {
@@ -66,7 +66,7 @@ struct SafetyToolkitView: View {
 
                         if let contact = trustedContacts.defaultContact {
                             ShareLink(
-                                item: TripShare.message(for: trip, contact: contact, phase: tripSession.phase),
+                                item: TripShare.message(for: trip, contact: contact, phase: tripSession.phase, coordinate: location.latestLocation?.coordinate),
                                 subject: Text("My Vuum trip"),
                                 message: Text("Live trip with \(contact.name)")
                             ) {
@@ -81,7 +81,7 @@ struct SafetyToolkitView: View {
                     } header: {
                         Text("Emergency")
                     } footer: {
-                        Text("Sharing sends driver, vehicle, plate, trip ID, destination, ETA, and a live tracking link.")
+                        Text("Sharing sends driver, vehicle, plate, trip ID, destination, ETA, live GPS when available, and a tracking link.")
                     }
                 }
 
@@ -194,7 +194,7 @@ struct SafetyToolkitView: View {
                     location: location,
                     contacts: trustedContacts.emergencyContacts
                 ) {
-                    tripSession.requestSOS()
+                    tripSession.requestSOS(coordinate: location.latestLocation?.coordinate)
                     showSOSConfirm = false
                 }
             }
@@ -209,6 +209,7 @@ struct SafetyToolkitView: View {
         }
         .presentationDetents([.medium, .large])
         .task {
+            location.startUpdatingIfAllowed()
             await permissions.refreshStatuses()
             tripSession.audioRecorder.refreshPermissionState()
         }

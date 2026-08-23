@@ -4,17 +4,19 @@ import Foundation
 // Internal comments may say mock; rider-facing copy must not.
 
 enum MockPlaces {
+    /// Market-default map center when GPS is unavailable — not the rider's live pickup.
+    /// Do not label these "Current location"; that string is reserved for unresolved GPS.
     static let lubumbashiCenter = Place(
         id: "lub-center",
-        name: "Current location",
-        subtitle: "Avenue Mobutu, Lubumbashi",
+        name: "Avenue Mobutu",
+        subtitle: "Lubumbashi",
         coordinate: GeoPoint(latitude: -11.6644, longitude: 27.4794)
     )
 
     static let nairobiCenter = Place(
         id: "nbo-center",
-        name: "Current location",
-        subtitle: "Kenyatta Avenue, Nairobi",
+        name: "Kenyatta Avenue",
+        subtitle: "Nairobi",
         coordinate: GeoPoint(latitude: -1.2864, longitude: 36.8172)
     )
 

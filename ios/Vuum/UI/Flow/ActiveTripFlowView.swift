@@ -5,6 +5,7 @@ struct ActiveTripScaffoldView: View {
     @EnvironmentObject private var tripSession: TripSession
     @EnvironmentObject private var session: SessionStore
     @EnvironmentObject private var permissions: PermissionCenter
+    @EnvironmentObject private var location: RiderLocationManager
     @AppStorage("vuum.safety.requirePIN") private var requirePIN = true
     @State private var showSafety = false
     @State private var showChat = false
@@ -27,146 +28,152 @@ struct ActiveTripScaffoldView: View {
     }
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            TripMapLayer()
+        GeometryReader { geo in
+            ZStack(alignment: .bottom) {
+                TripMapLayer()
 
-            topChrome
+                topChrome
 
-            VuumSheetChrome(title: nil) {
-                if let trip = tripSession.activeTrip {
-                    VStack(alignment: .leading, spacing: 14) {
-                        if tripSession.sosRequested {
-                            sosBanner
-                        }
+                VuumSheetChrome(title: nil) {
+                    if let trip = tripSession.activeTrip {
+                        ScrollView(.vertical, showsIndicators: false) {
+                            VStack(alignment: .leading, spacing: 12) {
+                                if tripSession.sosRequested {
+                                    sosBanner
+                                }
 
-                        if tripSession.isRecordingTripAudio {
-                            recordingBanner
-                        }
+                                if tripSession.isRecordingTripAudio {
+                                    recordingBanner
+                                }
 
-                        if let autoNotice = tripSession.automaticSafetyNotice {
-                            Text(autoNotice)
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundStyle(VuumColor.brandInk)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(10)
-                                .background(VuumColor.brand.opacity(0.14), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-                        }
+                                if let autoNotice = tripSession.automaticSafetyNotice {
+                                    Text(autoNotice)
+                                        .font(.system(size: 13, weight: .semibold))
+                                        .foregroundStyle(VuumColor.brandInk)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .padding(10)
+                                        .background(VuumColor.brand.opacity(0.14), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                                }
 
-                        if let notice = tripSession.destinationChangeNotice {
-                            Text(notice)
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundStyle(VuumColor.brandInk)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(10)
-                                .background(VuumColor.brand.opacity(0.14), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-                        }
+                                if let notice = tripSession.destinationChangeNotice {
+                                    Text(notice)
+                                        .font(.system(size: 13, weight: .semibold))
+                                        .foregroundStyle(VuumColor.brandInk)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .padding(10)
+                                        .background(VuumColor.brand.opacity(0.14), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                                }
 
-                        if let deviation = tripSession.routeDeviationNotice {
-                            routeDeviationBanner(text: deviation, trip: trip)
-                        }
+                                if let deviation = tripSession.routeDeviationNotice {
+                                    routeDeviationBanner(text: deviation, trip: trip)
+                                }
 
-                        if tripSession.isRecalculatingTripRoute {
-                            HStack(spacing: 8) {
-                                ProgressView()
-                                    .tint(VuumColor.brand)
-                                Text("Updating route & fare…")
-                                    .font(.system(size: 13, weight: .semibold))
-                                    .foregroundStyle(VuumColor.secondaryText)
-                            }
-                        }
+                                if tripSession.isRecalculatingTripRoute {
+                                    HStack(spacing: 8) {
+                                        ProgressView()
+                                            .tint(VuumColor.brand)
+                                        Text("Updating route & fare…")
+                                            .font(.system(size: 13, weight: .semibold))
+                                            .foregroundStyle(VuumColor.secondaryText)
+                                    }
+                                }
 
-                        if tripSession.phase == .driverArrived {
-                            pickupWaitBanner
-                        }
+                                if tripSession.phase == .driverArrived {
+                                    pickupWaitBanner
+                                }
 
-                        statusHeader(trip)
+                                statusHeader(trip)
 
-                        if tripSession.phase == .inTrip {
-                            LiveTripProgressBar(fraction: tripSession.tripProgressFraction)
-                        }
+                                if tripSession.phase == .inTrip {
+                                    LiveTripProgressBar(fraction: tripSession.tripProgressFraction)
+                                }
 
-                        LiveDriverCard(
-                            driver: trip.driver,
-                            showPIN: (tripSession.phase == .matched || tripSession.phase == .driverEnRoute)
-                                ? trip.tripPIN
-                                : nil,
-                            etaMinutes: tripSession.phase == .driverEnRoute || tripSession.phase == .matched
-                                ? trip.etaMinutes
-                                : nil,
-                            passengerName: trip.passengerName
-                        )
+                                // Header owns live ETA; card stays identity-only on the map overlay.
+                                LiveDriverCard(
+                                    driver: trip.driver,
+                                    showPIN: (tripSession.phase == .matched || tripSession.phase == .driverEnRoute)
+                                        ? trip.tripPIN
+                                        : nil,
+                                    etaMinutes: nil,
+                                    passengerName: trip.passengerName,
+                                    compact: true
+                                )
 
-                        if tripSession.phase == .driverEnRoute || tripSession.phase == .inTrip,
-                           tripSession.driverSpeedKmh > 0 {
-                            HStack {
-                                Label("Driver speed", systemImage: "gauge.with.dots.needle.33percent")
-                                    .font(.system(size: 13, weight: .semibold))
-                                    .foregroundStyle(VuumColor.secondaryText)
-                                Spacer()
-                                Text("\(tripSession.driverSpeedKmh) km/h")
-                                    .font(.system(size: 14, weight: .bold, design: .rounded))
-                                    .foregroundStyle(VuumColor.primaryText)
-                                    .monospacedDigit()
-                            }
-                            .padding(.horizontal, 4)
-                        }
+                                if tripSession.phase == .driverEnRoute || tripSession.phase == .inTrip,
+                                   tripSession.driverSpeedKmh > 0 {
+                                    HStack {
+                                        Label("Driver speed", systemImage: "gauge.with.dots.needle.33percent")
+                                            .font(.system(size: 13, weight: .semibold))
+                                            .foregroundStyle(VuumColor.secondaryText)
+                                        Spacer()
+                                        Text("\(tripSession.driverSpeedKmh) km/h")
+                                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                                            .foregroundStyle(VuumColor.primaryText)
+                                            .monospacedDigit()
+                                    }
+                                    .padding(.horizontal, 4)
+                                    .accessibilityElement(children: .combine)
+                                }
 
-                        fareRow(trip)
+                                fareRow(trip)
 
-                        if !trip.stops.isEmpty {
-                            stopsRow(trip)
-                        }
+                                if !trip.stops.isEmpty {
+                                    stopsRow(trip)
+                                }
 
-                        if tripSession.phase == .driverArrived {
-                            BoardingPINPanel(
-                                tripPIN: trip.tripPIN,
-                                entry: $tripSession.boardingPINEntry,
-                                rejected: tripSession.boardingPINRejected,
-                                requirePIN: requirePIN,
-                                onConfirm: { tripSession.confirmBoarding() }
-                            )
-                            .onChange(of: tripSession.boardingPINEntry) { _, _ in
-                                if tripSession.boardingPINRejected {
-                                    tripSession.boardingPINRejected = false
+                                if tripSession.phase == .driverArrived {
+                                    BoardingPINPanel(
+                                        tripPIN: trip.tripPIN,
+                                        entry: $tripSession.boardingPINEntry,
+                                        rejected: tripSession.boardingPINRejected,
+                                        requirePIN: requirePIN,
+                                        onConfirm: { tripSession.confirmBoarding() }
+                                    )
+                                    .onChange(of: tripSession.boardingPINEntry) { _, _ in
+                                        if tripSession.boardingPINRejected {
+                                            tripSession.boardingPINRejected = false
+                                        }
+                                    }
+                                }
+
+                                actionRow(trip)
+
+                                if tripSession.canChangeInTripDestination {
+                                    Button {
+                                        showChangeDestination = true
+                                    } label: {
+                                        Label("Change destination", systemImage: "mappin.and.ellipse")
+                                            .font(.system(size: 14, weight: .semibold))
+                                            .foregroundStyle(VuumColor.brand)
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+
+                                if tripSession.canRecordTripAudio
+                                    || tripSession.isRecordingTripAudio
+                                    || permissions.microphoneDenied
+                                    || tripSession.audioRecorder.permissionDenied {
+                                    audioControls
+                                }
+
+                                if canCancel {
+                                    Button("Cancel trip") {
+                                        showCancel = true
+                                    }
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundStyle(.red)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.top, 2)
                                 }
                             }
                         }
-
-                        actionRow(trip)
-
-                        if tripSession.canChangeInTripDestination {
-                            Button {
-                                showChangeDestination = true
-                            } label: {
-                                Label("Change destination", systemImage: "mappin.and.ellipse")
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundStyle(VuumColor.brand)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                            }
-                            .buttonStyle(.plain)
-                        }
-
-                        if tripSession.canRecordTripAudio
-                            || tripSession.isRecordingTripAudio
-                            || permissions.microphoneDenied
-                            || tripSession.audioRecorder.permissionDenied {
-                            audioControls
-                        }
-
-                        if canCancel {
-                            Button("Cancel trip") {
-                                showCancel = true
-                            }
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(.red)
-                            .frame(maxWidth: .infinity)
-                            .padding(.top, 2)
-                        }
+                        .frame(maxHeight: min(geo.size.height * 0.52, 440))
                     }
                 }
+                .padding(.horizontal, 12)
+                .padding(.bottom, 8)
             }
-            .padding(.horizontal, 12)
-            .padding(.bottom, 8)
         }
         .confirmationDialog(
             "Request emergency help?",
@@ -174,7 +181,7 @@ struct ActiveTripScaffoldView: View {
             titleVisibility: .visible
         ) {
             Button("Request help now", role: .destructive) {
-                tripSession.requestSOS()
+                tripSession.requestSOS(coordinate: location.latestLocation?.coordinate)
             }
             Button("Cancel", role: .cancel) {}
         } message: {
@@ -208,6 +215,7 @@ struct ActiveTripScaffoldView: View {
             Text("Safety recording is available only during an active trip. Your driver is notified while recording is on.")
         }
         .task {
+            location.startUpdatingIfAllowed()
             await permissions.refreshStatuses()
             tripSession.audioRecorder.refreshPermissionState()
         }
@@ -220,7 +228,7 @@ struct ActiveTripScaffoldView: View {
             HStack(spacing: 10) {
                 if let trip = tripSession.activeTrip {
                     ShareLink(
-                        item: TripShare.message(for: trip),
+                        item: TripShare.message(for: trip, phase: tripSession.phase, coordinate: location.latestLocation?.coordinate),
                         subject: Text("My Vuum trip"),
                         message: Text("Follow my live trip on Vuum")
                     ) {
@@ -301,7 +309,7 @@ struct ActiveTripScaffoldView: View {
                 .accessibilityLabel("Dismiss")
             }
             ShareLink(
-                item: TripShare.message(for: trip, phase: tripSession.phase),
+                item: TripShare.message(for: trip, phase: tripSession.phase, coordinate: location.latestLocation?.coordinate),
                 subject: Text(L10n.Safety.shareSubject),
                 message: Text(L10n.Safety.shareMessage)
             ) {
@@ -371,7 +379,7 @@ struct ActiveTripScaffoldView: View {
             } else {
                 LiveETABadge(
                     minutes: trip.etaMinutes,
-                    caption: tripSession.phase == .inTrip ? "away" : "ETA"
+                    caption: tripSession.phase == .inTrip ? "left" : "ETA"
                 )
             }
         }
@@ -419,14 +427,23 @@ struct ActiveTripScaffoldView: View {
             ) {
                 showSafety = true
             }
+            .accessibilityHint("Opens safety tools and SOS status")
 
             LiveTripActionChip(
                 title: "Chat",
                 systemImage: "bubble.left.and.bubble.right.fill",
-                badge: tripSession.unreadChatCount
+                badge: tripSession.isChatAvailable ? tripSession.unreadChatCount : 0,
+                tint: tripSession.isChatAvailable ? VuumColor.primaryText : VuumColor.secondaryText
             ) {
+                guard tripSession.isChatAvailable else { return }
                 showChat = true
             }
+            .disabled(!tripSession.isChatAvailable)
+            .accessibilityHint(
+                tripSession.isChatAvailable
+                    ? "Opens chat with your driver"
+                    : "Chat available once a driver is assigned"
+            )
 
             LiveTripActionChip(
                 title: "Call",
@@ -434,9 +451,10 @@ struct ActiveTripScaffoldView: View {
             ) {
                 tripSession.callDriver()
             }
+            .accessibilityHint("Places a phone call to your driver")
 
             ShareLink(
-                item: TripShare.message(for: trip),
+                item: TripShare.message(for: trip, phase: tripSession.phase, coordinate: location.latestLocation?.coordinate),
                 subject: Text("My Vuum trip"),
                 message: Text("Follow my live trip on Vuum")
             ) {
@@ -453,6 +471,7 @@ struct ActiveTripScaffoldView: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Share trip")
+            .accessibilityHint("Shares a live trip link")
         }
     }
 

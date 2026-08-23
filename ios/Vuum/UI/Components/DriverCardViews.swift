@@ -168,15 +168,17 @@ struct DriverCardView: View {
     var etaMinutes: Int? = nil
     var passengerName: String? = nil
     var showTripsCount: Bool = true
+    /// Map overlay: hide bio / languages so the sheet stays map-dominant.
+    var compact: Bool = false
 
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
-            DriverAvatarView(driver: driver, size: 56)
+            DriverAvatarView(driver: driver, size: compact ? 48 : 56)
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: compact ? 3 : 4) {
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
                     Text(driver.name)
-                        .font(.system(size: 17, weight: .semibold, design: .rounded))
+                        .font(.system(size: compact ? 16 : 17, weight: .semibold, design: .rounded))
                         .foregroundStyle(VuumColor.primaryText)
                         .lineLimit(1)
                     if let etaMinutes {
@@ -198,7 +200,7 @@ struct DriverCardView: View {
                     }
                 }
 
-                if !driver.languages.isEmpty {
+                if !compact, !driver.languages.isEmpty {
                     Text(driver.languages.prefix(3).joined(separator: " · "))
                         .font(.system(size: 11, weight: .medium))
                         .foregroundStyle(VuumColor.secondaryText)
@@ -207,15 +209,23 @@ struct DriverCardView: View {
 
                 HStack(spacing: 6) {
                     if driver.backgroundCheckPassed {
-                        trustChip("Background check", systemImage: "checkmark.shield.fill")
+                        trustChip(
+                            compact ? "Verified" : "Background check",
+                            systemImage: "checkmark.shield.fill"
+                        )
                     }
-                    trustChip(driver.vehicleInspection.title, systemImage: "wrench.and.screwdriver.fill")
+                    trustChip(
+                        compact ? "Inspected" : driver.vehicleInspection.title,
+                        systemImage: "wrench.and.screwdriver.fill"
+                    )
                 }
 
-                Text(driver.resolvedBio)
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(VuumColor.secondaryText)
-                    .lineLimit(2)
+                if !compact {
+                    Text(driver.resolvedBio)
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(VuumColor.secondaryText)
+                        .lineLimit(2)
+                }
 
                 if let passengerName, !passengerName.isEmpty {
                     Text("Passenger: \(passengerName)")
@@ -228,7 +238,7 @@ struct DriverCardView: View {
 
             DriverRatingLabel(
                 rating: driver.rating,
-                tripsCompleted: showTripsCount ? driver.tripsCompleted : nil,
+                tripsCompleted: showTripsCount && !compact ? driver.tripsCompleted : nil,
                 compact: true
             )
         }
@@ -250,6 +260,7 @@ struct DriverCardView: View {
 // MARK: - Contact actions (message / call / share)
 
 struct DriverContactActionsBar: View {
+    @EnvironmentObject private var location: RiderLocationManager
     let trip: ActiveTrip
     var unreadChatCount: Int = 0
     var chatEnabled: Bool = true
@@ -295,7 +306,7 @@ struct DriverContactActionsBar: View {
             }
 
             ShareLink(
-                item: TripShare.message(for: trip, phase: .inTrip),
+                item: TripShare.message(for: trip, phase: .inTrip, coordinate: location.latestLocation?.coordinate),
                 subject: Text("My Vuum trip"),
                 message: Text("Follow my live trip on Vuum")
             ) {

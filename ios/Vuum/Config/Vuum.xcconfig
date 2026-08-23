@@ -1,9 +1,18 @@
 // Shared build settings for the Vuum target.
-// Maps key injection: Info.plist uses $(VUUM_GOOGLE_MAPS_API_KEY) for both
-// VUUM_GOOGLE_MAPS_API_KEY and GMSApiKey. Default is a non-functional placeholder.
-// Never put a real key in this file (it is committed).
+//
+// Maps key → Info.plist:
+//   VUUM_GOOGLE_MAPS_API_KEY = $(VUUM_GOOGLE_MAPS_API_KEY)
+//   GMSApiKey                = $(VUUM_GOOGLE_MAPS_API_KEY)
+//
+// Resolution at runtime (MapBootstrap): scheme env → Info.plist VUUM_… → GMSApiKey.
+// Placeholders are skipped so a committed scheme stub cannot block Secrets.xcconfig.
+//
+// Default below is non-functional. Override via gitignored Secrets.xcconfig
+// (local copy of Secrets.example.xcconfig, or Codemagic inject). Never put a
+// real key in this committed file.
+// Bundle ID for Google Cloud iOS restriction: com.vuum.app
 VUUM_GOOGLE_MAPS_API_KEY = YOUR_GOOGLE_MAPS_API_KEY
 
-// Optional override (gitignored): copy Secrets.example.xcconfig → Secrets.xcconfig
-// Codemagic also writes Secrets.xcconfig from secure env when the key is set.
+// Optional override (gitignored): ios/Secrets.xcconfig
+// Path is relative to this file (ios/Vuum/Config/ → ios/).
 #include? "../../Secrets.xcconfig"

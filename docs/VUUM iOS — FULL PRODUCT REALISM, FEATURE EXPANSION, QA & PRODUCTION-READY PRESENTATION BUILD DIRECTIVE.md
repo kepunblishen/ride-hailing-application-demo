@@ -17,7 +17,7 @@ Full gap table: [`docs/DIRECTIVE_GAP_STATUS.md`](docs/DIRECTIVE_GAP_STATUS.md).
 - [x] Section 9 Language architecture (FR/EN/LN/SW; expand coverage over time)
 - [x] Sections 10-12 Home / booking / product sheets
 - [x] Sections 13-14 Maps software + fallback (credentials activate live tiles)
-- [x] Sections 15-20 Trip realism incl. PIN + in-trip destination change
+- [x] Sections 15-20 Trip realism incl. PIN + in-trip destination change (**§19 map overlay polished**: compact driver card, single ETA, chat/call/safety/share, height-capped sheet)
 - [x] Sections 21-23 Schedule / multi-stop / ride for someone else
 - [x] Sections 24-25 PaymentProvider adapters + payment history
 - [x] Sections 26-27 Trip history + receipts
@@ -719,12 +719,12 @@ Implement the code path for:
 - [x] map initialization
 - [x] user location
 - [x] camera
-- [x] markers
+- [x] markers <!-- bike / car / XXL: MapPin.vehicleClass + SF Symbol overlays in VuumMapView -->
 - [x] route polyline
 - [x] map styling
 - [x] pickup marker
 - [x] destination marker
-- [x] driver markers
+- [x] driver markers <!-- class glyphs: bicycle · car.fill · car.2.fill -->
 - [x] map interactions
 - [x] zoom
 - [x] recenter
@@ -740,6 +740,11 @@ Prepare:
 - [x] address retrieval
 - [x] location coordinates
 - [x] saved places abstraction
+- [x] session-token lifecycle (`beginSession` / reuse / Details / `abandonSession`)
+- [x] UI debounce (~300 ms) + request cancellation
+- [x] field masks (Autocomplete + Details)
+- [x] local catalog fallback when key missing or Places fails
+- [x] searching / empty / resolve-error states (no demo wording)
 
 Use proper Places session-token handling instead of making an unbounded request per keystroke. Google explicitly recommends session tokens for Autocomplete sessions.
 
@@ -816,6 +821,17 @@ But do not make the application permanently dependent on a fake map.
 Once the key exists:
 
 the real map should activate automatically.
+
+### Fallback UX audit (2026-08-23)
+
+- [x] App launches without usable Maps key (no crash)
+- [x] Rider-facing unavailable plane (`MapPlaceholderView`) — map icon + grid; L10n EN/FR/LN/SW
+- [x] **No** user-visible “demo”, “Add Maps API key”, or config instructions (DEBUG logs only)
+- [x] Placeholder vs live: `MapBootstrap.isConfigured` / `surface` → `GMSMapView` or unavailable plane at view create; key inject + rebuild/relaunch switches to live
+- [x] Network offline: app-level `VuumOfflineBanner` (Retry); Places → local catalog; Routes → synthetic path
+- [x] Known placeholder / macro / short keys rejected by `MapBootstrap.isUsableAPIKey`
+- [ ] Revoked/restricted Cloud key that still looks valid — still boots SDK (Google tile chrome); no dedicated in-map Retry chip (device F7)
+- [ ] Dedicated rider Retry for “Unable to calculate the route” (§17 central error map) — still silent synthetic fallback
 
 ---
 
@@ -912,7 +928,7 @@ Make this feel alive.
 
 Show:
 
-- [x] live driver marker
+- [x] live driver marker <!-- SF Symbol badge by VehicleClass -->
 - [x] ETA countdown
 - [x] distance
 - [x] pickup point
@@ -933,6 +949,7 @@ Do not allow a driver to instantly teleport from 7 minutes away to "Arrived."
 - [x] Tier selection affects fare, ETA, vehicle icon/class, and nearby fleet mix
 - [x] Phase machine: searching → matched → driverEnRoute (arriving) → driverArrived → inTrip → completed
 - [x] Map simulation APIs: `routeProgress`, `motionSimulationKind`, `isSimulatingDriverMotion`, `activeVehicleClass`, `MapPin.vehicleClass`
+- [x] Map marker glyphs by class: bike `bicycle` · car `car.fill` · XXL `car.2.fill` (`VuumMapView` SF Symbol overlays)
 
 ---
 
@@ -980,6 +997,15 @@ Include:
 - [x] fare/payment information
 - [x] change destination (in-trip)
 
+### Active-trip map overlay polish (verified)
+
+- [x] Map-dominant sheet (scroll + height cap; does not cover the full screen)
+- [x] Compact driver card (avatar, name, vehicle, plate, trust chips; bio off overlay)
+- [x] Single ETA source — `LiveETABadge` in status header (card does not duplicate)
+- [x] Chat gated by `TripSession.isChatAvailable`; Call / Safety / Share always on assigned trip
+- [x] Route polyline via `TripMapLayer` / `mapRoute`; deviation + recalculating notices
+- [x] SOS top chrome + Safety toolkit; trip share uses live phase message
+
 Keep the map dominant.
 
 Do not cover the entire screen with cards.
@@ -992,10 +1018,14 @@ Allow destination change before trip completion.
 
 Recalculate:
 
-- [x] route
-- [x] distance
-- [x] ETA
-- [x] fare estimate
+- [x] route — `TripSession.updateInTripDestination` → `RouteEngine` (synthetic immediate + live Routes/Directions); `trip.tripRoute` stores fare polyline for map / corridor
+- [x] distance — remaining + fare path meters refreshed
+- [x] ETA — remaining-path duration / speed-class ETA
+- [x] fare estimate — `MockFares.breakdown` on new fare distance; rider notice + sheet spinner
+
+**Hardened (audit):** live apply no longer keyed off `lifecycleGeneration` (bumped by `beginMotion`); uses `destinationRouteGeneration` so mid-trip polyline + fare refresh is not dropped. Superseded fetch must not clear another change’s spinner. Unit: `InTripDestinationChangeTests`.
+
+**Hardened (audit §52–§54):** background/resume does not re-issue Routes/Directions/Places; trip cancel cancels in-flight Google Tasks (`cancelInFlightGoogleWork`); `GoogleRouteProvider` does not chain Directions after cancel; Places cancels HTTP on background while keeping session token. Units: `TripSessionLifecyclePhaseTests` (cancel + resume).
 
 The RFQ expects dynamic route and fare handling, and Bolt currently supports destination changes in some markets.
 
@@ -2301,7 +2331,7 @@ Audit:
 - [x] VoiceOver labels — primary trip, auth, and home controls labeled with hints
 - [x] Hit target sizes — primary controls meet ~44pt targets (chrome / SOS / safety)
 - [ ] Color contrast — polish pass still recommended on secondary chips
-- [ ] Reduce Motion — not fully audited for every animation
+- [x] Reduce Motion — searching pulse respects system + Settings toggle; trip sheet avoids decorative motion
 - [x] Dark Mode — splash/auth support light/dark assets where provided
 - [x] Readable fare formatting — locale formatters used for VoiceOver-friendly amounts
 - [x] Accessible map controls — trip map exposes phase-aware VoiceOver summary; safety/recenter labeled
@@ -2364,9 +2394,9 @@ Do not introduce a requirement that cannot work with sideloading unless it is ge
 
 Make sure:
 
-- [x] bundle identifier is correct
+- [x] bundle identifier is correct (`com.vuum.app` / tests `com.vuum.app.tests`)
 - [x] assets are present (`AppIcon`, `AccentColor`, `SplashBackground`, auth icon imagesets + SF Symbol fallbacks)
-- [ ] Info.plist is valid
+- [x] Info.plist is valid (location strings, `LSApplicationQueriesSchemes` incl. `comgooglemaps`, `VUUM_GOOGLE_MAPS_API_KEY` + `GMSApiKey` slots, default ATS / no arbitrary loads, no committed secrets)
 - [ ] required entitlements are valid
 - [ ] build configuration is reproducible
 
@@ -2377,21 +2407,23 @@ Docs: `docs/CODEMAGIC_SETUP.md`, `docs/GOOGLE_MAPS_SETUP.md`, `ios/README.md`, `
 #### Done in repo (software)
 
 - [x] Unsigned `ios-release` workflow in `codemagic.yaml` (no Apple Developer Portal / certs on CI)
+- [x] `environment.groups: vuum_secrets` in `codemagic.yaml` (exact Codemagic UI group name)
 - [x] SPM resolve + deterministic DerivedData path for IPA packaging
-- [x] Maps key injection: Codemagic secure env → `ios/Secrets.xcconfig` + `xcodebuild` `VUUM_GOOGLE_MAPS_API_KEY`
+- [x] Maps key injection: `vuum_secrets` → Secure env → `ios/Secrets.xcconfig` + `xcodebuild` `VUUM_GOOGLE_MAPS_API_KEY`
 - [x] Info.plist `$(VUUM_GOOGLE_MAPS_API_KEY)` substitution wired; `MapBootstrap` ignores placeholders
 - [x] Bundle ID `com.vuum.app`; iOS 17+; Sideloadly IPA artifact `build/Vuum.ipa`
 - [x] No Snyk / security-scan steps in CI (see `docs/NO_SNYK.md`)
-- [x] Build succeeds without Maps credentials (map unavailable surface only)
+- [x] Build succeeds without Maps **key value** when group exists (map unavailable surface only)
 
 #### Credential-only remaining (operator — not code)
 
 - [ ] Google Cloud billing + **Maps SDK for iOS** enabled
 - [ ] API key restricted to iOS + bundle ID `com.vuum.app`
-- [ ] Codemagic secure env `VUUM_GOOGLE_MAPS_API_KEY` set
+- [ ] Codemagic group **`vuum_secrets`** created and linked to this app
+- [ ] Secure env `VUUM_GOOGLE_MAPS_API_KEY` set **inside** that group
 - [ ] Rebuild IPA → Sideloadly → confirm live map tiles
 
-When the three credential boxes above are checked:
+When the credential boxes above are checked:
 
 **GOOGLE MAPS CREDENTIALS ARE NOW THE ONLY REMAINING CONFIGURATION STEP** (for CI map tiles; Places/Routes remain optional expansions).
 
@@ -2447,7 +2479,7 @@ Build an internal test matrix covering:
 - [x] arrived — **Pass B**
 - [x] OTP — **Pass B** (boarding PIN + requirePIN pref)
 - [x] active — **Pass B**
-- [x] destination change — **Pass B**
+- [x] destination change — **Pass B** (hardened: live polyline + fare via `destinationRouteGeneration`; `InTripDestinationChangeTests`)
 - [x] completion — **Pass B**
 
 ### Safety
@@ -2597,17 +2629,26 @@ Fix:
 
 Implement:
 
-- Maps
+- [x] Maps
 - [x] Places
-- Routes
-- current GPS
-- route
-- ETA
+- [x] Routes
+- [x] current GPS
+- [x] route
+- [x] ETA
 - [x] address search
-- markers
-- moving vehicle
+- [x] markers <!-- class SF Symbol overlays: bike / car / XXL -->
+- [x] moving vehicle
 
 Leave only credentials/configuration for me.
+
+### Map motion audit (Uber-style vehicle)
+
+- [x] Marker animates along remaining polyline (`routeProgress` + `VuumMapView` CATransaction ease ~80 ms)
+- [x] Heading rotation (flat marker + smoothed `driverHeading` / shortest-arc lerp)
+- [x] ETA-timed wall motion (`TripMotionTiming` · bike ≈ 2 · car ≈ 5 · XXL ≈ 10)
+- [x] Camera follow matched → in-trip (`shouldFollowDriverOnMap`, bearing-aware, throttled)
+- [x] Motion APIs: `routeProgress`, `motionSimulationKind`, `isSimulatingDriverMotion`, `activeVehicleClass`, `MapPin.vehicleClass`
+- [x] In-trip legs sample `tripRoute` via `TripGeo.pathBetween` / `subpath` (marker stays on drawn polyline)
 
 ---
 
@@ -2988,17 +3029,19 @@ Do not report completion until the outstanding issue has been addressed or expli
 
 # 86A. AGENT 04 — DEPENDENCIES / SPM / SDK WIRING (CHECKLIST)
 
-Status as of Agent 04 pass:
+Status as of Agent 04 pass (re-verified 2026-08-23):
 
 - [x] Audit `ios/Vuum.xcodeproj` SPM package references
-- [x] **Google Maps** SPM declared — `https://github.com/googlemaps/ios-maps-sdk` â‰¥ 9.0.0, product `GoogleMaps` (remote tags verified)
-- [x] **ComponentsKit** SPM declared — `https://github.com/componentskit/ComponentsKit` â‰¥ 1.7.0 (remote tags verified)
-- [x] **KeychainSwift** SPM declared — `https://github.com/evgenyneu/keychain-swift.git` (fixed broken pin `24.0.0` → **`9.0.0`**; latest remote tag is 9.0.2)
+- [x] **Google Maps** SPM correct — `https://github.com/googlemaps/ios-maps-sdk`, `upToNextMajor` ≥ **10.0.0**, product **`GoogleMaps`** linked on `Vuum` target + Frameworks (resolves within 10.x; 11.x deferred — see `docs/PLACES_SDK_DECISION.md`)
+- [x] **ComponentsKit** SPM declared — `https://github.com/componentskit/ComponentsKit` ≥ 1.7.0 (remote latest **1.7.1**)
+- [x] **KeychainSwift** SPM declared — `https://github.com/evgenyneu/keychain-swift.git`, `upToNextMajor` ≥ **24.0.0** (corrected prior mistaken ≥9.0.0 floor; **24.0.0** is current remote tag — not broken)
 - [x] Places helper ready without extra SPM — `PlacesSearchService` (Places API New HTTPS + session tokens); no-key / failure → local catalog fuzzy fallback
 - [x] Routes helper ready without extra SPM — `RoutesAPIService` (`computeRoutes` HTTPS + polyline decode); no-key → `nil` / `TripGeo` fallback
 - [x] No Firebase / BLE / Snyk / Navigation SDK added
 - [x] Docs: `docs/SETUP.md` + `docs/GOOGLE_MAPS_SETUP.md` document API key as only remaining credential step
 - [x] Mac SPM resolve admin commands documented in `docs/SETUP.md` (Windows cannot resolve Apple SPM locally)
+- [x] Codemagic SPM resolve documented — `docs/CODEMAGIC_SETUP.md` + `codemagic.yaml` `xcodebuild -resolvePackageDependencies`
+- [x] dependency/package audit (workstream 34) — pins verified; no broken SPM floors
 - [ ] **Credential-only (user):** create Google Cloud key, enable Maps SDK for iOS + Places API (New) + Routes API, inject `VUUM_GOOGLE_MAPS_API_KEY` via Codemagic / scheme / `Secrets.xcconfig`
 
 ---
@@ -3127,18 +3170,27 @@ Wall-clock map animation is compressed via `TripMotionTiming` (delegates to the 
 2. **Map car animation** — spawn distance from `TripMotionTiming.approachDistanceMeters`; marker motion duration from `TripMotionTiming.approachSimulationSeconds` / `tripSimulationDurationSeconds`; `routeProgress` + `motionSimulationKind` published for Maps.
 3. **Chat availability** — `TripSession.isChatAvailable` is true for `matched | driverEnRoute | driverArrived | inTrip` when `activeTrip != nil`. Message CTA uses this flag.
 4. **Driver card** — `RootFlowView` shows active-trip UI for `matched` onward; card ETA counts down with motion via `TripMotionTiming.displayedETAMinutes`.
+5. **Map layer** — `TripMapLayer` reads only `mapCamera` / `mapPins` / `mapRoute` / `mapFitCoordinates` / `shouldFollowDriverOnMap` / `mapCameraFocusNonce` from `TripSession` (no parallel route or ETA clocks in SwiftUI).
 
 ### Integration checklist
 
 - [x] Tier rows publish class-based pickup ETAs (not raw chord distance).
 - [x] `assignDriver` / `finishAssignDriver` spawn by class ETA distance and pick a class-matched driver.
 - [x] Approach / in-trip motion uses `TripMotionTiming` (no hard-coded display clocks).
-- [x] Chat gated by `isChatAvailable`.
+- [x] Chat gated by `isChatAvailable` (active-trip Chat/Call chips + `sendChat`).
 - [x] Map pins carry `vehicleClass` (bike vs car vs XL glyphs).
+- [x] Map markers render SF Symbol overlays by class (`VehicleClass.systemImage` in `VuumMapView`).
 - [x] `RootFlowView` routes `.matched` to the active-trip UI.
+- [x] `TripMapLayer` follows via `shouldFollowDriverOnMap` (single flag; no duplicated phase switch in the view).
+- [x] Searching keeps the same preview polyline + waypoint fit as choose-ride (one ride path).
+- [x] Destination selection shows pickup (+ stops) pins; arrival clears approach polyline.
+- [x] In-trip progress UI uses `tripProgressFraction` → `routeProgress` (motion owns progress).
+- [x] Driver chat sheet still binds `chatMessages` / `setChatPresented` / unread badge.
+- [x] Map motion audit: polyline ease, heading rotation, ETA-timed class durations, camera follow (see Phase 3).
 
 ### Do not
 
 - Reintroduce independent ETA math in map or chat views.
 - Skip `.matched` when wiring new trip UI.
 - Duplicate bike/car/XL minute constants outside `VehiclePickupETA`.
+- Drive `VuumMapView` from local SwiftUI state instead of `TripSession` map APIs.

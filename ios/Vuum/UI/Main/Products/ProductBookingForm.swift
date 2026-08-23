@@ -1,8 +1,12 @@
 import SwiftUI
 
 /// Shared pickup / dropoff pickers for Services product sheets.
+/// Uses Places autocomplete when keyed (via `PlaceSearchPickerSheet`); local catalog otherwise.
 struct ProductBookingForm<Extra: View>: View {
     @EnvironmentObject private var savedPlaces: SavedPlacesStore
+    @EnvironmentObject private var tripSession: TripSession
+    @EnvironmentObject private var appLocale: AppLocale
+    @EnvironmentObject private var location: RiderLocationManager
 
     let title: String
     let subtitle: String
@@ -16,18 +20,42 @@ struct ProductBookingForm<Extra: View>: View {
     @ViewBuilder var extra: () -> Extra
     let onConfirm: () -> Void
 
+    @State private var pickerTarget: BookingPlaceTarget?
+
     private var fareMarket: AppLocale.Market {
         AppLocale.current == .kenya ? .kenya : .drc
     }
 
     private var places: [Place] {
-        let center = MockPlaces.defaultCenter(for: fareMarket)
+        let center = tripSession.pickup
         let catalog = MockPlaces.destinations(for: fareMarket)
         return savedPlaces.bookingPlaces(center: center, catalog: catalog)
     }
 
     private var routeMeters: Double {
         TripGeo.distanceMeters(from: pickup.coordinate, to: dropoff.coordinate)
+    }
+
+    private var previewPins: [MapPin] {
+        var pins = [
+            MapPin(id: "booking-pickup", coordinate: pickup.coordinate, kind: .pickup, heading: 0),
+        ]
+        if pickup.id != dropoff.id {
+            pins.append(
+                MapPin(id: "booking-dropoff", coordinate: dropoff.coordinate, kind: .dropoff, heading: 0)
+            )
+        }
+        return pins
+    }
+
+    private var previewFit: [GeoPoint] {
+        previewPins.map(\.coordinate)
+    }
+
+    /// Straight preview segment only — no Routes/Directions billing on form open.
+    private var previewRoute: [GeoPoint] {
+        guard pickup.id != dropoff.id else { return [] }
+        return [pickup.coordinate, dropoff.coordinate]
     }
 
     var body: some View {
@@ -50,18 +78,47 @@ struct ProductBookingForm<Extra: View>: View {
                 .padding(.vertical, 4)
             }
 
+            Section {
+                BookingRoutePreviewMap(
+                    cameraTarget: pickup.coordinate,
+                    pins: previewPins,
+                    route: previewRoute,
+                    fitCoordinates: previewFit
+                )
+                .frame(height: 148)
+                .listRowInsets(EdgeInsets(top: 8, leading: 12, bottom: 8, trailing: 12))
+                .listRowBackground(Color.clear)
+                .accessibilityLabel("Map showing pickup and drop-off")
+            }
+
             Section(L10n.Products.pickup) {
-                Picker(L10n.Products.from, selection: $pickup) {
-                    ForEach(places) { place in
-                        Text(savedPlaces.displayTitle(for: place)).tag(place)
-                    }
+                bookingPlaceRow(
+                    title: L10n.Products.from,
+                    place: pickup,
+                    icon: "mappin.and.ellipse"
+                ) {
+                    pickerTarget = .pickup
                 }
             }
 
             Section(L10n.Products.dropoff) {
-                Picker(L10n.Products.to, selection: $dropoff) {
-                    ForEach(places.filter { $0.id != pickup.id }) { place in
-                        Text(savedPlaces.displayTitle(for: place)).tag(place)
+                bookingPlaceRow(
+                    title: L10n.Products.to,
+                    place: dropoff,
+                    icon: "flag.fill"
+                ) {
+                    pickerTarget = .dropoff
+                }
+            }
+
+            if !quickPlaces.isEmpty {
+                Section(L10n.Destination.suggestions) {
+                    ForEach(quickPlaces) { place in
+                        Button {
+                            applyQuickDropoff(place)
+                        } label: {
+                            Label(savedPlaces.displayTitle(for: place), systemImage: savedPlaces.systemImage(for: place))
+                        }
                     }
                 }
             }
@@ -113,6 +170,139 @@ struct ProductBookingForm<Extra: View>: View {
                 .disabled(!canConfirm || pickup.id == dropoff.id)
             }
         }
+        .sheet(item: $pickerTarget) { target in
+            PlaceSearchPickerSheet(
+                title: target == .pickup ? L10n.Products.pickup : L10n.Products.dropoff,
+                bias: searchBias,
+                excludePlaceIDs: target == .dropoff ? [pickup.id] : [dropoff.id]
+            ) { place in
+                switch target {
+                case .pickup:
+                    pickup = place
+                    if dropoff.id == place.id, let alt = places.first(where: { $0.id != place.id }) {
+                        dropoff = alt
+                    }
+                case .dropoff:
+                    dropoff = place
+                    savedPlaces.recordRecent(place)
+                }
+            }
+        }
+        .onAppear {
+            seedFromLivePickupIfNeeded()
+        }
+    }
+
+    private var searchBias: GeoPoint {
+        if let loc = location.latestLocation {
+            return GeoPoint(latitude: loc.coordinate.latitude, longitude: loc.coordinate.longitude)
+        }
+        return tripSession.pickup.coordinate
+    }
+
+    private var quickPlaces: [Place] {
+        Array(
+            places
+                .filter { $0.id != pickup.id && $0.id != dropoff.id }
+                .prefix(4)
+        )
+    }
+
+    private func bookingPlaceRow(
+        title: String,
+        place: Place,
+        icon: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: icon)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(VuumColor.brand)
+                    .frame(width: 22)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                    Text(savedPlaces.displayTitle(for: place))
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(.primary)
+                        .multilineTextAlignment(.leading)
+                    Text(place.subtitle)
+                        .font(.system(size: 13))
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.leading)
+                        .lineLimit(2)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.vertical, 4)
+        }
+        .buttonStyle(.plain)
+        .accessibilityHint(L10n.Destination.searchPlaces)
+    }
+
+    private func applyQuickDropoff(_ place: Place) {
+        dropoff = place
+        savedPlaces.recordRecent(place)
+    }
+
+    /// Prefer live Home / GPS pickup when the sheet still has a market-default seed.
+    private func seedFromLivePickupIfNeeded() {
+        let marketCenter = MockPlaces.defaultCenter(for: fareMarket)
+        let live = tripSession.pickup
+        let stillOnMarketDefault =
+            pickup.id == marketCenter.id
+            || pickup.id == MockPlaces.lubumbashiCenter.id
+            || (
+                abs(pickup.coordinate.latitude - marketCenter.coordinate.latitude) < 0.0001
+                    && abs(pickup.coordinate.longitude - marketCenter.coordinate.longitude) < 0.0001
+            )
+        if stillOnMarketDefault {
+            pickup = live
+        }
+        if dropoff.id == pickup.id,
+           let alt = places.first(where: { $0.id != pickup.id })
+        {
+            dropoff = alt
+        }
+    }
+}
+
+private enum BookingPlaceTarget: String, Identifiable {
+    case pickup
+    case dropoff
+    var id: String { rawValue }
+}
+
+/// Compact map strip for Services booking forms (pins + optional straight preview).
+private struct BookingRoutePreviewMap: View {
+    var cameraTarget: GeoPoint
+    var pins: [MapPin]
+    var route: [GeoPoint]
+    var fitCoordinates: [GeoPoint]
+
+    var body: some View {
+        VuumMapView(
+            cameraTarget: cameraTarget,
+            zoom: 13,
+            pins: pins,
+            route: route,
+            fitCoordinates: fitCoordinates,
+            followDriver: false,
+            contentPadding: EdgeInsets(top: 20, leading: 20, bottom: 20, trailing: 20),
+            showsTraffic: false,
+            lowDataMode: true
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
+        }
+        .allowsHitTesting(false)
     }
 }
 

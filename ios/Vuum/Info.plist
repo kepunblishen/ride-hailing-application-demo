@@ -31,6 +31,11 @@
 	<string>Vuum uses your location to find your pickup point and show nearby drivers.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>Vuum can keep using your location during a trip so trusted contacts can follow your ride when you share trip status.</string>
+	<key>NSLocationTemporaryUsageDescriptionDictionary</key>
+	<dict>
+		<key>PickupAccuracy</key>
+		<string>Vuum needs precise location so your pickup pin and map blue-dot match where you are standing.</string>
+	</dict>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Safety recording is available only during an active trip. Audio stays on this device unless you keep it for an incident report, and your driver is notified while recording is on.</string>
 	<key>NSCameraUsageDescription</key>

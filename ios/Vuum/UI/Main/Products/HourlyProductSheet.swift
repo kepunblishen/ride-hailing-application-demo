@@ -66,7 +66,7 @@ struct HourlyProductSheet: View {
 
     private func seedPlaces() {
         let market: AppLocale.Market = AppLocale.current == .kenya ? .kenya : .drc
-        pickup = MockPlaces.defaultCenter(for: market)
+        pickup = tripSession.pickup
         dropoff = MockPlaces.destinations(for: market).first ?? dropoff
     }
 }

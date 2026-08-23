@@ -82,6 +82,28 @@ enum TripGeo {
         return (bearing + 360).truncatingRemainder(dividingBy: 360)
     }
 
+    /// Shortest signed turn from `from` to `to` in degrees (−180…180].
+    static func shortestHeadingDelta(from: Double, to: Double) -> Double {
+        var delta = (to - from).truncatingRemainder(dividingBy: 360)
+        if delta > 180 { delta -= 360 }
+        if delta <= -180 { delta += 360 }
+        return delta
+    }
+
+    /// Interpolate heading along the shortest arc (avoids 359°→1° spins).
+    static func lerpHeading(from: Double, to: Double, fraction: Double) -> Double {
+        let t = min(max(fraction, 0), 1)
+        let next = from + shortestHeadingDelta(from: from, to: to) * t
+        return (next + 360).truncatingRemainder(dividingBy: 360)
+    }
+
+    /// Blend toward a target heading with a max turn rate (degrees per blend).
+    static func smoothHeading(current: Double, target: Double, maxStepDegrees: Double = 28) -> Double {
+        let delta = shortestHeadingDelta(from: current, to: target)
+        let step = min(max(delta, -maxStepDegrees), maxStepDegrees)
+        return (current + step + 360).truncatingRemainder(dividingBy: 360)
+    }
+
     static func interpolate(from a: GeoPoint, to b: GeoPoint, fraction t: Double) -> GeoPoint {
         let u = min(max(t, 0), 1)
         return GeoPoint(
@@ -135,6 +157,37 @@ enum TripGeo {
             total += distanceMeters(from: points[i - 1], to: points[i])
         }
         return total
+    }
+
+    /// Dense sub-polyline between two points snapped onto `path` (for leg motion along a booked route).
+    static func subpath(along path: [GeoPoint], from start: GeoPoint, to end: GeoPoint, samples: Int = 32) -> [GeoPoint] {
+        guard path.count >= 2 else { return [start, end] }
+        let startFrac = progressFraction(along: path, near: start)
+        let endFrac = progressFraction(along: path, near: end)
+        if endFrac <= startFrac + 0.002 {
+            // Waypoints may share the same nearest vertex on a coarse path — fall back to a short chord.
+            return routePolyline(from: start, to: end, samples: max(samples / 2, 8))
+        }
+        let count = max(samples, 8)
+        var points: [GeoPoint] = []
+        points.reserveCapacity(count + 1)
+        for i in 0...count {
+            let t = Double(i) / Double(count)
+            let fraction = startFrac + (endFrac - startFrac) * t
+            points.append(pointAlong(path: path, fraction: fraction).point)
+        }
+        if let first = points.first, distanceMeters(from: first, to: start) > 3 {
+            points.insert(start, at: 0)
+        }
+        if let last = points.last, distanceMeters(from: last, to: end) > 3 {
+            points.append(end)
+        }
+        return points
+    }
+
+    /// In-trip leg slice along the booked polyline (alias used by `TripSession.beginNextInTripLeg`).
+    static func pathBetween(along path: [GeoPoint], from start: GeoPoint, to end: GeoPoint) -> [GeoPoint] {
+        subpath(along: path, from: start, to: end, samples: 40)
     }
 
     /// Remaining path length for a distance-based fraction (0…1), not a point-index fraction.
@@ -221,32 +274,37 @@ enum TripGeo {
     /// Used by Maps to draw only the remaining approach / trip segment.
     static func remainingPath(along path: [GeoPoint], from coordinate: GeoPoint) -> [GeoPoint] {
         guard path.count > 1 else { return path }
-        let total = pathLengthMeters(path)
-        guard total > 1 else { return path }
+        guard pathLengthMeters(path) > 1 else { return path }
 
-        var bestIndex = 0
+        var bestSegEnd = 1
+        var bestPoint = path[0]
         var bestDist = Double.greatestFiniteMagnitude
-        var walkedToBest = 0.0
-        var walked = 0.0
-        for i in 0..<path.count {
-            if i > 0 {
-                walked += distanceMeters(from: path[i - 1], to: path[i])
-            }
-            let d = distanceMeters(from: path[i], to: coordinate)
+        for i in 1..<path.count {
+            let projected = closestPointOnSegment(coordinate, a: path[i - 1], b: path[i])
+            let d = distanceMeters(from: coordinate, to: projected)
             if d < bestDist {
                 bestDist = d
-                bestIndex = i
-                walkedToBest = walked
+                bestPoint = projected
+                bestSegEnd = i
             }
         }
 
         var result: [GeoPoint] = [coordinate]
-        if bestIndex + 1 < path.count {
-            result.append(contentsOf: path[(bestIndex + 1)...])
-        } else if let last = path.last {
-            result = [coordinate, last]
+        if distanceMeters(from: coordinate, to: bestPoint) > 2 {
+            result.append(bestPoint)
         }
-        _ = walkedToBest
+        let firstTail: Int
+        if let last = result.last, distanceMeters(from: last, to: path[bestSegEnd]) < 1 {
+            firstTail = bestSegEnd + 1
+        } else {
+            firstTail = bestSegEnd
+        }
+        if firstTail < path.count {
+            result.append(contentsOf: path[firstTail...])
+        }
+        if result.count < 2, let last = path.last {
+            return [coordinate, last]
+        }
         return result
     }
 

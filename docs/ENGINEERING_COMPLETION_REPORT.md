@@ -71,8 +71,8 @@ Declared on `ios/Vuum.xcodeproj` · deployment **iOS 17+**:
 | Package | URL | Role |
 |---------|-----|------|
 | **ComponentsKit** | `https://github.com/componentskit/ComponentsKit` (≥ 1.7.0) | Shared controls / accent |
-| **Google Maps SDK** | `https://github.com/googlemaps/ios-maps-sdk` (≥ 9.0.0), product `GoogleMaps` | Live map surface |
-| **KeychainSwift** | `https://github.com/evgenyneu/keychain-swift` (≥ 9.0.0) | Rider session persistence |
+| **Google Maps SDK** | `https://github.com/googlemaps/ios-maps-sdk` (≥ 10.0.0, `< 11`), product `GoogleMaps` | Live map surface |
+| **KeychainSwift** | `https://github.com/evgenyneu/keychain-swift` (≥ 24.0.0, `< 25`) | Rider session persistence |
 
 **System frameworks:** SwiftUI, UIKit (maps / share bridges).
 
@@ -85,7 +85,7 @@ Declared on `ios/Vuum.xcodeproj` · deployment **iOS 17+**:
 No required SPM products were removed mid-program for Vuum. Intentionally **not** added:
 
 - Firebase / GoogleService-Info stack
-- `ios-places-sdk` (Places used over HTTPS instead)
+- `ios-places-sdk` (Places used over HTTPS — [`PLACES_SDK_DECISION.md`](PLACES_SDK_DECISION.md))
 - `ios-navigation-sdk`
 - KeychainAccess (avoided — ships SPM `unsafeFlags`)
 
@@ -110,7 +110,7 @@ Codemagic `ios-release` has **no** Snyk step. Security review is manual / on req
 | Layer | Software | Live behavior |
 |-------|----------|----------------|
 | Maps SDK for iOS | `MapBootstrap` + `VuumMapView` | Needs key → tiles, markers, polylines |
-| Places API (New) | `PlacesSearchService` (session tokens) | Needs key → else local `MockPlaces` catalog |
+| Places API (New) | `PlacesSearchService` + `PlacesSearchController` (session tokens, debounce, field masks) | Needs key → else local `MockPlaces` catalog; UI error/searching states |
 | Routes API | `RoutesAPIService` (`computeRoutes`) | Needs key → else `TripGeo` local geometry |
 | Directions API | `DirectionsRouteService` | Fallback when Routes fails / keyed |
 | Reverse geocode | `ReverseGeocodingService` | Google when keyed; else `CLGeocoder` |
@@ -262,9 +262,9 @@ Use Home (or Services) → destination → choose ride. Pickup ETAs are **class-
 
 | Book | Fleet class | Displayed pickup ETA | What to show |
 |------|-------------|----------------------|--------------|
-| **Bike / 2-Wheels** | `.bike` | **2 min** | Faster match, bike glyph on map, compressed approach motion |
-| **Standard car** (Vuum / Comfort / Courier) | `.standard` | **5 min** | Default car card, chat after match, PIN at arrive |
-| **XXL / Large / Executive / Hourly** | `.large` | **10 min** | Larger vehicle story, longer baseline ETA |
+| **Bike / 2-Wheels** | `.bike` | **2 min** | Faster match, bike SF Symbol (`bicycle`) on map, compressed approach motion |
+| **Standard car** (Vuum / Comfort / Courier) | `.standard` | **5 min** | Default car badge (`car.fill`), chat after match, PIN at arrive |
+| **XXL / Large / Executive / Hourly** | `.large` | **10 min** | Larger badge (`car.2.fill`), longer baseline ETA |
 
 ### Recommended script (~8–12 minutes)
 

@@ -22,93 +22,98 @@ struct SearchingScaffoldView: View {
     }
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            TripMapLayer()
+        GeometryReader { geo in
+            ZStack(alignment: .bottom) {
+                TripMapLayer()
 
-            VuumSheetChrome(title: nil) {
-                VStack(spacing: 16) {
-                    if isNoDrivers {
-                        Image(systemName: "car.slash.fill")
-                            .font(.system(size: 34, weight: .semibold))
-                            .foregroundStyle(VuumColor.secondaryText)
-                            .accessibilityHidden(true)
-                    } else {
-                        SearchingPulseView()
-                    }
-
-                    Text(tripSession.searchMessage)
-                        .font(.system(size: 20, weight: .bold, design: .rounded))
-                        .multilineTextAlignment(.center)
-                        .frame(maxWidth: .infinity)
-                        .animation(.easeInOut(duration: 0.25), value: tripSession.searchMessage)
-
-                    if isDelayed {
-                        Label("Weak connection — still searching", systemImage: "wifi.exclamationmark")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundStyle(.orange)
-                    } else if isNoDrivers {
-                        Text("No partners accepted nearby. Try again or change ride category.")
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundStyle(VuumColor.secondaryText)
-                            .multilineTextAlignment(.center)
-                    } else {
-                        TimelineView(.periodic(from: .now, by: 1)) { _ in
-                            HStack(spacing: 6) {
-                                Image(systemName: "clock")
-                                    .font(.system(size: 12, weight: .semibold))
-                                Text(matchCountdownLabel)
-                                    .font(.system(size: 13, weight: .semibold))
+                VuumSheetChrome(title: nil) {
+                    ScrollView(.vertical, showsIndicators: false) {
+                        VStack(spacing: 14) {
+                            if isNoDrivers {
+                                Image(systemName: "car.slash.fill")
+                                    .font(.system(size: 34, weight: .semibold))
+                                    .foregroundStyle(VuumColor.secondaryText)
+                                    .accessibilityHidden(true)
+                            } else {
+                                SearchingPulseView()
                             }
-                            .foregroundStyle(VuumColor.secondaryText)
-                        }
-                    }
 
-                    if let tier = tripSession.selectedTier {
-                        HStack(spacing: 10) {
-                            metaChip(icon: tier.systemImage, title: tier.name)
-                            RideClassETABadge(minutes: tier.classETABadgeMinutes, compact: true)
-                            metaChip(
-                                icon: "car.2.fill",
-                                title: nearbyCount == 1 ? "1 nearby" : "\(nearbyCount) nearby"
-                            )
-                        }
-                    } else {
-                        HStack(spacing: 10) {
-                            metaChip(icon: "car.fill", title: tierName)
-                            metaChip(
-                                icon: "car.2.fill",
-                                title: nearbyCount == 1 ? "1 nearby" : "\(nearbyCount) nearby"
-                            )
-                        }
-                    }
+                            Text(tripSession.searchMessage)
+                                .font(.system(size: 20, weight: .bold, design: .rounded))
+                                .multilineTextAlignment(.center)
+                                .frame(maxWidth: .infinity)
+                                .animation(.easeInOut(duration: 0.25), value: tripSession.searchMessage)
 
-                    if let dropoff = tripSession.dropoff {
-                        VStack(alignment: .leading, spacing: 6) {
-                            routeLine(icon: "circle.fill", color: VuumColor.brand, title: tripSession.pickup.name)
-                            routeLine(icon: "mappin.circle.fill", color: VuumColor.primaryText, title: dropoff.name)
-                        }
-                        .padding(12)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(VuumColor.chipBackground, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                    }
+                            if isDelayed {
+                                Label("Weak connection — still searching", systemImage: "wifi.exclamationmark")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundStyle(.orange)
+                            } else if isNoDrivers {
+                                Text("No partners accepted nearby. Try again or change ride category.")
+                                    .font(.system(size: 13, weight: .medium))
+                                    .foregroundStyle(VuumColor.secondaryText)
+                                    .multilineTextAlignment(.center)
+                            } else {
+                                TimelineView(.periodic(from: .now, by: 1)) { _ in
+                                    HStack(spacing: 6) {
+                                        Image(systemName: "clock")
+                                            .font(.system(size: 12, weight: .semibold))
+                                        Text(matchCountdownLabel)
+                                            .font(.system(size: 13, weight: .semibold))
+                                    }
+                                    .foregroundStyle(VuumColor.secondaryText)
+                                }
+                            }
 
-                    if isNoDrivers {
-                        VuumPrimaryButton(title: "Try again") {
-                            tripSession.retrySearch()
+                            if let tier = tripSession.selectedTier {
+                                HStack(spacing: 10) {
+                                    metaChip(icon: tier.systemImage, title: tier.name)
+                                    RideClassETABadge(minutes: tier.classETABadgeMinutes, compact: true)
+                                    metaChip(
+                                        icon: "car.2.fill",
+                                        title: nearbyCount == 1 ? "1 nearby" : "\(nearbyCount) nearby"
+                                    )
+                                }
+                            } else {
+                                HStack(spacing: 10) {
+                                    metaChip(icon: "car.fill", title: tierName)
+                                    metaChip(
+                                        icon: "car.2.fill",
+                                        title: nearbyCount == 1 ? "1 nearby" : "\(nearbyCount) nearby"
+                                    )
+                                }
+                            }
+
+                            if let dropoff = tripSession.dropoff {
+                                VStack(alignment: .leading, spacing: 6) {
+                                    routeLine(icon: "circle.fill", color: VuumColor.brand, title: tripSession.pickup.name)
+                                    routeLine(icon: "mappin.circle.fill", color: VuumColor.primaryText, title: dropoff.name)
+                                }
+                                .padding(12)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .background(VuumColor.chipBackground, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                            }
+
+                            if isNoDrivers {
+                                VuumPrimaryButton(title: "Try again") {
+                                    tripSession.retrySearch()
+                                }
+                            }
+
+                            Button("Cancel request") {
+                                showCancel = true
+                            }
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(.red)
+                            .padding(.top, 2)
+                            .accessibilityHint("Opens cancellation reasons")
                         }
                     }
-
-                    Button("Cancel request") {
-                        showCancel = true
-                    }
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(.red)
-                    .padding(.top, 2)
-                    .accessibilityHint("Opens cancellation reasons")
+                    .frame(maxHeight: min(geo.size.height * 0.48, 380))
                 }
+                .padding(.horizontal, 12)
+                .padding(.bottom, 8)
             }
-            .padding(.horizontal, 12)
-            .padding(.bottom, 8)
         }
         .sheet(isPresented: $showCancel) {
             CancelTripSheet(

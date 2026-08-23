@@ -128,6 +128,8 @@ final class TripSession: ObservableObject {
     }
 
     private var lifecycleTask: Task<Void, Never>?
+    /// Optional traffic-aware ETA re-query (off unless rider opts in + Maps key present).
+    private var etaRefreshTask: Task<Void, Never>?
     /// Separate from trip `lifecycleTask` so idle/search crawls never cancel driver motion.
     private var nearbyMotionTask: Task<Void, Never>?
     private var audioObservation: AnyCancellable?
@@ -148,6 +150,12 @@ final class TripSession: ObservableObject {
     @Published private(set) var previewRoute: [GeoPoint] = []
     private var previewRouteTask: Task<Void, Never>?
     private var routeAssignTask: Task<Void, Never>?
+    /// Live in-trip leg refine (Routes/Directions); cancelled with trip / superseded by next leg.
+    private var legRefineTask: Task<Void, Never>?
+    /// Waypoints last requested for choose-ride preview — skips duplicate Google fetches on resume/redraw.
+    private var previewRouteWaypoints: [GeoPoint]?
+    /// Invalidates in-flight mid-trip destination RouteEngine fetches (independent of motion `lifecycleGeneration`).
+    private var destinationRouteGeneration = 0
     /// Next waypoint index along pickup → stops → dropoff during in-trip legs.
     private var inTripWaypointIndex = 0
     /// Debounce reverse-geocode while GPS crawls.
@@ -173,6 +181,50 @@ final class TripSession: ObservableObject {
     /// XCTest seam: skip the alternating first-search “no drivers” outcome.
     func testingPreferImmediateDriverMatch() {
         simulateNoDriversOnNextSearch = false
+    }
+
+    /// XCTest seam: outstanding Routes/Directions Tasks (preview, assign, leg refine).
+    var testingHasOutstandingGoogleRouteWork: Bool {
+        previewRouteTask != nil || routeAssignTask != nil || legRefineTask != nil
+    }
+
+    // MARK: - App lifecycle (background / resume)
+
+    /// Foreground resume: keep authoritative trip state; do **not** re-issue Routes/Directions/Places.
+    /// Location refresh remains owned by `VuumApp` → `RiderLocationManager` (throttled reverse geocode).
+    func handleAppWillEnterForeground() {
+        // Intentionally no refreshPreviewRoute / assignDriver / Places — audit §54.
+    }
+
+    /// Background: cancel idle/choose-ride Google preview + reverse-geocode; leave active-trip
+    /// route Tasks alone (generation guards still apply on apply).
+    func handleAppDidEnterBackground() {
+        switch phase {
+        case .idle, .selectingDestination, .choosingRide:
+            previewRouteTask?.cancel()
+            previewRouteTask = nil
+            reverseGeocodeTask?.cancel()
+            reverseGeocodeTask = nil
+        case .searching, .matched, .driverEnRoute, .driverArrived, .inTrip, .completed:
+            reverseGeocodeTask?.cancel()
+            reverseGeocodeTask = nil
+        }
+    }
+
+    /// Cancels in-flight Google route / geocode work. Safe on trip cancel — not from `beginMotion`
+    /// / `cancelLifecycle` (those must not abort mid-trip destination RouteEngine applies).
+    private func cancelInFlightGoogleWork() {
+        previewRouteTask?.cancel()
+        previewRouteTask = nil
+        previewRouteWaypoints = nil
+        routeAssignTask?.cancel()
+        routeAssignTask = nil
+        legRefineTask?.cancel()
+        legRefineTask = nil
+        destinationRouteGeneration &+= 1
+        isRecalculatingTripRoute = false
+        reverseGeocodeTask?.cancel()
+        reverseGeocodeTask = nil
     }
 
     private enum MotionKind {
@@ -253,19 +305,10 @@ final class TripSession: ObservableObject {
         var pins: [MapPin] = []
 
         switch phase {
-        case .idle, .selectingDestination:
-            for vehicle in nearbyVehicles {
-                pins.append(
-                    MapPin(
-                        id: vehicle.id,
-                        coordinate: vehicle.coordinate,
-                        kind: .nearby,
-                        heading: vehicle.heading,
-                        vehicleClass: vehicle.vehicleClass
-                    )
-                )
-            }
-        case .choosingRide:
+        case .idle:
+            appendNearbyVehiclePins(to: &pins)
+        case .selectingDestination:
+            // Same ride anchors as later phases — pickup (+ stops / dropoff) while choosing a destination.
             pins.append(MapPin(id: "pickup", coordinate: pickup.coordinate, kind: .pickup, heading: 0))
             for stop in stops {
                 pins.append(MapPin(id: "stop-\(stop.id)", coordinate: stop.coordinate, kind: .stop, heading: 0))
@@ -273,18 +316,8 @@ final class TripSession: ObservableObject {
             if let dropoff {
                 pins.append(MapPin(id: "dropoff", coordinate: dropoff.coordinate, kind: .dropoff, heading: 0))
             }
-            for vehicle in nearbyVehicles {
-                pins.append(
-                    MapPin(
-                        id: vehicle.id,
-                        coordinate: vehicle.coordinate,
-                        kind: .nearby,
-                        heading: vehicle.heading,
-                        vehicleClass: vehicle.vehicleClass
-                    )
-                )
-            }
-        case .searching:
+            appendNearbyVehiclePins(to: &pins)
+        case .choosingRide, .searching:
             pins.append(MapPin(id: "pickup", coordinate: pickup.coordinate, kind: .pickup, heading: 0))
             for stop in stops {
                 pins.append(MapPin(id: "stop-\(stop.id)", coordinate: stop.coordinate, kind: .stop, heading: 0))
@@ -292,17 +325,7 @@ final class TripSession: ObservableObject {
             if let dropoff {
                 pins.append(MapPin(id: "dropoff", coordinate: dropoff.coordinate, kind: .dropoff, heading: 0))
             }
-            for vehicle in nearbyVehicles {
-                pins.append(
-                    MapPin(
-                        id: vehicle.id,
-                        coordinate: vehicle.coordinate,
-                        kind: .nearby,
-                        heading: vehicle.heading,
-                        vehicleClass: vehicle.vehicleClass
-                    )
-                )
-            }
+            appendNearbyVehiclePins(to: &pins)
         case .matched, .driverEnRoute, .driverArrived, .inTrip:
             guard let trip = activeTrip else { break }
             pins.append(MapPin(id: "pickup", coordinate: trip.pickup.coordinate, kind: .pickup, heading: 0))
@@ -328,20 +351,25 @@ final class TripSession: ObservableObject {
         return pins
     }
 
+    /// Preview / remaining polyline for the single live ride — Maps must not invent a second path.
     var mapRoute: [GeoPoint] {
         guard let trip = activeTrip else {
-            if phase == .choosingRide, dropoff != nil {
+            switch phase {
+            case .choosingRide, .searching:
+                guard dropoff != nil else { return [] }
                 return previewRoute.isEmpty
                     ? TripGeo.routePolyline(through: tripWaypoints)
                     : previewRoute
+            default:
+                return []
             }
-            return []
         }
         switch phase {
         case .matched, .driverEnRoute:
             return TripGeo.remainingPath(along: trip.pickupRoute, from: trip.driverCoordinate)
         case .driverArrived:
-            return trip.pickupRoute
+            // Driver at curb — clear approach polyline so the map matches arrival.
+            return []
         case .inTrip:
             return TripGeo.remainingPath(along: trip.tripRoute, from: trip.driverCoordinate)
         default:
@@ -349,11 +377,14 @@ final class TripSession: ObservableObject {
         }
     }
 
-    /// Static fit targets only — live driver position is followed via `followDriver`, not refit every frame.
+    /// Static fit targets only — live driver position is followed via `shouldFollowDriverOnMap`, not refit every frame.
     var mapFitCoordinates: [GeoPoint] {
         switch phase {
-        case .choosingRide:
+        case .choosingRide, .searching:
             return tripWaypoints
+        case .selectingDestination:
+            let points = tripWaypoints
+            return points.count >= 2 ? points : []
         case .matched, .driverEnRoute, .driverArrived:
             guard let trip = activeTrip else { return [] }
             if let start = trip.pickupRoute.first {
@@ -374,6 +405,31 @@ final class TripSession: ObservableObject {
     /// Maps / UI: whether TripSession owns a live driver marker along a route.
     var isSimulatingDriverMotion: Bool {
         motionSimulationKind != nil && activeTrip != nil
+    }
+
+    /// Single camera-follow flag for `TripMapLayer` — derived only from this ride's phase.
+    var shouldFollowDriverOnMap: Bool {
+        guard activeTrip != nil else { return false }
+        switch phase {
+        case .matched, .driverEnRoute, .driverArrived, .inTrip:
+            return true
+        default:
+            return false
+        }
+    }
+
+    private func appendNearbyVehiclePins(to pins: inout [MapPin]) {
+        for vehicle in nearbyVehicles {
+            pins.append(
+                MapPin(
+                    id: vehicle.id,
+                    coordinate: vehicle.coordinate,
+                    kind: .nearby,
+                    heading: vehicle.heading,
+                    vehicleClass: vehicle.vehicleClass
+                )
+            )
+        }
     }
 
     /// Fleet class for the selected / active ride (defaults to standard cars on the home map).
@@ -515,15 +571,29 @@ final class TripSession: ObservableObject {
         ]
         guard autoPickupIDs.contains(pickup.id) else { return }
         guard let location else { return }
+        // Ignore stale / invalid fixes so pickup does not jump to an old coordinate.
+        let age = -location.timestamp.timeIntervalSinceNow
+        guard age >= 0, age <= 60 else { return }
+        guard location.horizontalAccuracy >= 0, location.horizontalAccuracy <= 500 else { return }
 
         let coordinate = GeoPoint(
             latitude: location.coordinate.latitude,
             longitude: location.coordinate.longitude
         )
-        let keptName = pickup.id == "current" ? pickup.name : "Current location"
-        let keptSubtitle = pickup.id == "current"
-            ? pickup.subtitle
-            : ReverseGeocodingService.coordinateFallback(location).subtitle
+        // Market centers keep honest place names; only live GPS (`id == current`) may show
+        // "Current location", and only until reverse geocode supplies a street/place label.
+        let fromMarketCenter = pickup.id != "current"
+        let awaitingFirstLabel = ReverseGeocodingService.isUnresolvedPickupName(pickup.name)
+        let keptName: String
+        let keptSubtitle: String
+        if fromMarketCenter || awaitingFirstLabel {
+            let fallback = ReverseGeocodingService.coordinateFallback(location)
+            keptName = fallback.name
+            keptSubtitle = fallback.subtitle
+        } else {
+            keptName = pickup.name
+            keptSubtitle = pickup.subtitle
+        }
         pickup = Place(
             id: "current",
             name: keptName,
@@ -562,10 +632,24 @@ final class TripSession: ObservableObject {
             // Drop stale results if GPS moved far while geocoding.
             if current.distance(from: snapshot) > 120 { return }
 
+            // Prefer keeping a prior street label over regressing to the unresolved placeholder.
+            let nextName: String
+            let nextSubtitle: String
+            if ReverseGeocodingService.isUnresolvedPickupName(label.name),
+               !ReverseGeocodingService.isUnresolvedPickupName(pickup.name) {
+                nextName = pickup.name
+                nextSubtitle = pickup.subtitle.isEmpty
+                    ? ReverseGeocodingService.coordinateSubtitle(snapshot)
+                    : pickup.subtitle
+            } else {
+                nextName = label.name
+                nextSubtitle = label.subtitle
+            }
+
             pickup = Place(
                 id: "current",
-                name: label.name,
-                subtitle: label.subtitle,
+                name: nextName,
+                subtitle: nextSubtitle,
                 coordinate: pickup.coordinate
             )
             lastReverseGeocodedLocation = snapshot
@@ -599,11 +683,15 @@ final class TripSession: ObservableObject {
         seedNearbyVehicles()
         refreshZoneContext()
         if phase == .choosingRide {
+            // Pickup pin + high-demand zone changed — rebuild preview (live or synthetic)
+            // so map polyline and surge-aware fares use the same geography.
+            refreshPreviewRoute()
             refreshTierPricing()
         }
     }
 
     func beginDestinationSelection(preferredTierID: String? = nil) {
+        cancelInFlightGoogleWork()
         cancelLifecycle()
         self.preferredTierID = preferredTierID
         stickyInjectTierID = nil
@@ -615,6 +703,7 @@ final class TripSession: ObservableObject {
         activeTrip = nil
         packageNotes = ""
         hourlyDurationHours = 0
+        clearPreviewRoute()
         seedNearbyVehicles()
     }
 
@@ -633,6 +722,7 @@ final class TripSession: ObservableObject {
         selectedTier = nil
         activeTrip = nil
         phase = .selectingDestination
+        clearPreviewRoute()
         seedNearbyVehicles()
     }
 
@@ -668,24 +758,24 @@ final class TripSession: ObservableObject {
         )
         let farePoints = fareWaypoints(for: trip, dropoff: place)
 
-        // Immediate synthetic path so the map updates before Directions returns.
-        let synthetic = RouteEngine.synthetic(through: routeWaypoints)
+        // Immediate synthetic path so the map + fare update before Routes/Directions returns.
+        let syntheticRemaining = RouteEngine.synthetic(through: routeWaypoints)
+        let syntheticFare = RouteEngine.synthetic(through: farePoints)
         applyInTripDestinationRoute(
             place: place,
             previousName: previousName,
             previousFareTotal: previousFareTotal,
-            remainingPath: synthetic,
-            fareDistanceMeters: TripGeo.pathLengthMeters(
-                TripGeo.routePolyline(through: farePoints, samplesPerLeg: 24)
-            ),
+            remainingPath: syntheticRemaining,
+            fareRoute: syntheticFare,
             remainingStopStart: remainingStopStart,
             trip: &trip,
             announce: true,
             finalizeRecalc: false
         )
 
-        // Capture after motion restart so a cancel/new change invalidates this fetch.
-        let generation = lifecycleGeneration
+        // Own generation: `beginMotion` bumps `lifecycleGeneration`, which must not drop the live apply.
+        destinationRouteGeneration &+= 1
+        let generation = destinationRouteGeneration
         let placeID = place.id
         routeAssignTask?.cancel()
         routeAssignTask = Task { [weak self] in
@@ -694,12 +784,15 @@ final class TripSession: ObservableObject {
             await MainActor.run {
                 guard let self else { return }
                 guard !Task.isCancelled,
-                      self.lifecycleGeneration == generation,
+                      self.destinationRouteGeneration == generation,
                       self.canChangeInTripDestination,
                       var current = self.activeTrip,
                       current.dropoff.id == placeID
                 else {
-                    self.isRecalculatingTripRoute = false
+                    // Only the latest in-flight change may clear the spinner.
+                    if self.destinationRouteGeneration == generation {
+                        self.isRecalculatingTripRoute = false
+                    }
                     return
                 }
                 self.applyInTripDestinationRoute(
@@ -707,7 +800,7 @@ final class TripSession: ObservableObject {
                     previousName: previousName,
                     previousFareTotal: previousFareTotal,
                     remainingPath: liveRemaining,
-                    fareDistanceMeters: liveFare.distanceMeters,
+                    fareRoute: liveFare,
                     remainingStopStart: remainingStopStart,
                     trip: &current,
                     announce: false,
@@ -760,7 +853,7 @@ final class TripSession: ObservableObject {
         previousName: String,
         previousFareTotal: Int,
         remainingPath: RouteEngine.Route,
-        fareDistanceMeters: Double,
+        fareRoute: RouteEngine.Route,
         remainingStopStart: Int,
         trip: inout ActiveTrip,
         announce: Bool,
@@ -769,8 +862,9 @@ final class TripSession: ObservableObject {
         let waiting = trip.stops.isEmpty ? 0 : trip.stops.count * Self.waitMinutesPerStop
         let airport = MockSurge.isAirportTrip(pickup: trip.pickup, dropoff: place)
         surgeState = MockSurge.state(pickup: trip.pickup, dropoff: place)
+        let fareDistanceMeters = max(fareRoute.distanceMeters, 1)
         let fare = MockFares.breakdown(
-            distanceMeters: max(fareDistanceMeters, 1),
+            distanceMeters: fareDistanceMeters,
             tier: trip.tier,
             discountCDF: appliedPromoDiscountCDF,
             surgeMultiplier: surgeState.multiplier,
@@ -783,9 +877,14 @@ final class TripSession: ObservableObject {
         trip.fare = fare
         dropoff = place
 
-        // Full trip polyline for map fit / remaining-path helpers.
+        // Prefer live fare polyline (Routes/Directions) so the map / corridor match the new fare path.
         let fullWaypoints = fareWaypoints(for: trip, dropoff: place)
-        trip.tripRoute = RouteEngine.synthetic(through: fullWaypoints).coordinates
+        trip.tripRoute = fareRoute.coordinates.count >= 2
+            ? fareRoute.coordinates
+            : RouteEngine.synthetic(through: fullWaypoints).coordinates
+        if fareRoute.durationSeconds > 0 {
+            trip.routeDurationSeconds = fareRoute.durationSeconds
+        }
 
         let pathCoords = remainingPath.coordinates.count >= 2
             ? remainingPath.coordinates
@@ -799,7 +898,7 @@ final class TripSession: ObservableObject {
         let remainingMeters = remainingPath.distanceMeters > 0
             ? remainingPath.distanceMeters
             : TripGeo.pathLengthMeters(pathCoords)
-        let eta = max(1, remainingPath.durationMinutes > 0
+        let eta = max(1, remainingPath.durationSeconds > 0
             ? remainingPath.durationMinutes
             : TripGeo.etaMinutes(distanceMeters: remainingMeters, speedKmh: VehiclePickupETA.tripSpeedKmh(for: trip.tier.vehicleClass)))
 
@@ -811,13 +910,19 @@ final class TripSession: ObservableObject {
 
             if remainingStopStart < trip.stops.count {
                 let stop = trip.stops[remainingStopStart]
-                let leg = TripGeo.routePolyline(
-                    from: trip.driverCoordinate,
-                    to: stop.coordinate,
-                    samples: 40
-                )
+                let leg = Self.firstLeg(of: pathCoords, to: stop.coordinate, from: trip.driverCoordinate)
                 let legDistance = TripGeo.pathLengthMeters(leg)
-                let legETA = TripGeo.etaMinutes(distanceMeters: legDistance)
+                let legETA: Int
+                if let first = remainingPath.legs.first, first.durationSeconds > 0 {
+                    legETA = first.durationMinutes
+                } else if remainingPath.durationSeconds > 0 {
+                    legETA = remainingPath.etaMinutes(forRemainingMeters: legDistance)
+                } else {
+                    legETA = TripGeo.etaMinutes(
+                        distanceMeters: legDistance,
+                        speedKmh: VehiclePickupETA.tripSpeedKmh(for: trip.tier.vehicleClass)
+                    )
+                }
                 trip.distanceRemainingMeters = remainingMeters
                 trip.etaMinutes = eta
                 trip.statusHeadline = "Next stop · \(stop.name)"
@@ -873,6 +978,24 @@ final class TripSession: ObservableObject {
         if finalizeRecalc {
             isRecalculatingTripRoute = false
         }
+    }
+
+    /// Prefix of a multi-leg remaining polyline up to the next stop (falls back to a synthetic leg).
+    private static func firstLeg(of path: [GeoPoint], to waypoint: GeoPoint, from origin: GeoPoint) -> [GeoPoint] {
+        guard path.count >= 2 else {
+            return RouteEngine.synthetic(from: origin, to: waypoint).coordinates
+        }
+        var bestIdx = path.count - 1
+        var bestDist = Double.greatestFiniteMagnitude
+        for (index, point) in path.enumerated() {
+            let distance = TripGeo.distanceMeters(from: point, to: waypoint)
+            if distance < bestDist {
+                bestDist = distance
+                bestIdx = index
+            }
+        }
+        let leg = Array(path.prefix(max(bestIdx + 1, 2)))
+        return leg.count >= 2 ? leg : RouteEngine.synthetic(from: origin, to: waypoint).coordinates
     }
 
     /// Hands a Services-hub product form into the standard choose-ride → request path.
@@ -972,10 +1095,12 @@ final class TripSession: ObservableObject {
             return
         }
         dropoff = place
-        refreshTierPricing()
-        applyPreferredTierIfNeeded()
         phase = .choosingRide
+        // Synthetic preview first so fare distance matches the map immediately;
+        // live Routes/Directions replace the polyline and reprice when ready.
         refreshPreviewRoute()
+        applyPreferredTierIfNeeded()
+        refreshTierPricing()
     }
 
     func addStop(_ place: Place) {
@@ -988,15 +1113,15 @@ final class TripSession: ObservableObject {
         }
         stops.append(place)
         isAddingStop = false
-        refreshTierPricing()
         phase = .choosingRide
         refreshPreviewRoute()
+        refreshTierPricing()
     }
 
     func removeStop(_ place: Place) {
         stops.removeAll { $0.id == place.id }
-        refreshTierPricing()
         refreshPreviewRoute()
+        refreshTierPricing()
     }
 
     /// Reorders an intermediate stop (booking only). Triggers fare + route recalculation.
@@ -1504,14 +1629,14 @@ final class TripSession: ObservableObject {
         }
     }
 
-    func requestSOS() {
+    func requestSOS(coordinate: CLLocationCoordinate2D? = nil) {
         sosRequested = true
         sosRequestedAt = Date()
         safetyTeamNotified = false
         incidentFlagged = true
         notifications?.postSafetyEvent(
             title: "Emergency help requested",
-            body: "Vuum Safety received your SOS and is contacting you with your trip details."
+            body: TripShare.sosDetailBody(for: activeTrip, coordinate: coordinate)
         )
         sosNotifyTask?.cancel()
         sosNotifyTask = Task { @MainActor [weak self] in
@@ -1530,6 +1655,7 @@ final class TripSession: ObservableObject {
         recordCancellation(reason: note, feeLocal: 0, wasFree: true)
         finalizeTripAudio()
         stopPickupWaitTicker()
+        cancelInFlightGoogleWork()
         cancelLifecycle()
         searchStartedAt = nil
         driverAssignedAt = nil
@@ -1602,6 +1728,7 @@ final class TripSession: ObservableObject {
         }
         finalizeTripAudio()
         stopPickupWaitTicker()
+        cancelInFlightGoogleWork()
         cancelLifecycle()
         searchStartedAt = nil
         driverAssignedAt = nil
@@ -1781,8 +1908,12 @@ final class TripSession: ObservableObject {
         previewRoute = []
         previewRouteTask?.cancel()
         previewRouteTask = nil
+        previewRouteWaypoints = nil
         routeAssignTask?.cancel()
         routeAssignTask = nil
+        legRefineTask?.cancel()
+        legRefineTask = nil
+        destinationRouteGeneration &+= 1
         isRecalculatingTripRoute = false
         destinationChangeNotice = nil
         clearRouteDeviationState()
@@ -1794,6 +1925,8 @@ final class TripSession: ObservableObject {
         incidentFlagged = false
         sosNotifyTask?.cancel()
         sosNotifyTask = nil
+        reverseGeocodeTask?.cancel()
+        reverseGeocodeTask = nil
         promoCode = ""
         appliedPromoDiscountCDF = 0
         promoStatus = .idle
@@ -1838,13 +1971,26 @@ final class TripSession: ObservableObject {
         selectedTier = match
     }
 
-    private func refreshPreviewRoute() {
+    private func clearPreviewRoute() {
         previewRouteTask?.cancel()
+        previewRouteTask = nil
+        previewRouteWaypoints = nil
+        previewRoute = []
+    }
+
+    private func refreshPreviewRoute() {
         let waypoints = tripWaypoints
         guard waypoints.count >= 2 else {
-            previewRoute = []
+            clearPreviewRoute()
             return
         }
+        // §54: identical waypoints + outstanding or completed preview → do not re-hit Google.
+        if previewRouteWaypoints == waypoints {
+            if previewRouteTask != nil { return }
+            if !previewRoute.isEmpty { return }
+        }
+        previewRouteTask?.cancel()
+        previewRouteWaypoints = waypoints
         // Immediate synthetic path so the map never blanks while Directions loads.
         previewRoute = RouteEngine.synthetic(through: waypoints).coordinates
         previewRouteTask = Task { [weak self] in
@@ -1852,7 +1998,10 @@ final class TripSession: ObservableObject {
             await MainActor.run {
                 guard let self, !Task.isCancelled else { return }
                 guard self.phase == .choosingRide || self.phase == .searching else { return }
+                // Ignore stale responses if pickup/stops/dropoff changed mid-flight.
+                guard self.tripWaypoints == waypoints else { return }
                 self.previewRoute = built.coordinates
+                self.previewRouteTask = nil
                 self.refreshTierPricing()
             }
         }
@@ -2154,7 +2303,7 @@ final class TripSession: ObservableObject {
         waypoints.append(contentsOf: stops.map(\.coordinate))
         waypoints.append(dropoff.coordinate)
 
-        // Resolve road polylines via RouteEngine (Routes → Directions → synthetic).
+        // Resolve road polylines via RouteProvider (Routes → Directions → synthetic).
         searchMessage = "Confirming your driver's route…"
         let generation = lifecycleGeneration
         let capturedPickup = pickup
@@ -2170,8 +2319,15 @@ final class TripSession: ObservableObject {
         let capturedPrefs = currentRidePreferences
         routeAssignTask?.cancel()
         routeAssignTask = Task { [weak self] in
+            // Routes API (traffic-aware) → Directions → synthetic; always drawable.
             let pickupBuilt = await RouteEngine.route(from: start, to: capturedPickup.coordinate)
+            guard !Task.isCancelled else { return }
             let tripBuilt = await RouteEngine.route(through: waypoints)
+            guard !Task.isCancelled else { return }
+            // Prefer live/traffic duration for approach when available; keep class ETA otherwise.
+            let approachETA = pickupBuilt.isTrafficAware
+                ? max(1, pickupBuilt.durationMinutes)
+                : pickupETA
             await MainActor.run {
                 guard let self else { return }
                 guard self.lifecycleGeneration == generation, self.phase == .searching else { return }
@@ -2179,12 +2335,13 @@ final class TripSession: ObservableObject {
                     dropoff: dropoff,
                     tier: tier,
                     vehicleClass: vehicleClass,
-                    pickupETA: pickupETA,
+                    pickupETA: approachETA,
                     driver: driver,
                     start: start,
                     pickupRoute: pickupBuilt.coordinates,
                     tripRoute: tripBuilt.coordinates,
                     tripDistance: tripBuilt.distanceMeters,
+                    tripDurationSeconds: tripBuilt.durationSeconds,
                     pickupPlace: capturedPickup,
                     stopPlaces: capturedStops,
                     payment: capturedPayment,
@@ -2209,6 +2366,7 @@ final class TripSession: ObservableObject {
         pickupRoute: [GeoPoint],
         tripRoute: [GeoPoint],
         tripDistance: Double,
+        tripDurationSeconds: TimeInterval,
         pickupPlace: Place,
         stopPlaces: [Place],
         payment: PaymentMethod,
@@ -2255,6 +2413,7 @@ final class TripSession: ObservableObject {
             driverHeading: TripGeo.bearingDegrees(from: start, to: pickupPlace.coordinate),
             pickupRoute: pickupRoute,
             tripRoute: tripRoute,
+            routeDurationSeconds: max(tripDurationSeconds, 0),
             etaMinutes: pickupETA,
             distanceRemainingMeters: pickupDistance,
             statusHeadline: "\(driver.name) accepted your ride",
@@ -2365,6 +2524,7 @@ final class TripSession: ObservableObject {
             await MainActor.run {
                 guard self.lifecycleGeneration == generation, self.phase == .matched else { return }
                 self.phase = .driverEnRoute
+                self.syncLiveETARefresh()
                 if var trip = self.activeTrip {
                     trip.statusHeadline = L10n.format("trip.driver_en_route", trip.driver.name)
                     trip.statusDetail = "Arrives in \(TripGeo.formatDuration(minutes: pickupETA)) · \(TripGeo.formatDistance(pickupDistance))"
@@ -2436,7 +2596,12 @@ final class TripSession: ObservableObject {
             )
         }
         trip.driverCoordinate = displayPoint
-        trip.driverHeading = sample.heading
+        // Cap turn rate so polyline corners don't spin the marker.
+        trip.driverHeading = TripGeo.smoothHeading(
+            current: trip.driverHeading,
+            target: sample.heading,
+            maxStepDegrees: 32
+        )
         routeProgress = fraction
 
         let remaining = TripGeo.remainingDistanceMeters(path: motionPath, fraction: fraction)
@@ -2476,9 +2641,10 @@ final class TripSession: ObservableObject {
                 return true
             }
         case .toStop(let index):
-            trip.etaMinutes = TripGeo.etaMinutes(
-                distanceMeters: remaining,
-                speedKmh: VehiclePickupETA.tripSpeedKmh(for: trip.tier.vehicleClass)
+            // Prefer Google/route baseline remaining (same path as approach), not fixedSpeed.
+            trip.etaMinutes = TripMotionTiming.displayedETAMinutes(
+                baseline: motionBaselineETAMinutes,
+                fraction: fraction
             )
             let stopName = trip.stops.indices.contains(index) ? trip.stops[index].name : "Stop \(index + 1)"
             trip.statusHeadline = "Next stop · \(stopName)"
@@ -2490,9 +2656,9 @@ final class TripSession: ObservableObject {
                 return true
             }
         case .toDropoff:
-            trip.etaMinutes = TripGeo.etaMinutes(
-                distanceMeters: remaining,
-                speedKmh: VehiclePickupETA.tripSpeedKmh(for: trip.tier.vehicleClass)
+            trip.etaMinutes = TripMotionTiming.displayedETAMinutes(
+                baseline: motionBaselineETAMinutes,
+                fraction: fraction
             )
             trip.statusHeadline = L10n.t("trip.heading_to_destination")
             trip.statusDetail = "\(TripGeo.formatDuration(minutes: trip.etaMinutes)) · \(TripGeo.formatDistance(remaining)) remaining"
@@ -2557,8 +2723,8 @@ final class TripSession: ObservableObject {
         if snap.didActivateNotice, !didPostRouteDeviationNotification {
             didPostRouteDeviationNotification = true
             notifications?.postSafetyEvent(
-                title: "Route update",
-                body: "Your trip is taking a different path than planned. Share your live location if you want someone to follow along."
+                title: L10n.Route.deviationTitle,
+                body: L10n.Route.deviationBody
             )
         }
     }
@@ -2583,6 +2749,7 @@ final class TripSession: ObservableObject {
         applyPickupWaitToActiveFare()
         clearRouteDeviationState()
         phase = .inTrip
+        syncLiveETARefresh()
         trip = activeTrip ?? trip
         trip.waitingAtStopIndex = nil
         activeTrip = trip
@@ -2622,16 +2789,97 @@ final class TripSession: ObservableObject {
         let to = waypoints[destIndex]
         trip.driverCoordinate = from
         trip.waitingAtStopIndex = nil
-        let path = TripGeo.routePolyline(from: from, to: to, samples: 40)
-        let distance = TripGeo.pathLengthMeters(path)
-        let eta = TripGeo.etaMinutes(
-            distanceMeters: distance,
-            speedKmh: VehiclePickupETA.tripSpeedKmh(for: trip.tier.vehicleClass)
+
+        // Reuse assign-time trip polyline (Routes/Directions/synthetic) — avoid recalculating the whole trip.
+        let reusedPath: [GeoPoint]
+        if trip.tripRoute.count >= 2 {
+            reusedPath = TripGeo.subpath(along: trip.tripRoute, from: from, to: to, samples: 40)
+        } else {
+            reusedPath = RouteEngine.synthetic(from: from, to: to).coordinates
+        }
+        startInTripLegMotion(
+            trip: &trip,
+            path: reusedPath,
+            from: from,
+            destIndex: destIndex,
+            waypointCount: waypoints.count,
+            announceStart: announceStart,
+            durationMinutesOverride: nil
         )
+
+        // When keyed, refine this leg with live road geometry + traffic ETA (early progress only).
+        // Capture generation *after* beginMotion (it bumps lifecycleGeneration).
+        MapBootstrap.configureIfNeeded()
+        guard MapBootstrap.hasAPIKey else { return }
+        let generation = lifecycleGeneration
+        let legIndex = inTripWaypointIndex
+        let vehicleClass = trip.tier.vehicleClass
+        legRefineTask?.cancel()
+        legRefineTask = Task { [weak self] in
+            let live = await RouteEngine.route(from: from, to: to)
+            guard !Task.isCancelled else { return }
+            guard live.hasRoadGeometry || live.isTrafficAware else { return }
+            await MainActor.run {
+                guard let self else { return }
+                guard !Task.isCancelled,
+                      self.lifecycleGeneration == generation,
+                      self.phase == .inTrip,
+                      self.inTripWaypointIndex == legIndex,
+                      self.routeProgress < 0.22,
+                      var current = self.activeTrip
+                else { return }
+                let eta = live.isTrafficAware
+                    ? max(1, live.durationMinutes)
+                    : TripGeo.etaMinutes(
+                        distanceMeters: live.distanceMeters > 0
+                            ? live.distanceMeters
+                            : TripGeo.pathLengthMeters(live.coordinates),
+                        speedKmh: VehiclePickupETA.tripSpeedKmh(for: vehicleClass)
+                    )
+                self.startInTripLegMotion(
+                    trip: &current,
+                    path: live.coordinates.count >= 2 ? live.coordinates : reusedPath,
+                    from: from,
+                    destIndex: destIndex,
+                    waypointCount: waypoints.count,
+                    announceStart: false,
+                    durationMinutesOverride: eta
+                )
+                if self.legRefineTask?.isCancelled == false {
+                    self.legRefineTask = nil
+                }
+            }
+        }
+    }
+
+    private func startInTripLegMotion(
+        trip: inout ActiveTrip,
+        path: [GeoPoint],
+        from: GeoPoint,
+        destIndex: Int,
+        waypointCount: Int,
+        announceStart: Bool,
+        durationMinutesOverride: Int?
+    ) {
+        let distance = TripGeo.pathLengthMeters(path)
+        let eta: Int
+        if let override = durationMinutesOverride {
+            eta = max(1, override)
+        } else if trip.routeDurationSeconds > 0 {
+            let totalMeters = max(TripGeo.pathLengthMeters(trip.tripRoute), 1)
+            let scaled = trip.routeDurationSeconds * (distance / totalMeters)
+            eta = max(1, Int(ceil(scaled / 60.0)))
+        } else {
+            eta = TripGeo.etaMinutes(
+                distanceMeters: distance,
+                speedKmh: VehiclePickupETA.tripSpeedKmh(for: trip.tier.vehicleClass)
+            )
+        }
+        trip.driverCoordinate = from
         trip.distanceRemainingMeters = distance
         trip.etaMinutes = eta
 
-        let isDropoffLeg = destIndex == waypoints.count - 1
+        let isDropoffLeg = destIndex == waypointCount - 1
         if isDropoffLeg {
             trip.statusHeadline = L10n.format("trip.on_the_way", trip.dropoff.name)
             trip.statusDetail = "\(TripGeo.formatDuration(minutes: eta)) · \(TripGeo.formatDistance(distance))"
@@ -2718,6 +2966,7 @@ final class TripSession: ObservableObject {
         // Stop capture but keep the file until home so post-trip incident reports can attach it.
         audioRecorder.retainRecordingFile()
         phase = .completed
+        stopLiveETARefresh()
         var done = trip
         done.driverCoordinate = trip.dropoff.coordinate
         done.distanceRemainingMeters = 0
@@ -2781,6 +3030,7 @@ final class TripSession: ObservableObject {
     }
 
     private func cancelLifecycle() {
+        stopLiveETARefresh()
         lifecycleGeneration += 1
         lifecycleTask?.cancel()
         lifecycleTask = nil
@@ -2790,6 +3040,79 @@ final class TripSession: ObservableObject {
         routeProgress = 0
     }
 
+    /// Starts/stops optional live ETA refresh for approach / in-trip when policy allows.
+    private func syncLiveETARefresh() {
+        guard MapTrafficSettings.shouldRefreshETA(lowDataMode: AppPreferences.shared.lowDataMode) else {
+            stopLiveETARefresh()
+            return
+        }
+        switch phase {
+        case .driverEnRoute, .inTrip:
+            break
+        default:
+            stopLiveETARefresh()
+            return
+        }
+        guard etaRefreshTask == nil else { return }
+        let generation = lifecycleGeneration
+        etaRefreshTask = Task { [weak self] in
+            while !Task.isCancelled {
+                let nanos = UInt64(MapTrafficSettings.etaRefreshIntervalSeconds * 1_000_000_000)
+                try? await Task.sleep(nanoseconds: nanos)
+                guard !Task.isCancelled else { return }
+                await MainActor.run {
+                    guard let self, self.lifecycleGeneration == generation else { return }
+                    self.performLiveETARefresh()
+                }
+            }
+        }
+    }
+
+    private func stopLiveETARefresh() {
+        etaRefreshTask?.cancel()
+        etaRefreshTask = nil
+    }
+
+    /// Re-queries `RouteEngine` for remaining driver?target duration when a Maps key is present.
+    private func performLiveETARefresh() {
+        guard MapTrafficSettings.shouldRefreshETA(lowDataMode: AppPreferences.shared.lowDataMode) else {
+            stopLiveETARefresh()
+            return
+        }
+        guard activeTrip != nil else { return }
+        let origin = activeTrip!.driverCoordinate
+        let destination: GeoPoint
+        switch phase {
+        case .driverEnRoute:
+            destination = activeTrip!.pickup.coordinate
+        case .inTrip:
+            let trip = activeTrip!
+            if let waiting = trip.waitingAtStopIndex, trip.stops.indices.contains(waiting) {
+                destination = trip.stops[waiting].coordinate
+            } else if let nextStop = trip.stops.first(where: { stop in
+                TripGeo.distanceMeters(from: origin, to: stop.coordinate) > 40
+            }) {
+                destination = nextStop.coordinate
+            } else {
+                destination = trip.dropoff.coordinate
+            }
+        default:
+            return
+        }
+        let generation = lifecycleGeneration
+        Task { [weak self] in
+            let built = await RouteEngine.route(from: origin, to: destination)
+            await MainActor.run {
+                guard let self, self.lifecycleGeneration == generation, var live = self.activeTrip else { return }
+                // Keep motion-derived ETA when Google is unavailable; only apply live traffic-aware results.
+                guard built.isTrafficAware, built.source != .synthetic else { return }
+                live.etaMinutes = built.durationMinutes
+                live.distanceRemainingMeters = built.distanceMeters
+                live.routeDurationSeconds = built.durationSeconds
+                self.activeTrip = live
+            }
+        }
+    }
     private var showsNearbyVehicles: Bool {
         switch phase {
         case .idle, .selectingDestination, .choosingRide, .searching:

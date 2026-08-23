@@ -34,7 +34,7 @@ Do **not** block Maps UI work on L10n completeness, full marketplaces, or backen
 - Safety (SOS, share, trusted contacts, trip audio flag, incidents), chat gating, cancel fees, surge/promo
 - Payments shells + history; corporate / executive / field-sales shells
 - Product sheets: ride tiers, 2-Wheels, Hourly (also Rental tile), Airport, Executive, Hotel, Group, Courier, Food, Grocery, **Convenience, Alcohol, Health**
-- Maps stack software: `MapBootstrap`, `VuumMapView` (optional `VuumMapStyle.json` / `VuumMapStyleLite.json` hook), `PlacesSearchService`, `RoutesAPIService`, `DirectionsRouteService`, reverse geocode
+- Maps stack software: `MapBootstrap`, `VuumMapView` (`VuumMapStyle.json` / lite / night via `GMSMapView.mapStyle`), `PlacesSearchService`, `RoutesAPIService`, `DirectionsRouteService`, reverse geocode
 - Offline banner / status UI; hidden diagnostics; no user-visible “demo” copy
 - Docs: SETUP, GOOGLE_MAPS_SETUP, CODEMAGIC_SETUP, TESTING_MATRIX, RFQ_204_MATRIX, ENGINEERING_COMPLETION_REPORT, DIRECTIVE_GAP_STATUS
 - Unit tests under `ios/VuumTests/` (phases, ETA, fare/promo, auth, money, payment/referral — see `TESTING.md`)
@@ -64,9 +64,9 @@ Declared on `ios/Vuum.xcodeproj` (SPM). Xcode / Codemagic resolve on build. **No
 
 | Package | URL | Product | Role |
 |---------|-----|---------|------|
-| **Google Maps SDK** | `https://github.com/googlemaps/ios-maps-sdk` (≥ 9.0.0) | `GoogleMaps` | Live map tiles, markers, polylines |
+| **Google Maps SDK** | `https://github.com/googlemaps/ios-maps-sdk` (≥ 10.0.0, `< 11`) | `GoogleMaps` | Live map tiles, markers, polylines |
 | **ComponentsKit** | `https://github.com/componentskit/ComponentsKit` (≥ 1.7.0) | `ComponentsKit` | Shared controls / accent (`VuumTheme`) |
-| **KeychainSwift** | `https://github.com/evgenyneu/keychain-swift.git` (≥ 9.0.0) | `KeychainSwift` | Rider session persistence |
+| **KeychainSwift** | `https://github.com/evgenyneu/keychain-swift.git` (≥ 24.0.0, `< 25`) | `KeychainSwift` | Rider session persistence |
 
 **Not SPM (HTTPS helpers, same `VUUM_GOOGLE_MAPS_API_KEY`):**
 
@@ -85,15 +85,13 @@ Declared on `ios/Vuum.xcodeproj` (SPM). Xcode / Codemagic resolve on build. **No
 
 ---
 
-## Next steps — Uber-like map styling (pointer only)
-
-Do **not** redesign Maps until the key works and tiles load. Then, in order:
+## Next steps — Uber-like map styling
 
 1. Confirm tiles via [`GOOGLE_MAPS_SETUP.md`](GOOGLE_MAPS_SETUP.md) (scheme env or `Secrets.xcconfig`).
-2. Add Google Maps JSON style as bundle resource **`VuumMapStyle.json`** (optional lite: `VuumMapStyleLite.json`).  
-   `VuumMapView.applyOptionalBrandMapStyle` already loads these if present.
+2. Brand styles ship as bundle resources: **`VuumMapStyle.json`**, **`VuumMapStyleLite.json`**, **`VuumMapStyleNight.json`**.  
+   `VuumMapView` applies them via `GMSMapView.mapStyle` when the Maps key is configured (day/night from `colorScheme`, lite when low-data is on).
 3. Tune in **`ios/Vuum/Maps/VuumMapView.swift`**: polyline color/width, marker icons, padding vs bottom sheets, traffic / low-data.
 4. Drive camera / fit / follow-driver from existing `TripSession` / flow scaffolds — avoid parallel clocks in SwiftUI.
 5. Presenter check: Home → book → search → approach → in-trip polyline with live tiles.
 
-Key files: `MapBootstrap.swift`, `VuumMapView.swift`, flow scaffolds, `TripSession` motion timing.
+Key files: `MapBootstrap.swift`, `VuumMapView.swift`, map style JSON under `ios/Vuum/Maps/`, flow scaffolds, `TripSession` motion timing.

@@ -7,10 +7,8 @@ struct ChangeDestinationSheet: View {
     @EnvironmentObject private var appLocale: AppLocale
     @Environment(\.dismiss) private var dismiss
 
+    @StateObject private var placesSearch = PlacesSearchController()
     @State private var query = ""
-    @State private var remoteSuggestions: [PlacesSearchService.PlaceSuggestion] = []
-    @State private var searchTask: Task<Void, Never>?
-    @State private var isResolving = false
 
     private var currentDropoff: Place? {
         tripSession.activeTrip?.dropoff ?? tripSession.dropoff
@@ -93,10 +91,12 @@ struct ChangeDestinationSheet: View {
                 HStack(spacing: 10) {
                     Image(systemName: "magnifyingglass")
                         .foregroundStyle(VuumColor.secondaryText)
-                    TextField("Search new destination", text: $query)
+                    TextField(L10n.Destination.searchNewDestination, text: $query)
                         .textInputAutocapitalization(.words)
                         .autocorrectionDisabled()
-                    if isResolving || tripSession.isRecalculatingTripRoute {
+                    if placesSearch.isResolving
+                        || placesSearch.isQueryPending
+                        || tripSession.isRecalculatingTripRoute {
                         ProgressView()
                             .controlSize(.small)
                     }
@@ -109,6 +109,22 @@ struct ChangeDestinationSheet: View {
                     .foregroundStyle(VuumColor.secondaryText)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
+                if let status = placesSearch.statusMessage {
+                    HStack(alignment: .top, spacing: 10) {
+                        Text(status)
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(VuumColor.secondaryText)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        if placesSearch.canRetry {
+                            Button(L10n.t("status.retry")) {
+                                placesSearch.retryLastSearch()
+                            }
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(VuumColor.brand)
+                        }
+                    }
+                }
+
                 ScrollView {
                     VStack(spacing: 0) {
                         if !isSearching {
@@ -116,28 +132,34 @@ struct ChangeDestinationSheet: View {
                         }
 
                         if !filteredFavorites.isEmpty {
-                            sectionHeader("Favorites")
+                            sectionHeader(L10n.Destination.favorites)
                             placeRows(filteredFavorites, icon: "star.fill")
                         }
 
                         if !filteredRecent.isEmpty {
-                            sectionHeader("Recent")
+                            sectionHeader(L10n.Destination.recent)
                             placeRows(filteredRecent, icon: "clock.fill")
                         }
 
                         if isSearching {
-                            sectionHeader("Results")
-                            if !remoteSuggestions.isEmpty {
-                                suggestionRows(remoteSuggestions)
+                            sectionHeader(L10n.Destination.results)
+                            if placesSearch.isQueryPending, placesSearch.suggestions.isEmpty {
+                                Text(L10n.Destination.searchingPlaces)
+                                    .font(.system(size: 14))
+                                    .foregroundStyle(VuumColor.secondaryText)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.vertical, 12)
+                            } else if !placesSearch.suggestions.isEmpty {
+                                suggestionRows(placesSearch.suggestions)
                             } else {
-                                Text("No matching places")
+                                Text(L10n.Destination.noMatchingPlaces)
                                     .font(.system(size: 14))
                                     .foregroundStyle(VuumColor.secondaryText)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     .padding(.vertical, 12)
                             }
                         } else if !filteredSuggestions.isEmpty {
-                            sectionHeader("Suggestions")
+                            sectionHeader(L10n.Destination.suggestions)
                             placeRows(filteredSuggestions, icon: "mappin.circle.fill")
                         }
                     }
@@ -148,27 +170,33 @@ struct ChangeDestinationSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Close") {
-                        PlacesSearchService.abandonSession()
+                    Button(L10n.Common.cancel) {
+                        placesSearch.abandonSession()
                         dismiss()
                     }
                 }
             }
             .onAppear {
-                PlacesSearchService.beginSession()
+                placesSearch.beginSession()
             }
             .onChange(of: query) { _, newValue in
-                scheduleRemoteSearch(newValue)
+                let bias = tripSession.activeTrip?.driverCoordinate ?? tripSession.pickup.coordinate
+                placesSearch.scheduleSearch(
+                    newValue,
+                    bias: bias,
+                    market: appLocale.fareMarket,
+                    isPlaceAvailable: isAvailable
+                )
             }
             .onDisappear {
-                searchTask?.cancel()
+                placesSearch.tearDown()
             }
         }
     }
 
     @ViewBuilder
     private var savedQuickRows: some View {
-        sectionHeader("Saved places")
+        sectionHeader(L10n.Destination.savedPlaces)
         if let home = savedPlaces.home, isAvailable(home) {
             placeButton(home, icon: "house.fill")
             Divider()
@@ -225,20 +253,20 @@ struct ChangeDestinationSheet: View {
     }
 
     private func suggestionRows(_ items: [PlacesSearchService.PlaceSuggestion]) -> some View {
-        ForEach(Array(items.enumerated()), id: \.offset) { _, suggestion in
+        ForEach(items) { suggestion in
             Button {
                 selectSuggestion(suggestion)
             } label: {
                 HStack(spacing: 12) {
-                    Image(systemName: "magnifyingglass")
+                    Image(systemName: suggestion.systemImage)
                         .foregroundStyle(VuumColor.brand)
                         .frame(width: 22)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(suggestion.primaryText)
                             .font(.system(size: 15, weight: .semibold))
                             .foregroundStyle(VuumColor.primaryText)
-                        if !suggestion.secondaryText.isEmpty {
-                            Text(suggestion.secondaryText)
+                        if !suggestion.compactSubtitle.isEmpty {
+                            Text(suggestion.compactSubtitle)
                                 .font(.system(size: 12))
                                 .foregroundStyle(VuumColor.secondaryText)
                                 .lineLimit(2)
@@ -249,51 +277,22 @@ struct ChangeDestinationSheet: View {
                 .padding(.vertical, 10)
             }
             .buttonStyle(.plain)
+            .disabled(placesSearch.isResolving)
             Divider()
         }
     }
 
-    private func scheduleRemoteSearch(_ raw: String) {
-        searchTask?.cancel()
-        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else {
-            remoteSuggestions = []
-            return
-        }
-        searchTask = Task {
-            try? await Task.sleep(for: .milliseconds(280))
-            guard !Task.isCancelled else { return }
-            let bias = tripSession.activeTrip?.driverCoordinate ?? tripSession.pickup.coordinate
-            let results = await PlacesSearchService.autocomplete(
-                query: trimmed,
-                bias: bias,
-                market: appLocale.fareMarket
-            )
-            guard !Task.isCancelled else { return }
-            remoteSuggestions = results.filter { suggestion in
-                if let place = suggestion.place {
-                    return isAvailable(place)
-                }
-                return true
-            }
-        }
-    }
-
     private func selectSuggestion(_ suggestion: PlacesSearchService.PlaceSuggestion) {
-        isResolving = true
         Task {
-            let place = await PlacesSearchService.resolve(suggestion)
-            await MainActor.run {
-                isResolving = false
-                guard let place, isAvailable(place) else { return }
-                confirm(place)
-            }
+            let place = await placesSearch.resolve(suggestion)
+            guard let place, isAvailable(place) else { return }
+            confirm(place)
         }
     }
 
     private func confirm(_ place: Place) {
         savedPlaces.recordRecent(place)
-        PlacesSearchService.abandonSession()
+        placesSearch.abandonSession()
         tripSession.updateInTripDestination(place)
         dismiss()
     }

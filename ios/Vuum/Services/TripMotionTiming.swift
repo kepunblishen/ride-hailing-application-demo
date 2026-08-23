@@ -15,7 +15,7 @@ enum TripMotionTiming {
 
     /// Seconds of wall time per displayed ETA minute while the marker moves.
     private static let wallSecondsPerDisplayedMinute = 3.5
-    private static let minSimulationSeconds: TimeInterval = 14
+    private static let minSimulationSeconds: TimeInterval = 8
     private static let maxSimulationSeconds: TimeInterval = 50
 
     static func pickupETAMinutes(for vehicleClass: VehicleClass) -> Int {

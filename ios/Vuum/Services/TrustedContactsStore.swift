@@ -1,4 +1,5 @@
 import Combine
+import CoreLocation
 import Foundation
 
 struct TrustedContact: Identifiable, Equatable, Codable, Hashable {
@@ -198,6 +199,25 @@ enum TripShare {
         return "https://share.vuum.app/live/\(padded)"
     }
 
+    /// Google Maps deep link when a live fix is available.
+    static func mapsURLString(latitude: Double, longitude: Double) -> String {
+        String(format: "https://maps.google.com/?q=%.5f,%.5f", latitude, longitude)
+    }
+
+    static func coordinateLine(for coordinate: CLLocationCoordinate2D?) -> String? {
+        guard let coordinate,
+              CLLocationCoordinate2DIsValid(coordinate),
+              abs(coordinate.latitude) > 0.000_01 || abs(coordinate.longitude) > 0.000_01
+        else { return nil }
+        let maps = mapsURLString(latitude: coordinate.latitude, longitude: coordinate.longitude)
+        return String(
+            format: "Live location: %.5f, %.5f\n%@",
+            coordinate.latitude,
+            coordinate.longitude,
+            maps
+        )
+    }
+
     static func phaseLabel(for phase: TripPhase) -> String {
         switch phase {
         case .matched, .driverEnRoute:
@@ -213,11 +233,15 @@ enum TripShare {
         }
     }
 
-    static func message(for trip: ActiveTrip, phase: TripPhase = .inTrip) -> String {
+    static func message(
+        for trip: ActiveTrip,
+        phase: TripPhase = .inTrip,
+        coordinate: CLLocationCoordinate2D? = nil
+    ) -> String {
         let eta = TripGeo.formatDuration(minutes: max(trip.etaMinutes, 0))
         let link = liveShareURLString(for: trip)
         let tripID = tripID(for: trip)
-        return """
+        var body = """
         I'm on a Vuum trip — follow my ride live:
         \(link)
 
@@ -227,17 +251,55 @@ enum TripShare {
         To: \(trip.dropoff.name)
         ETA: \(eta)
         Trip PIN: \(trip.tripPIN)
+        """
+        if let coordLine = coordinateLine(for: coordinate) {
+            body += "\n\(coordLine)\n"
+        }
+        body += """
 
         If anything looks wrong, call me or contact Vuum support.
         """
+        return body
     }
 
-    static func message(for trip: ActiveTrip, contact: TrustedContact, phase: TripPhase) -> String {
+    static func message(
+        for trip: ActiveTrip,
+        contact: TrustedContact,
+        phase: TripPhase,
+        coordinate: CLLocationCoordinate2D? = nil
+    ) -> String {
         """
         Hi \(contact.name.split(separator: " ").first.map(String.init) ?? contact.name),
 
-        \(message(for: trip, phase: phase))
+        \(message(for: trip, phase: phase, coordinate: coordinate))
         """
+    }
+
+    /// Compact SOS notification body including live coords when available.
+    static func sosDetailBody(
+        for trip: ActiveTrip?,
+        coordinate: CLLocationCoordinate2D?
+    ) -> String {
+        var parts: [String] = [
+            "Vuum Safety received your SOS and is contacting you with your trip details."
+        ]
+        if let trip {
+            parts.append("Trip ID \(tripID(for: trip)).")
+        }
+        if let coordinate,
+           CLLocationCoordinate2DIsValid(coordinate),
+           abs(coordinate.latitude) > 0.000_01 || abs(coordinate.longitude) > 0.000_01 {
+            parts.append(
+                String(
+                    format: "Live location %.5f, %.5f.",
+                    coordinate.latitude,
+                    coordinate.longitude
+                )
+            )
+        } else {
+            parts.append("Live GPS unavailable — trip pin will be used.")
+        }
+        return parts.joined(separator: " ")
     }
 
     static var shareByDefaultEnabled: Bool {

@@ -58,10 +58,12 @@
 | Live map tiles + blue-dot | Home / trip with key + Location | Google Map tiles; user location when permitted | Blocked on Maps key |
 | Places autocomplete (Google) | Type arbitrary address with key | Places API (New) suggestions | Blocked on Maps key |
 | Places fallback (no key) | Type destination without key | Local Lubumbashi / Nairobi catalog / recents / saved | Pass |
-| Places failure | Key present but Places API disabled / network error | Falls back to local catalog without hard crash | Pass |
+| Places failure | Key present but Places API disabled / network error | Falls back to local catalog; resolve failure shows short error | Pass |
+| Places session + debounce | Focus search, type quickly, dismiss | One session token; ~300 ms debounce; abandon on dismiss | Pass |
 | Routes / Directions live polyline | Confirm ride with key + APIs enabled | Road-following polyline via Routes → Directions | Blocked on Maps key |
 | Routes failure / no key | Confirm ride without key or with Routes failing | Synthetic polyline retained; ETAs still shown | Pass |
 | Reverse geocode | Drop / adjust pickup pin | Google reverse geocode when keyed; else `CLGeocoder` | Pass (live Google: Blocked on Maps key) |
+| Vehicle-class map markers | Idle nearby fleet + book bike / car / XXL | Markers use SF Symbol badges: `bicycle` / `car.fill` / `car.2.fill` by `MapPin.vehicleClass` | Pass (live tiles: Blocked on Maps key) |
 
 ---
 
@@ -96,7 +98,7 @@
 | Scheduled / Reserve | Later → future time → Reserve | Upcoming reservation listed; cancel from Activity | Pass |
 | Confirm → searching | Confirm request | Phase → searching; matching UI | Pass |
 | Cancel before match | Cancel while searching | Returns to idle / home; fee rules if in window | Pass |
-| Surge display | Book in high-demand zone / mock surge | Surge state visible in pricing when active | Pass |
+| Surge display | Book in high-demand zone (live GPS or catalog pin) | Surge banner + multiplier on choose-ride; fare breakdown surge line; still correct after live route reprice | Pass (software; live Maps key optional) |
 | Preview route on choose-ride | Open choose-ride | Synthetic path immediately; live path when keyed | Pass (live: Blocked on Maps key) |
 
 ---
@@ -111,7 +113,7 @@
 | Arrived | Reach driver-arrived phase | Arrived state; boarding PIN panel when required | Pass |
 | Boarding PIN / OTP | Preference require PIN on; confirm boarding | Correct PIN advances; wrong PIN blocked | Pass |
 | In trip (active) | Confirm boarding | In-trip chrome; share / chat / safety available | Pass |
-| In-trip destination change | Change destination sheet | Updates dropoff / fare path; keeps stops as designed | Pass |
+| In-trip destination change | Change destination sheet | Updates dropoff; **live route polyline + fare** via `RouteEngine` (synthetic first, then live); keeps stops | Pass (hardened: `destinationRouteGeneration`; see `InTripDestinationChangeTests`) |
 | Completion | Finish trip simulation | Post-trip fare / rate / receipt path | Pass |
 | Cancel mid-trip (policy) | CancelTripSheet from active phases | Fee vs free window per `CancellationPolicy` | Pass |
 | Rebook from receipt | Activity → past trip → Rebook | Reopens choose-ride / draft for that route | Pass |
@@ -208,7 +210,7 @@
 |---------|-------------|-----------------|--------|
 | Service zone catalog | Book inside Lubumbashi / Nairobi markets | Zone gating on Home / Services / choose-ride | Pass |
 | Airport geofence | Pickup near Luano / JKIA / Wilson (catalog coords) | Airport product / zone messaging | Pass |
-| Downtown / high-demand | Book in catalog high-demand cells | Surge / demand presentation when mocked | Pass |
+| Downtown / high-demand | Book in catalog high-demand cells | Surge / demand presentation when active; banner stays aligned after pickup adjust + live preview | Pass |
 | Out-of-zone messaging | Force pickup outside service area if UI allows | Unavailable / out-of-zone status (not a silent book) | Pass |
 | Live city boundary polygons | Drive arbitrary GPS across city edges | Full polygon / route-deviation depth still thin | Manual on device |
 

@@ -9,6 +9,7 @@ struct DiagnosticsToolsView: View {
     @EnvironmentObject private var network: NetworkReachability
     @EnvironmentObject private var fieldSales: FieldSalesStore
     @ObservedObject private var diagnostics = DeveloperDiagnostics.shared
+    @ObservedObject private var mapsDiagnostics = GoogleMapsDiagnostics.shared
 
     @State private var confirmReset = false
 
@@ -18,6 +19,47 @@ struct DiagnosticsToolsView: View {
                 Text("Internal tools for QA and presentation prep. Keep locked for client walkthroughs.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
+            }
+
+            Section("Maps credentials") {
+                LabeledContent("API key", value: mapsDiagnostics.keyPresenceLabel)
+                LabeledContent("Key usable", value: mapsDiagnostics.hasUsableKeyLabel)
+                LabeledContent("Maps SDK", value: mapsDiagnostics.mapsSDKConfiguredLabel)
+                LabeledContent("Bundle ID", value: mapsDiagnostics.bundleID)
+                LabeledContent("Build", value: mapsDiagnostics.buildConfiguration)
+                LabeledContent(
+                    "Last error",
+                    value: mapsDiagnostics.lastErrorCode ?? "None"
+                )
+                if let rider = mapsDiagnostics.lastRiderMessage {
+                    Text(rider)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+                #if DEBUG
+                if !mapsDiagnostics.recentRequests.isEmpty {
+                    ForEach(mapsDiagnostics.recentRequests.prefix(8)) { entry in
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(entry.api)
+                                .font(.caption.weight(.semibold))
+                            Text(
+                                "\(entry.outcome) · \(entry.durationMs)ms · attempts \(entry.attemptCount)"
+                                    + (entry.httpStatus.map { " · HTTP \($0)" } ?? "")
+                            )
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        }
+                    }
+                    Button("Clear Maps request log") {
+                        mapsDiagnostics.clearRequestLog()
+                        MapsRequestCache.clearAll()
+                    }
+                } else {
+                    Text("No Google HTTPS calls logged yet (DEBUG).")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+                #endif
             }
 
             Section("Market & language") {
@@ -84,7 +126,7 @@ struct DiagnosticsToolsView: View {
 
             Section("Safety") {
                 Button("Trigger SOS") {
-                    tripSession.requestSOS()
+                    tripSession.requestSOS(coordinate: location.latestLocation?.coordinate)
                 }
                 Button(tripSession.audioRecorder.isRecording ? "Stop recording" : "Start recording") {
                     Task {

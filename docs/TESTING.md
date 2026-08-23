@@ -6,7 +6,8 @@ XCTest target **`VuumTests`** covers critical business logic (directive **§75 p
 |------|--------|
 | `ios/VuumTests/TripSessionPhaseTests.swift` | Trip phase machine: idle → selecting → choosingRide → searching → cancel / reset |
 | `ios/VuumTests/TripSessionLifecyclePhaseTests.swift` | Accelerated search → matched → enRoute → arrived → inTrip (+ boarding PIN) |
-| `ios/VuumTests/VehiclePickupETATests.swift` | Pickup ETA by class: bike **2**, car **5**, XXL/large **10** |
+| `ios/VuumTests/InTripDestinationChangeTests.swift` | Mid-trip destination change refreshes `tripRoute` polyline end + fare; rejects pickup/same dropoff |
+| `ios/VuumTests/VehiclePickupETATests.swift` | Pickup ETA by class: bike **2**, car **5**, XXL/large **10**; map SF Symbol names (`bicycle` / `car.fill` / `car.2.fill`) |
 | `ios/VuumTests/FarePromoMathTests.swift` | `MockFares.breakdown` discount / waiting / surge; `PromoCodesStore` validation |
 | `ios/VuumTests/AuthOTPValidationTests.swift` | Phone / OTP digit gates, profile email rules, `AppLocale` national-number helpers |
 | `ios/VuumTests/CurrencyMoneyFormattingTests.swift` | `Money` / `CurrencyFormatter` / FX helpers / dual-currency pairs |

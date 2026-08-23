@@ -5,7 +5,8 @@ struct AppPreferencesView: View {
     @EnvironmentObject private var appLocale: AppLocale
     @AppStorage(AppLocale.overrideKey) private var marketOverride = "auto"
     @AppStorage("vuum.distanceUnit") private var distanceUnit = "km"
-    @AppStorage("vuum.mapTraffic") private var mapTraffic = true
+    @AppStorage(MapTrafficSettings.trafficKey) private var mapTraffic = false
+    @AppStorage(MapTrafficSettings.etaRefreshKey) private var etaRefresh = false
 
     private var currencyLabel: String {
         AppLocale.currencySubtitle(for: appLocale.fareMarket)
@@ -67,16 +68,23 @@ struct AppPreferencesView: View {
                     Text(L10n.Settings.distance)
                 }
                 Toggle(L10n.Settings.traffic, isOn: $mapTraffic)
-                    .disabled(preferences.lowDataMode)
+                    .disabled(preferences.lowDataMode || !MapBootstrap.hasAPIKey)
+                Toggle(L10n.Settings.etaRefresh, isOn: $etaRefresh)
+                    .disabled(preferences.lowDataMode || !MapBootstrap.hasAPIKey)
             }
         }
         .navigationTitle(L10n.Account.preferencesTitle)
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
+            MapBootstrap.configureIfNeeded()
             appLocale.setOverride(AppLocale.Override(rawValue: marketOverride) ?? .auto)
         }
         .onChange(of: preferences.lowDataMode) { _, enabled in
-            if enabled { mapTraffic = false }
+            if enabled {
+                mapTraffic = false
+                etaRefresh = false
+                MapTrafficSettings.applyLowDataMode(true)
+            }
         }
     }
 }

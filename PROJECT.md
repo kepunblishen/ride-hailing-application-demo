@@ -72,8 +72,8 @@ Folder conventions: [`.cursor/rules/project-structure.mdc`](.cursor/rules/projec
 | Package | Role |
 |---------|------|
 | [ComponentsKit](https://github.com/componentskit/ComponentsKit) (≥1.7) | Shared UI controls / accent bootstrap |
-| [Google Maps iOS SDK](https://github.com/googlemaps/ios-maps-sdk) (≥9.0) | Live map surface (`GoogleMaps`) |
-| [KeychainSwift](https://github.com/evgenyneu/keychain-swift) (≥9.0) | Persisted rider session |
+| [Google Maps iOS SDK](https://github.com/googlemaps/ios-maps-sdk) (≥9.0, `<10`) | Live map surface (`GoogleMaps`) |
+| [KeychainSwift](https://github.com/evgenyneu/keychain-swift) (≥24.0) | Persisted rider session |
 
 **Credential-gated (no extra SPM):** Places API (New) via `PlacesSearchService`, Routes API via `RoutesAPIService` — same `VUUM_GOOGLE_MAPS_API_KEY`.
 

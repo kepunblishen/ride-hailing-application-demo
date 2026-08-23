@@ -1,4 +1,4 @@
-﻿// !$*UTF8*$!
+// !$*UTF8*$!
 {
 	archiveVersion = 1;
 	classes = {
@@ -43,8 +43,15 @@
 		S10000000000000000000006 /* TripAudioRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = S20000000000000000000006 /* TripAudioRecorder.swift */; };
 		S10000000000000000000007 /* TrustedContactsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = S20000000000000000000007 /* TrustedContactsStore.swift */; };
 		S10000000000000000000008 /* PlacesSearchService.swift in Sources */ = {isa = PBXBuildFile; fileRef = S20000000000000000000008 /* PlacesSearchService.swift */; };
+		S10000000000000000000012 /* PlacesSearchController.swift in Sources */ = {isa = PBXBuildFile; fileRef = S20000000000000000000012 /* PlacesSearchController.swift */; };
 		S10000000000000000000009 /* SavedPlacesStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = S20000000000000000000009 /* SavedPlacesStore.swift */; };
 		S1000000000000000000000C /* RoutesAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = S2000000000000000000000C /* RoutesAPIService.swift */; };
+		S10000000000000000000020 /* GoogleAPIError.swift in Sources */ = {isa = PBXBuildFile; fileRef = S20000000000000000000020 /* GoogleAPIError.swift */; };
+		S10000000000000000000021 /* GoogleAPIHTTP.swift in Sources */ = {isa = PBXBuildFile; fileRef = S20000000000000000000021 /* GoogleAPIHTTP.swift */; };
+		S10000000000000000000022 /* GoogleMapsDiagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = S20000000000000000000022 /* GoogleMapsDiagnostics.swift */; };
+		S10000000000000000000023 /* GoogleMapsREST.swift in Sources */ = {isa = PBXBuildFile; fileRef = S20000000000000000000023 /* GoogleMapsREST.swift */; };
+		S10000000000000000000024 /* MapsRequestCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = S20000000000000000000024 /* MapsRequestCache.swift */; };
+		S10000000000000000000025 /* BoundedTTLCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = S20000000000000000000025 /* BoundedTTLCache.swift */; };
 		S1000000000000000000000B /* PaymentMethodStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = S2000000000000000000000B /* PaymentMethodStore.swift */; };
 		PAY100000000000000000002 /* PaymentHubView.swift in Sources */ = {isa = PBXBuildFile; fileRef = PAY200000000000000000002 /* PaymentHubView.swift */; };
 		A10000000000000000000005 /* TermsAgreeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000005 /* TermsAgreeView.swift */; };
@@ -90,6 +97,11 @@
 		SVC1A2900C /* SafetyAutoActivation.swift in Sources */ = {isa = PBXBuildFile; fileRef = SVC2A2900C /* SafetyAutoActivation.swift */; };
 		MAP100000000000000000001 /* DirectionsRouteService.swift in Sources */ = {isa = PBXBuildFile; fileRef = MAP200000000000000000001 /* DirectionsRouteService.swift */; };
 		MAP100000000000000000002 /* RouteEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = MAP200000000000000000002 /* RouteEngine.swift */; };
+		MAP100000000000000000006 /* MapTrafficSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = MAP200000000000000000006 /* MapTrafficSettings.swift */; };
+		MAP100000000000000000006 /* RouteProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = MAP200000000000000000006 /* RouteProvider.swift */; };
+		MAP100000000000000000003 /* VuumMapStyle.json in Resources */ = {isa = PBXBuildFile; fileRef = MAP200000000000000000003 /* VuumMapStyle.json */; };
+		MAP100000000000000000004 /* VuumMapStyleLite.json in Resources */ = {isa = PBXBuildFile; fileRef = MAP200000000000000000004 /* VuumMapStyleLite.json */; };
+		MAP100000000000000000005 /* VuumMapStyleNight.json in Resources */ = {isa = PBXBuildFile; fileRef = MAP200000000000000000005 /* VuumMapStyleNight.json */; };
 		S1000000000000000000000D /* PromoCodesStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = S2000000000000000000000D /* PromoCodesStore.swift */; };
 		S1000000000000000000000E /* TripMotionTiming.swift in Sources */ = {isa = PBXBuildFile; fileRef = S2000000000000000000000E /* TripMotionTiming.swift */; };
 		S1000000000000000000000F /* NetworkReachability.swift in Sources */ = {isa = PBXBuildFile; fileRef = S2000000000000000000000F /* NetworkReachability.swift */; };
@@ -102,6 +114,7 @@
 		MDL1A29002 /* Money.swift in Sources */ = {isa = PBXBuildFile; fileRef = MDL2A29002 /* Money.swift */; };
 		SVC1A29006 /* PricingEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = SVC2A29006 /* PricingEngine.swift */; };
 		MDL1A29003 /* ServiceZone.swift in Sources */ = {isa = PBXBuildFile; fileRef = MDL2A29003 /* ServiceZone.swift */; };
+		MDL1A29004 /* PlaceCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = MDL2A29004 /* PlaceCategory.swift */; };
 		SVC1A29004 /* DeveloperDiagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = SVC2A29004 /* DeveloperDiagnostics.swift */; };
 		SVC1A29005 /* FieldSalesStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = SVC2A29005 /* FieldSalesStore.swift */; };
 		SVC1A29007 /* ReservedTripStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = SVC2A29007 /* ReservedTripStore.swift */; };
@@ -125,6 +138,12 @@
 		T10000000000000000000006 /* PaymentReferralEligibilityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = T20000000000000000000006 /* PaymentReferralEligibilityTests.swift */; };
 		T10000000000000000000007 /* TripSessionLifecyclePhaseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = T20000000000000000000007 /* TripSessionLifecyclePhaseTests.swift */; };
 		T10000000000000000000008 /* RouteDeviationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = T20000000000000000000008 /* RouteDeviationTests.swift */; };
+		T10000000000000000000009 /* MapBootstrapKeyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = T20000000000000000000009 /* MapBootstrapKeyTests.swift */; };
+		T1000000000000000000000A /* InTripDestinationChangeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = T2000000000000000000000A /* InTripDestinationChangeTests.swift */; };
+		T1000000000000000000000B /* ReverseGeocodingNamingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = T2000000000000000000000B /* ReverseGeocodingNamingTests.swift */; };
+		T1000000000000000000000C /* PlacesSearchLocalCatalogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = T2000000000000000000000C /* PlacesSearchLocalCatalogTests.swift */; };
+		T1000000000000000000000E /* GoogleAPIErrorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = T2000000000000000000000E /* GoogleAPIErrorTests.swift */; };
+		T1000000000000000000000D /* RouteEngineProviderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = T2000000000000000000000D /* RouteEngineProviderTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -144,6 +163,7 @@
 		R20000000000000000000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		R20000000000000000000003 /* RootFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootFlowView.swift; sourceTree = "<group>"; };
 		R20000000000000000000004 /* TripModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripModels.swift; sourceTree = "<group>"; };
+		MDL2A29004 /* PlaceCategory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceCategory.swift; sourceTree = "<group>"; };
 		R20000000000000000000005 /* TripSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripSession.swift; sourceTree = "<group>"; };
 		R20000000000000000000006 /* MockCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockCatalog.swift; sourceTree = "<group>"; };
 		R20000000000000000000007 /* MapBootstrap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapBootstrap.swift; sourceTree = "<group>"; };
@@ -174,8 +194,15 @@
 		S20000000000000000000006 /* TripAudioRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripAudioRecorder.swift; sourceTree = "<group>"; };
 		S20000000000000000000007 /* TrustedContactsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrustedContactsStore.swift; sourceTree = "<group>"; };
 		S20000000000000000000008 /* PlacesSearchService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlacesSearchService.swift; sourceTree = "<group>"; };
+		S20000000000000000000012 /* PlacesSearchController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlacesSearchController.swift; sourceTree = "<group>"; };
 		S20000000000000000000009 /* SavedPlacesStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedPlacesStore.swift; sourceTree = "<group>"; };
 		S2000000000000000000000C /* RoutesAPIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutesAPIService.swift; sourceTree = "<group>"; };
+		S20000000000000000000020 /* GoogleAPIError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleAPIError.swift; sourceTree = "<group>"; };
+		S20000000000000000000021 /* GoogleAPIHTTP.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleAPIHTTP.swift; sourceTree = "<group>"; };
+		S20000000000000000000022 /* GoogleMapsDiagnostics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleMapsDiagnostics.swift; sourceTree = "<group>"; };
+		S20000000000000000000023 /* GoogleMapsREST.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleMapsREST.swift; sourceTree = "<group>"; };
+		S20000000000000000000024 /* MapsRequestCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapsRequestCache.swift; sourceTree = "<group>"; };
+		S20000000000000000000025 /* BoundedTTLCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoundedTTLCache.swift; sourceTree = "<group>"; };
 		S2000000000000000000000A /* AppLocale.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLocale.swift; sourceTree = "<group>"; };
 		S2000000000000000000000B /* PaymentMethodStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentMethodStore.swift; sourceTree = "<group>"; };
 		PAY200000000000000000002 /* PaymentHubView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentHubView.swift; sourceTree = "<group>"; };
@@ -223,6 +250,11 @@
 		SVC2A2900C /* SafetyAutoActivation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SafetyAutoActivation.swift; sourceTree = "<group>"; };
 		MAP200000000000000000001 /* DirectionsRouteService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DirectionsRouteService.swift; sourceTree = "<group>"; };
 		MAP200000000000000000002 /* RouteEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteEngine.swift; sourceTree = "<group>"; };
+		MAP200000000000000000006 /* MapTrafficSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapTrafficSettings.swift; sourceTree = "<group>"; };
+		MAP200000000000000000006 /* RouteProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteProvider.swift; sourceTree = "<group>"; };
+		MAP200000000000000000003 /* VuumMapStyle.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = VuumMapStyle.json; sourceTree = "<group>"; };
+		MAP200000000000000000004 /* VuumMapStyleLite.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = VuumMapStyleLite.json; sourceTree = "<group>"; };
+		MAP200000000000000000005 /* VuumMapStyleNight.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = VuumMapStyleNight.json; sourceTree = "<group>"; };
 		S2000000000000000000000D /* PromoCodesStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromoCodesStore.swift; sourceTree = "<group>"; };
 		S2000000000000000000000E /* TripMotionTiming.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripMotionTiming.swift; sourceTree = "<group>"; };
 		S2000000000000000000000F /* NetworkReachability.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkReachability.swift; sourceTree = "<group>"; };
@@ -235,6 +267,7 @@
 		MDL2A29002 /* Money.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Money.swift; sourceTree = "<group>"; };
 		SVC2A29006 /* PricingEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PricingEngine.swift; sourceTree = "<group>"; };
 		MDL2A29003 /* ServiceZone.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceZone.swift; sourceTree = "<group>"; };
+		MDL2A29004 /* PlaceCategory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceCategory.swift; sourceTree = "<group>"; };
 		SVC2A29004 /* DeveloperDiagnostics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeveloperDiagnostics.swift; sourceTree = "<group>"; };
 		SVC2A29005 /* FieldSalesStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FieldSalesStore.swift; sourceTree = "<group>"; };
 		SVC2A29007 /* ReservedTripStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReservedTripStore.swift; sourceTree = "<group>"; };
@@ -259,6 +292,12 @@
 		T20000000000000000000006 /* PaymentReferralEligibilityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentReferralEligibilityTests.swift; sourceTree = "<group>"; };
 		T20000000000000000000007 /* TripSessionLifecyclePhaseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripSessionLifecyclePhaseTests.swift; sourceTree = "<group>"; };
 		T20000000000000000000008 /* RouteDeviationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteDeviationTests.swift; sourceTree = "<group>"; };
+		T20000000000000000000009 /* MapBootstrapKeyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapBootstrapKeyTests.swift; sourceTree = "<group>"; };
+		T2000000000000000000000A /* InTripDestinationChangeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InTripDestinationChangeTests.swift; sourceTree = "<group>"; };
+		T2000000000000000000000B /* ReverseGeocodingNamingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReverseGeocodingNamingTests.swift; sourceTree = "<group>"; };
+		T2000000000000000000000C /* PlacesSearchLocalCatalogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlacesSearchLocalCatalogTests.swift; sourceTree = "<group>"; };
+		T2000000000000000000000E /* GoogleAPIErrorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleAPIErrorTests.swift; sourceTree = "<group>"; };
+		T2000000000000000000000D /* RouteEngineProviderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteEngineProviderTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -311,6 +350,12 @@
 				T20000000000000000000006 /* PaymentReferralEligibilityTests.swift */,
 				T20000000000000000000007 /* TripSessionLifecyclePhaseTests.swift */,
 				T20000000000000000000008 /* RouteDeviationTests.swift */,
+				T20000000000000000000009 /* MapBootstrapKeyTests.swift */,
+				T2000000000000000000000A /* InTripDestinationChangeTests.swift */,
+				T2000000000000000000000B /* ReverseGeocodingNamingTests.swift */,
+				T2000000000000000000000C /* PlacesSearchLocalCatalogTests.swift */,
+				T2000000000000000000000D /* RouteEngineProviderTests.swift */,
+				T2000000000000000000000E /* GoogleAPIErrorTests.swift */,
 			);
 			path = VuumTests;
 			sourceTree = "<group>";
@@ -365,6 +410,7 @@
 				MDL2A29001 /* FieldSalesModels.swift */,
 				MDL2A29002 /* Money.swift */,
 				MDL2A29003 /* ServiceZone.swift */,
+				MDL2A29004 /* PlaceCategory.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -383,9 +429,16 @@
 				S20000000000000000000006 /* TripAudioRecorder.swift */,
 				S20000000000000000000007 /* TrustedContactsStore.swift */,
 				S20000000000000000000008 /* PlacesSearchService.swift */,
+				S20000000000000000000012 /* PlacesSearchController.swift */,
 				S20000000000000000000011 /* ReverseGeocodingService.swift */,
 				S20000000000000000000009 /* SavedPlacesStore.swift */,
 				S2000000000000000000000C /* RoutesAPIService.swift */,
+				S20000000000000000000020 /* GoogleAPIError.swift */,
+				S20000000000000000000021 /* GoogleAPIHTTP.swift */,
+				S20000000000000000000022 /* GoogleMapsDiagnostics.swift */,
+				S20000000000000000000023 /* GoogleMapsREST.swift */,
+				S20000000000000000000024 /* MapsRequestCache.swift */,
+				S20000000000000000000025 /* BoundedTTLCache.swift */,
 				S2000000000000000000000D /* PromoCodesStore.swift */,
 				S2000000000000000000000E /* TripMotionTiming.swift */,
 				S2000000000000000000000F /* NetworkReachability.swift */,
@@ -418,6 +471,11 @@
 				R20000000000000000000008 /* VuumMapView.swift */,
 				MAP200000000000000000001 /* DirectionsRouteService.swift */,
 				MAP200000000000000000002 /* RouteEngine.swift */,
+				MAP200000000000000000006 /* MapTrafficSettings.swift */,
+				MAP200000000000000000006 /* RouteProvider.swift */,
+				MAP200000000000000000003 /* VuumMapStyle.json */,
+				MAP200000000000000000004 /* VuumMapStyleLite.json */,
+				MAP200000000000000000005 /* VuumMapStyleNight.json */,
 			);
 			path = Maps;
 			sourceTree = "<group>";
@@ -675,6 +733,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				R1000000000000000000000D /* Assets.xcassets in Resources */,
+				MAP100000000000000000003 /* VuumMapStyle.json in Resources */,
+				MAP100000000000000000004 /* VuumMapStyleLite.json in Resources */,
+				MAP100000000000000000005 /* VuumMapStyleNight.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -696,6 +757,7 @@
 				R10000000000000000000002 /* ContentView.swift in Sources */,
 				R10000000000000000000003 /* RootFlowView.swift in Sources */,
 				R10000000000000000000004 /* TripModels.swift in Sources */,
+				MDL1A29004 /* PlaceCategory.swift in Sources */,
 				LOC10000000000000000001 /* L10n.swift in Sources */,
 				S1000000000000000000000A /* AppLocale.swift in Sources */,
 				R10000000000000000000005 /* TripSession.swift in Sources */,
@@ -704,6 +766,8 @@
 				R10000000000000000000008 /* VuumMapView.swift in Sources */,
 				MAP100000000000000000001 /* DirectionsRouteService.swift in Sources */,
 				MAP100000000000000000002 /* RouteEngine.swift in Sources */,
+				MAP100000000000000000006 /* MapTrafficSettings.swift in Sources */,
+				MAP100000000000000000006 /* RouteProvider.swift in Sources */,
 				R10000000000000000000009 /* VuumTheme.swift in Sources */,
 				R1000000000000000000000A /* VuumChrome.swift in Sources */,
 				R10000000000000000000010 /* VuumGlass.swift in Sources */,
@@ -735,7 +799,14 @@
 				S10000000000000000000006 /* TripAudioRecorder.swift in Sources */,
 				S10000000000000000000007 /* TrustedContactsStore.swift in Sources */,
 				S10000000000000000000008 /* PlacesSearchService.swift in Sources */,
+				S10000000000000000000012 /* PlacesSearchController.swift in Sources */,
 				S10000000000000000000011 /* ReverseGeocodingService.swift in Sources */,
+				S10000000000000000000020 /* GoogleAPIError.swift in Sources */,
+				S10000000000000000000021 /* GoogleAPIHTTP.swift in Sources */,
+				S10000000000000000000022 /* GoogleMapsDiagnostics.swift in Sources */,
+				S10000000000000000000023 /* GoogleMapsREST.swift in Sources */,
+				S10000000000000000000024 /* MapsRequestCache.swift in Sources */,
+				S10000000000000000000025 /* BoundedTTLCache.swift in Sources */,
 				S10000000000000000000009 /* SavedPlacesStore.swift in Sources */,
 				S1000000000000000000000C /* RoutesAPIService.swift in Sources */,
 				S1000000000000000000000D /* PromoCodesStore.swift in Sources */,
@@ -815,6 +886,12 @@
 				T10000000000000000000006 /* PaymentReferralEligibilityTests.swift in Sources */,
 				T10000000000000000000007 /* TripSessionLifecyclePhaseTests.swift in Sources */,
 				T10000000000000000000008 /* RouteDeviationTests.swift in Sources */,
+				T10000000000000000000009 /* MapBootstrapKeyTests.swift in Sources */,
+				T1000000000000000000000A /* InTripDestinationChangeTests.swift in Sources */,
+				T1000000000000000000000B /* ReverseGeocodingNamingTests.swift in Sources */,
+				T1000000000000000000000C /* PlacesSearchLocalCatalogTests.swift in Sources */,
+				T1000000000000000000000D /* RouteEngineProviderTests.swift in Sources */,
+				T1000000000000000000000E /* GoogleAPIErrorTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1000,7 +1077,7 @@
 			repositoryURL = "https://github.com/googlemaps/ios-maps-sdk";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 9.0.0;
+				minimumVersion = 10.0.0;
 			};
 		};
 		R40000000000000000000002 /* XCRemoteSwiftPackageReference "ComponentsKit" */ = {
@@ -1016,7 +1093,7 @@
 			repositoryURL = "https://github.com/evgenyneu/keychain-swift.git";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 9.0.0;
+				minimumVersion = 24.0.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */

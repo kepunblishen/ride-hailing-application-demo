@@ -32,9 +32,35 @@ final class VehiclePickupETATests: XCTestCase {
         XCTAssertEqual(VehicleClass.resolving(tierID: "airport"), .large)
     }
 
+    func testVehicleClassSystemImagesForMapMarkers() {
+        XCTAssertEqual(VehicleClass.bike.systemImage, "bicycle")
+        XCTAssertEqual(VehicleClass.standard.systemImage, "car.fill")
+        XCTAssertEqual(VehicleClass.large.systemImage, "car.2.fill")
+    }
+
     func testDisplayedETACountsDownWithProgress() {
         XCTAssertEqual(TripMotionTiming.displayedETAMinutes(baseline: 5, fraction: 0), 5)
         XCTAssertEqual(TripMotionTiming.displayedETAMinutes(baseline: 5, fraction: 0.5), 3)
         XCTAssertEqual(TripMotionTiming.displayedETAMinutes(baseline: 5, fraction: 1), 0)
+    }
+
+    func testApproachSimulationSecondsScalesWithClassETA() {
+        let bike = TripMotionTiming.approachSimulationSeconds(for: .bike)
+        let car = TripMotionTiming.approachSimulationSeconds(for: .standard)
+        let xxl = TripMotionTiming.approachSimulationSeconds(for: .large)
+        XCTAssertLessThan(bike, car)
+        XCTAssertLessThan(car, xxl)
+        // bike~2 / car~5 / XXL~10 minutes → compressed wall clocks stay distinct.
+        XCTAssertEqual(bike, TripMotionTiming.simulationDurationSeconds(displayedETAMinutes: 2), accuracy: 0.01)
+        XCTAssertEqual(car, TripMotionTiming.simulationDurationSeconds(displayedETAMinutes: 5), accuracy: 0.01)
+        XCTAssertEqual(xxl, TripMotionTiming.simulationDurationSeconds(displayedETAMinutes: 10), accuracy: 0.01)
+        XCTAssertEqual(VehiclePickupETA.approachSimulationSeconds(for: .standard), car, accuracy: 0.01)
+    }
+
+    func testHeadingLerpUsesShortestArc() {
+        let mid = TripGeo.lerpHeading(from: 350, to: 10, fraction: 0.5)
+        XCTAssertEqual(mid, 0, accuracy: 0.01)
+        let smoothed = TripGeo.smoothHeading(current: 10, target: 100, maxStepDegrees: 20)
+        XCTAssertEqual(smoothed, 30, accuracy: 0.01)
     }
 }

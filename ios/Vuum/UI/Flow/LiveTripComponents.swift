@@ -4,7 +4,13 @@ import SwiftUI
 
 /// Concentric rings used on the matching sheet — state communication, not decoration.
 struct SearchingPulseView: View {
+    @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
+    @AppStorage("vuum.a11y.reduceMotion") private var appReduceMotion = false
     @State private var pulse = false
+
+    private var reduceMotion: Bool {
+        systemReduceMotion || appReduceMotion
+    }
 
     var body: some View {
         ZStack {
@@ -12,12 +18,14 @@ struct SearchingPulseView: View {
                 Circle()
                     .stroke(VuumColor.brand.opacity(0.35 - Double(index) * 0.1), lineWidth: 2)
                     .frame(width: 56 + CGFloat(index) * 28, height: 56 + CGFloat(index) * 28)
-                    .scaleEffect(pulse ? 1.08 : 0.92)
-                    .opacity(pulse ? 0.35 : 0.9)
+                    .scaleEffect(reduceMotion ? 1 : (pulse ? 1.08 : 0.92))
+                    .opacity(reduceMotion ? (0.55 - Double(index) * 0.12) : (pulse ? 0.35 : 0.9))
                     .animation(
-                        .easeInOut(duration: 1.35)
-                            .repeatForever(autoreverses: true)
-                            .delay(Double(index) * 0.18),
+                        reduceMotion
+                            ? nil
+                            : .easeInOut(duration: 1.35)
+                                .repeatForever(autoreverses: true)
+                                .delay(Double(index) * 0.18),
                         value: pulse
                     )
             }
@@ -27,8 +35,11 @@ struct SearchingPulseView: View {
                 .frame(width: 52, height: 52)
                 .background(VuumColor.brand, in: Circle())
         }
-        .frame(height: 120)
-        .onAppear { pulse = true }
+        .frame(height: reduceMotion ? 96 : 120)
+        .onAppear {
+            guard !reduceMotion else { return }
+            pulse = true
+        }
         .accessibilityHidden(true)
     }
 }
@@ -37,7 +48,8 @@ struct SearchingPulseView: View {
 
 struct LiveETABadge: View {
     let minutes: Int
-    var caption: String = "min"
+    /// Short status under the duration (e.g. ETA / left). Duration already includes “min”.
+    var caption: String = "ETA"
     var emphasize: Bool = true
 
     var body: some View {
@@ -61,15 +73,18 @@ struct LiveETABadge: View {
 struct LiveDriverCard: View {
     let driver: DriverProfile
     var showPIN: String? = nil
+    /// Prefer header `LiveETABadge` on map overlays; pass only when card owns ETA.
     var etaMinutes: Int? = nil
     var passengerName: String? = nil
+    var compact: Bool = true
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             DriverCardView(
                 driver: driver,
                 etaMinutes: etaMinutes,
-                passengerName: passengerName
+                passengerName: passengerName,
+                compact: compact
             )
             if let showPIN {
                 HStack(spacing: 8) {

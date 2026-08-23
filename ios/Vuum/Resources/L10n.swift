@@ -45,7 +45,8 @@ final class AppPreferences: ObservableObject {
             guard lowDataMode != oldValue else { return }
             UserDefaults.standard.set(lowDataMode, forKey: Self.lowDataModeKey)
             if lowDataMode {
-                UserDefaults.standard.set(false, forKey: "vuum.mapTraffic")
+                UserDefaults.standard.set(false, forKey: MapTrafficSettings.trafficKey)
+                UserDefaults.standard.set(false, forKey: MapTrafficSettings.etaRefreshKey)
             }
         }
     }
@@ -336,6 +337,7 @@ enum L10n {
         static var kilometers: String { t("settings.kilometers") }
         static var miles: String { t("settings.miles") }
         static var traffic: String { t("settings.traffic") }
+        static var etaRefresh: String { t("settings.eta_refresh") }
         static var currency: String { t("settings.currency") }
         static var security: String { t("settings.security") }
         static var securityDetail: String { t("settings.security_detail") }
@@ -498,6 +500,41 @@ enum L10n {
         static var setWork: String { t("destination.set_work") }
         static var stopProgress: String { t("destination.stop_progress") }
         static var favoritesHint: String { t("destination.favorites_hint") }
+        static var noMatchingPlaces: String { t("destination.no_matching_places") }
+        static var searchingPlaces: String { t("destination.searching_places") }
+        static var couldNotOpenPlace: String { t("destination.could_not_open_place") }
+        static var searchNewDestination: String { t("destination.search_new") }
+        static var routeUnavailable: String { t("maps.error.no_route") }
+        static var mapsUnavailable: String { t("maps.error.unavailable") }
+    }
+
+    // MARK: - Maps errors (rider-facing; never mention Google / HTTP / keys)
+
+    enum Maps {
+        static var unavailable: String { t("maps.error.unavailable") }
+        static var busy: String { t("maps.error.busy") }
+        static var temporary: String { t("maps.error.temporary") }
+        static var generic: String { t("maps.error.generic") }
+        static var network: String { t("maps.error.network") }
+        static var noRoute: String { t("maps.error.no_route") }
+        static var timeout: String { t("maps.error.temporary") }
+
+        static var unavailableTitle: String { t("map.unavailable_title") }
+        static var unavailableDetail: String { t("map.unavailable_detail") }
+        static var a11yHome: String { t("map.a11y_home") }
+        static var a11yPreview: String { t("map.a11y_preview") }
+        static var a11yMatching: String { t("map.a11y_matching") }
+        static var a11yApproach: String { t("map.a11y_approach") }
+        static var a11yActive: String { t("map.a11y_active") }
+        static var a11yCompleted: String { t("map.a11y_completed") }
+
+        // Aliases used by older call sites
+        static var errorUnavailable: String { unavailable }
+        static var errorBusy: String { busy }
+        static var errorTimeout: String { timeout }
+        static var errorOffline: String { network }
+        static var errorGeneric: String { generic }
+        static var errorNoRoute: String { noRoute }
     }
 
     // MARK: - Permissions
@@ -558,6 +595,39 @@ enum L10n {
         static var diagnostics: String { t("legal.diagnostics") }
         static var diagnosticsUnlocked: String { t("legal.diagnostics_unlocked") }
         static var diagnosticsUnlockedMsg: String { t("legal.diagnostics_unlocked_msg") }
+    }
+
+    // MARK: - Maps / Places / Route errors
+
+    enum Maps {
+        static var unavailableTitle: String { t("map.unavailable_title") }
+        static var unavailableDetail: String { t("map.unavailable_detail") }
+        static var errorUnavailable: String { t("maps.error_unavailable") }
+        static var errorBusy: String { t("maps.error_busy") }
+        static var errorTimeout: String { t("maps.error_timeout") }
+        static var errorOffline: String { t("maps.error_offline") }
+        static var errorGeneric: String { t("maps.error_generic") }
+        static var errorNoRoute: String { t("maps.error_no_route") }
+        static var a11yHome: String { t("map.a11y_home") }
+        static var a11yPreview: String { t("map.a11y_preview") }
+        static var a11yMatching: String { t("map.a11y_matching") }
+        static var a11yApproach: String { t("map.a11y_approach") }
+        static var a11yActive: String { t("map.a11y_active") }
+        static var a11yCompleted: String { t("map.a11y_completed") }
+    }
+
+    enum Places {
+        static var errorUnavailable: String { t("places.error_unavailable") }
+        static var errorOffline: String { t("places.error_offline") }
+        static var errorGeneric: String { t("places.error_generic") }
+        static var errorNoResults: String { t("places.error_no_results") }
+    }
+
+    enum Route {
+        static var errorUnable: String { t("route.error_unable") }
+        static var deviationTitle: String { t("route.deviation_title") }
+        static var deviationNotice: String { t("route.deviation_notice") }
+        static var deviationBody: String { t("route.deviation_body") }
     }
 
     // MARK: Catalog
@@ -968,6 +1038,7 @@ enum L10n {
         "settings.kilometers": s("Kilometers", "Kilomètres", "Ba kilomètre", "Kilomita"),
         "settings.miles": s("Miles", "Miles", "Ba mile", "Maili"),
         "settings.traffic": s("Show traffic layer", "Afficher le trafic", "Monisa traffic", "Onyesha msongamano"),
+        "settings.eta_refresh": s("Refresh live ETA", "Actualiser l'ETA en direct", "Actualiser ETA ya sikoyo", "Sasisha ETA moja kwa moja"),
         "settings.currency": s("Currency display", "Affichage de la devise", "Monnaie", "Onyesho la sarafu"),
         "settings.security": s("Security", "Sécurité", "Sécurité", "Usalama"),
         "settings.security_detail": s("App lock & sessions", "Verrouillage et sessions", "Verrouillage mpe ba session", "Kufunga programu na vipindi"),
@@ -1208,6 +1279,66 @@ enum L10n {
             "Tya étoile na bisika mpo na kobomba yango awa.",
             "Weka nyota kwenye mahali kutoka orodha ili kuyahifadhi hapa."
         ),
+        "destination.no_matching_places": s(
+            "No matching places",
+            "Aucun lieu correspondant",
+            "Esika eza te",
+            "Hakuna sehemu zinazolingana"
+        ),
+        "destination.searching_places": s(
+            "Searching…",
+            "Recherche…",
+            "Koluka…",
+            "Inatafuta…"
+        ),
+        "destination.could_not_open_place": s(
+            "Couldn't open that place. Try another.",
+            "Impossible d'ouvrir ce lieu. Essayez-en un autre.",
+            "Ekoki te kofungola esika wana. Meka mosusu.",
+            "Haikuweza kufungua mahali hapo. Jaribu lingine."
+        ),
+        "maps.error.unavailable": s(
+            "Maps isn't available right now.",
+            "La carte n'est pas disponible pour le moment.",
+            "Carte ezali te sikoyo.",
+            "Ramani haipatikani sasa."
+        ),
+        "maps.error.busy": s(
+            "Too many requests. Try again in a moment.",
+            "Trop de demandes. Réessayez dans un instant.",
+            "Ba demandes ebele. Meka lisusu noki.",
+            "Maombi mengi. Jaribu tena baadaye kidogo."
+        ),
+        "maps.error.temporary": s(
+            "Temporary connection issue. Try again.",
+            "Problème de connexion temporaire. Réessayez.",
+            "Problème ya connexion ya mwa tango. Meka lisusu.",
+            "Tatizo la muda la muunganisho. Jaribu tena."
+        ),
+        "maps.error.generic": s(
+            "Something went wrong. Try again.",
+            "Une erreur s'est produite. Réessayez.",
+            "Erreur esalemi. Meka lisusu.",
+            "Hitilafu imetokea. Jaribu tena."
+        ),
+        "maps.error.network": s(
+            "Check your connection and try again.",
+            "Vérifiez votre connexion et réessayez.",
+            "Tala connexion na yo mpe meka lisusu.",
+            "Angalia muunganisho wako kisha ujaribu tena."
+        ),
+        "maps.error.no_route": s(
+            "Unable to calculate the route right now.",
+            "Impossible de calculer l'itinéraire pour le moment.",
+            "Ekoki te kobongisa nzela sikoyo.",
+            "Haiwezi kukokotoa njia sasa."
+        ),
+        "destination.search_new": s(
+            "Search new destination",
+            "Rechercher une nouvelle destination",
+            "Luka destination ya sika",
+            "Tafuta unakoenda mpya"
+        ),
 
         // Permissions
         "permissions.title": s("Enable access", "Activer l’accès", "Fungola accès", "Wezesha ufikiaji"),
@@ -1318,6 +1449,142 @@ enum L10n {
             "Les outils internes sont disponibles depuis cet écran.",
             "Ba outil ya interne ezali awa.",
             "Zana za ndani zinapatikana kwenye skrini hii."
+        ),
+
+        // Map surface (unavailable / no live tiles)
+        "map.unavailable_title": s(
+            "Map unavailable",
+            "Carte indisponible",
+            "Carte eza te",
+            "Ramani haipatikani"
+        ),
+        "map.unavailable_detail": s(
+            "You can still search and book. The map will appear when it’s available.",
+            "Vous pouvez toujours chercher et réserver. La carte s’affichera dès qu’elle sera disponible.",
+            "Okoki kaka ko chercher mpe ko book. Carte ekomonisa soki ezali.",
+            "Bado unaweza kutafuta na kuagiza. Ramani itaonekana itakapopatikana."
+        ),
+        "map.a11y_home": s(
+            "Map showing your current area",
+            "Carte de votre zone actuelle",
+            "Carte ya zone na yo",
+            "Ramani inayoonyesha eneo lako la sasa"
+        ),
+        "map.a11y_preview": s(
+            "Map showing pickup and destination",
+            "Carte du départ et de la destination",
+            "Carte ya départ mpe destination",
+            "Ramani ya kuchukuliwa na unakoenda"
+        ),
+        "map.a11y_matching": s(
+            "Map showing nearby vehicles while matching a driver",
+            "Carte des véhicules proches pendant la recherche d’un chauffeur",
+            "Carte ya ba véhicules pene tango koluka chauffeur",
+            "Ramani ya magari karibu wakati wa kutafuta dereva"
+        ),
+        "map.a11y_approach": s(
+            "Map showing your driver approaching pickup",
+            "Carte du chauffeur qui approche du point de prise en charge",
+            "Carte ya chauffeur azali koyaka na pickup",
+            "Ramani ya dereva anayekaribia mahali pa kuchukuliwa"
+        ),
+        "map.a11y_active": s(
+            "Map showing your active trip route",
+            "Carte de l’itinéraire de votre course",
+            "Carte ya route ya voyage na yo",
+            "Ramani ya njia ya safari yako"
+        ),
+        "map.a11y_completed": s(
+            "Map showing completed trip",
+            "Carte du trajet terminé",
+            "Carte ya voyage oyo esili",
+            "Ramani ya safari iliyokamilika"
+        ),
+
+        // Maps / Places / Route rider errors (GoogleAPIError + route UX — no demo / key copy)
+        "maps.error_unavailable": s(
+            "Maps aren’t available right now.",
+            "La carte n’est pas disponible pour le moment.",
+            "Carte eza te sika oyo.",
+            "Ramani haipatikani kwa sasa."
+        ),
+        "maps.error_busy": s(
+            "We’re busy right now. Try again in a moment.",
+            "Nous sommes saturés. Réessayez dans un instant.",
+            "Ezali na ba demandes mingi. Meka lisusu noki.",
+            "Tuko na shughuli nyingi. Jaribu tena baadaye kidogo."
+        ),
+        "maps.error_timeout": s(
+            "That took too long. Try again.",
+            "Cela a pris trop de temps. Réessayez.",
+            "Etikala mingi. Meka lisusu.",
+            "Imechukua muda mrefu. Jaribu tena."
+        ),
+        "maps.error_offline": s(
+            "Check your connection and try again.",
+            "Vérifiez votre connexion et réessayez.",
+            "Tala connexion na yo mpe meka lisusu.",
+            "Angalia muunganisho wako kisha jaribu tena."
+        ),
+        "maps.error_generic": s(
+            "We couldn’t complete that. Try again.",
+            "Impossible de terminer. Réessayez.",
+            "Tokoki kosilisa. Meka lisusu.",
+            "Hatukuweza kukamilisha. Jaribu tena."
+        ),
+        "maps.error_no_route": s(
+            "Unable to calculate the route right now.",
+            "Impossible de calculer l’itinéraire pour le moment.",
+            "Tokoki ko calculer route sika oyo.",
+            "Haiwezekani kukokotoa njia kwa sasa."
+        ),
+        "places.error_unavailable": s(
+            "Place search isn’t available right now.",
+            "La recherche de lieux n’est pas disponible pour le moment.",
+            "Boluki ya ba lieux eza te sika oyo.",
+            "Utafutaji wa mahali haupatikani kwa sasa."
+        ),
+        "places.error_offline": s(
+            "Couldn’t search places. Check your connection.",
+            "Impossible de rechercher des lieux. Vérifiez votre connexion.",
+            "Tokoki ko chercher ba lieux. Tala connexion.",
+            "Hatukuweza kutafuta mahali. Angalia muunganisho."
+        ),
+        "places.error_generic": s(
+            "Couldn’t find that place. Try another search.",
+            "Lieu introuvable. Essayez une autre recherche.",
+            "Tokoki kokuta esika wana. Meka boluki mosusu.",
+            "Mahali hapakupatikana. Jaribu utafutaji mwingine."
+        ),
+        "places.error_no_results": s(
+            "No places match your search.",
+            "Aucun lieu ne correspond à votre recherche.",
+            "Esika eza te oyo elandi boluki na yo.",
+            "Hakuna mahali yanayolingana na utafutaji wako."
+        ),
+        "route.error_unable": s(
+            "Unable to calculate the route right now.",
+            "Impossible de calculer l’itinéraire pour le moment.",
+            "Tokoki ko calculer route sika oyo.",
+            "Haiwezekani kukokotoa njia kwa sasa."
+        ),
+        "route.deviation_title": s(
+            "Route update",
+            "Mise à jour d’itinéraire",
+            "Mise à jour ya route",
+            "Sasisho la njia"
+        ),
+        "route.deviation_notice": s(
+            "Your driver appears to be off the planned route. You can share your live trip with a trusted contact.",
+            "Votre chauffeur semble s’éloigner de l’itinéraire prévu. Vous pouvez partager votre course en direct avec un contact de confiance.",
+            "Chauffeur na yo azali kobima na route oyo eza planned. Okoki ko partager voyage na contact ya confiance.",
+            "Dereva wako anaonekana ametoka kwenye njia iliyopangwa. Unaweza kushiriki safari yako moja kwa moja na anwani unayeimaini."
+        ),
+        "route.deviation_body": s(
+            "Your trip is taking a different path than planned. Share your live location if you want someone to follow along.",
+            "Votre course emprunte un autre chemin que prévu. Partagez votre position en direct si vous souhaitez être suivi.",
+            "Voyage na yo ezali na nzela mosusu. Partager localisation na yo soki olingi moto alanda yo.",
+            "Safari yako inachukua njia tofauti na iliyopangwa. Shiriki eneo lako moja kwa moja ikiwa unataka mtu afuatilie."
         ),
 
         // Empty / error / offline (Agent 34)

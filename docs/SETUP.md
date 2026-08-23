@@ -25,9 +25,9 @@ Xcode cannot run on Windows — builds and SPM resolution go through Codemagic (
 |------|-----|-----------|
 | **SwiftUI** | Built into iOS SDK | Yes — all UI |
 | **UIKit** | Built into iOS SDK | Yes — maps / share bridges |
-| **ComponentsKit** | SPM `https://github.com/componentskit/ComponentsKit` (≥ 1.7.0) | Yes — theme / controls |
-| **Google Maps SDK** | SPM `https://github.com/googlemaps/ios-maps-sdk` (≥ 9.0.0), product `GoogleMaps` | Yes — map surface |
-| **KeychainSwift** | SPM `https://github.com/evgenyneu/keychain-swift.git` (≥ 9.0.0) | Yes — rider session |
+| **ComponentsKit** | SPM `https://github.com/componentskit/ComponentsKit` (≥ 1.7.0, `< 2`) | Yes — theme / controls |
+| **Google Maps SDK** | SPM `https://github.com/googlemaps/ios-maps-sdk` (≥ 10.0.0, `< 11`), product `GoogleMaps` | Yes — map surface |
+| **KeychainSwift** | SPM `https://github.com/evgenyneu/keychain-swift.git` (≥ 24.0.0, `< 25`) | Yes — rider session |
 | **Places API (New)** | HTTPS via `PlacesSearchService` (no extra SPM) | Credential-gated |
 | **Routes API** | HTTPS via `RoutesAPIService` (no extra SPM) | Credential-gated |
 | Firebase / BLE / Snyk | — | **No** — out of scope |
@@ -60,9 +60,13 @@ Without a key the app still builds and opens; map shows unavailable; Places/Rout
 
 ---
 
-## Resolve SPM on a Mac (optional admin / first open)
+## Resolve SPM on Codemagic (supported from Windows)
 
-On Windows you cannot run `xcodebuild -resolvePackageDependencies`. Use Codemagic, or on a Mac:
+Push to GitHub → Codemagic workflow **ios-release** → script **Resolve Swift packages** runs the same `xcodebuild -resolvePackageDependencies` as below, then builds the IPA. Details: [CODEMAGIC_SETUP.md](CODEMAGIC_SETUP.md#spm-resolve-on-codemagic-required-path-from-windows).
+
+PowerShell on Windows cannot resolve Apple SPM graphs; Codemagic (or a Mac) is required.
+
+## Resolve SPM on a Mac (optional admin / first open)
 
 ```bash
 # Xcode Command Line Tools (once; may prompt for admin password)
@@ -76,8 +80,6 @@ xcodebuild -resolvePackageDependencies \
 ```
 
 If Xcode asks to trust Swift packages on first open: **File → Packages → Resolve Package Versions**.
-
-PowerShell on Windows cannot resolve Apple SPM graphs; pushing to GitHub and letting Codemagic resolve is the supported path.
 
 ---
 

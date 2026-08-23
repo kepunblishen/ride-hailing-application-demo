@@ -3,7 +3,7 @@
 struct TripMapLayer: View {
     @EnvironmentObject private var tripSession: TripSession
     @EnvironmentObject private var preferences: AppPreferences
-    @AppStorage("vuum.mapTraffic") private var mapTraffic = true
+    @EnvironmentObject private var location: RiderLocationManager
 
     var body: some View {
         VuumMapView(
@@ -16,14 +16,13 @@ struct TripMapLayer: View {
                 ? simplifiedRoute(tripSession.mapRoute)
                 : tripSession.mapRoute,
             fitCoordinates: tripSession.mapFitCoordinates,
-            followDriver: tripSession.phase == .matched
-                || tripSession.phase == .driverEnRoute
-                || tripSession.phase == .inTrip
-                || tripSession.phase == .driverArrived,
+            followDriver: tripSession.shouldFollowDriverOnMap,
             cameraFocusNonce: tripSession.mapCameraFocusNonce,
-            showsTraffic: mapTraffic && !preferences.lowDataMode,
+            showsUserLocation: location.isAuthorized,
+            showsTraffic: MapTrafficSettings.shouldShowTrafficLayer(lowDataMode: preferences.lowDataMode),
             lowDataMode: preferences.lowDataMode
         )
+        .onAppear { location.startUpdatingIfAllowed() }
         .ignoresSafeArea()
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(mapAccessibilityLabel)
@@ -45,19 +44,22 @@ struct TripMapLayer: View {
     }
 
     private var mapAccessibilityLabel: String {
+        if MapBootstrap.surface == .unavailable {
+            return L10n.Maps.unavailableTitle
+        }
         switch tripSession.phase {
         case .idle:
-            return "Map showing your current area"
+            return L10n.Maps.a11yHome
         case .selectingDestination, .choosingRide:
-            return "Map showing pickup and destination"
+            return L10n.Maps.a11yPreview
         case .searching:
-            return "Map showing nearby vehicles while matching a driver"
+            return L10n.Maps.a11yMatching
         case .matched, .driverEnRoute, .driverArrived:
-            return "Map showing your driver approaching pickup"
+            return L10n.Maps.a11yApproach
         case .inTrip:
-            return "Map showing your active trip route"
+            return L10n.Maps.a11yActive
         case .completed:
-            return "Map showing completed trip"
+            return L10n.Maps.a11yCompleted
         }
     }
 }
@@ -164,7 +166,7 @@ struct HomeMapScaffoldView: View {
                                     Image(systemName: "calendar")
                                         .foregroundStyle(VuumColor.brand)
                                     VStack(alignment: .leading, spacing: 2) {
-                                        Text("\(trip.pickupName) → \(trip.dropoffName)")
+                                        Text("\(trip.pickupName) ? \(trip.dropoffName)")
                                             .font(.system(size: 14, weight: .semibold))
                                         if !trip.stopNames.isEmpty {
                                             Text("via \(trip.stopNames.joined(separator: ", "))")
@@ -411,15 +413,15 @@ struct DestinationScaffoldView: View {
     @EnvironmentObject private var tripSession: TripSession
     @EnvironmentObject private var savedPlaces: SavedPlacesStore
     @EnvironmentObject private var appLocale: AppLocale
+    @StateObject private var placesSearch = PlacesSearchController()
     @State private var query = ""
     @State private var assignSlot: SavedPlaceKind?
-    @State private var remoteSuggestions: [PlacesSearchService.PlaceSuggestion] = []
-    @State private var searchTask: Task<Void, Never>?
-    @State private var isResolving = false
 
     private var isSearching: Bool {
         !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
+
+    private var isResolving: Bool { placesSearch.isResolving }
 
     private func isAvailable(_ place: Place) -> Bool {
         place.id != tripSession.pickup.id
@@ -467,7 +469,7 @@ struct DestinationScaffoldView: View {
     }
 
     private var sheetTitle: String {
-        tripSession.isAddingStop ? "Add a stop" : "Choose destination"
+        tripSession.isAddingStop ? L10n.Destination.addStop : L10n.Destination.choose
     }
 
     var body: some View {
@@ -487,18 +489,34 @@ struct DestinationScaffoldView: View {
                         Image(systemName: "magnifyingglass")
                             .foregroundStyle(VuumColor.secondaryText)
                         TextField(
-                            tripSession.isAddingStop ? "Search for a stop" : "Search places",
+                            tripSession.isAddingStop ? L10n.Destination.searchStop : L10n.Destination.searchPlaces,
                             text: $query
                         )
                         .textInputAutocapitalization(.words)
                         .autocorrectionDisabled()
-                        if isResolving {
+                        if isResolving || placesSearch.isQueryPending {
                             ProgressView()
                                 .controlSize(.small)
                         }
                     }
                     .padding(12)
                     .background(VuumColor.fieldBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+
+                    if let status = placesSearch.statusMessage {
+                        HStack(alignment: .top, spacing: 10) {
+                            Text(status)
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundStyle(VuumColor.secondaryText)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            if placesSearch.canRetry {
+                                Button(L10n.t("status.retry")) {
+                                    placesSearch.retryLastSearch()
+                                }
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundStyle(VuumColor.brand)
+                            }
+                        }
+                    }
 
                     if !tripSession.stops.isEmpty, !tripSession.isAddingStop {
                         stopsPreview
@@ -511,29 +529,34 @@ struct DestinationScaffoldView: View {
                             }
 
                             if !filteredFavorites.isEmpty {
-                                sectionHeader("Favorites")
+                                sectionHeader(L10n.Destination.favorites)
                                 placeRows(filteredFavorites, leadingIcon: { _ in "star.fill" })
                             }
 
                             if !filteredRecent.isEmpty {
-                                sectionHeader("Recent")
+                                sectionHeader(L10n.Destination.recent)
                                 placeRows(filteredRecent, leadingIcon: { _ in "clock.fill" })
                             }
 
                             if isSearching {
-                                if !remoteSuggestions.isEmpty {
-                                    sectionHeader("Results")
-                                    suggestionRows(remoteSuggestions)
+                                sectionHeader(L10n.Destination.results)
+                                if placesSearch.isQueryPending, placesSearch.suggestions.isEmpty {
+                                    Text(L10n.Destination.searchingPlaces)
+                                        .font(.system(size: 14))
+                                        .foregroundStyle(VuumColor.secondaryText)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .padding(.vertical, 12)
+                                } else if !placesSearch.suggestions.isEmpty {
+                                    suggestionRows(placesSearch.suggestions)
                                 } else {
-                                    sectionHeader("Results")
-                                    Text("No matching places")
+                                    Text(L10n.Destination.noMatchingPlaces)
                                         .font(.system(size: 14))
                                         .foregroundStyle(VuumColor.secondaryText)
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                         .padding(.vertical, 12)
                                 }
                             } else if !filteredSuggestions.isEmpty {
-                                sectionHeader("Suggestions")
+                                sectionHeader(L10n.Destination.suggestions)
                                 placeRows(
                                     filteredSuggestions,
                                     leadingIcon: { _ in
@@ -546,16 +569,16 @@ struct DestinationScaffoldView: View {
                     .frame(maxHeight: 320)
 
                     if tripSession.isAddingStop {
-                        Button("Cancel") {
-                            PlacesSearchService.abandonSession()
+                        Button(L10n.Common.cancel) {
+                            placesSearch.abandonSession()
                             tripSession.cancelAddingStop()
                         }
                         .font(.system(size: 15, weight: .medium, design: .rounded))
                         .foregroundStyle(VuumColor.secondaryText)
                         .padding(.top, 4)
                     } else {
-                        Button("Cancel") {
-                            PlacesSearchService.abandonSession()
+                        Button(L10n.Common.cancel) {
+                            placesSearch.abandonSession()
                             tripSession.resetToHome()
                         }
                         .font(.system(size: 15, weight: .medium, design: .rounded))
@@ -567,13 +590,18 @@ struct DestinationScaffoldView: View {
                     AssignSavedPlaceSheet(kind: kind)
                 }
                 .onAppear {
-                    PlacesSearchService.beginSession()
+                    placesSearch.beginSession()
                 }
                 .onChange(of: query) { _, newValue in
-                    scheduleRemoteSearch(newValue)
+                    placesSearch.scheduleSearch(
+                        newValue,
+                        bias: tripSession.pickup.coordinate,
+                        market: appLocale.fareMarket,
+                        isPlaceAvailable: isAvailable
+                    )
                 }
                 .onDisappear {
-                    searchTask?.cancel()
+                    placesSearch.tearDown()
                 }
             }
             .padding(.horizontal, 12)
@@ -581,44 +609,14 @@ struct DestinationScaffoldView: View {
         }
     }
 
-    private func scheduleRemoteSearch(_ raw: String) {
-        searchTask?.cancel()
-        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else {
-            remoteSuggestions = []
-            return
-        }
-        searchTask = Task {
-            try? await Task.sleep(for: .milliseconds(280))
-            guard !Task.isCancelled else { return }
-            let results = await PlacesSearchService.autocomplete(
-                query: trimmed,
-                bias: tripSession.pickup.coordinate,
-                market: appLocale.fareMarket
-            )
-            guard !Task.isCancelled else { return }
-            remoteSuggestions = results.filter { suggestion in
-                if let place = suggestion.place {
-                    return isAvailable(place)
-                }
-                return true
-            }
-        }
-    }
-
     private func selectSuggestion(_ suggestion: PlacesSearchService.PlaceSuggestion) {
-        isResolving = true
         Task {
-            let place = await PlacesSearchService.resolve(suggestion)
-            await MainActor.run {
-                isResolving = false
-                guard let place, isAvailable(place) else { return }
-                savedPlaces.recordRecent(place)
-                PlacesSearchService.beginSession()
-                query = ""
-                remoteSuggestions = []
-                tripSession.selectDestination(place)
-            }
+            let place = await placesSearch.resolve(suggestion)
+            guard let place, isAvailable(place) else { return }
+            savedPlaces.recordRecent(place)
+            placesSearch.beginSessionAfterSelection()
+            query = ""
+            tripSession.selectDestination(place)
         }
     }
 
@@ -743,16 +741,19 @@ struct DestinationScaffoldView: View {
                     selectSuggestion(suggestion)
                 } label: {
                     HStack(alignment: .top, spacing: 12) {
-                        Image(systemName: tripSession.isAddingStop ? "plus.circle.fill" : "mappin.circle.fill")
+                        Image(systemName: suggestion.systemImage)
                             .foregroundStyle(VuumColor.brand)
                             .frame(width: 22)
                         VStack(alignment: .leading, spacing: 2) {
                             Text(suggestion.primaryText)
                                 .font(.system(size: 16, weight: .semibold, design: .rounded))
                                 .foregroundStyle(VuumColor.primaryText)
-                            Text(suggestion.secondaryText)
-                                .font(.system(size: 13, weight: .regular, design: .rounded))
-                                .foregroundStyle(VuumColor.secondaryText)
+                            if !suggestion.compactSubtitle.isEmpty {
+                                Text(suggestion.compactSubtitle)
+                                    .font(.system(size: 13, weight: .regular, design: .rounded))
+                                    .foregroundStyle(VuumColor.secondaryText)
+                                    .lineLimit(2)
+                            }
                         }
                         Spacer(minLength: 0)
                     }
@@ -1196,26 +1197,55 @@ struct RideOptionsScaffoldView: View {
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(VuumColor.secondaryText)
             }
-            Spacer()
+            Spacer(minLength: 8)
+            if tripSession.surgeState.isActive {
+                Text(String(format: "%.2g�", tripSession.surgeState.multiplier))
+                    .font(.system(size: 13, weight: .bold, design: .rounded))
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(VuumColor.brand.opacity(0.18), in: Capsule())
+            }
         }
         .foregroundStyle(VuumColor.primaryText)
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
         .background(VuumColor.brand.opacity(0.12), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(surgeAccessibilityLabel)
     }
 
     private var surgeBannerTitle: String {
-        if let zone = tripSession.zoneContext.primaryZone {
-            return zone.name
+        // Prefer demand/surge wording over a generic zone place-name so choose-ride
+        // stays clear when live map pickup sits inside overlapping geofences.
+        if tripSession.surgeState.isActive {
+            let label = tripSession.surgeState.label.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !label.isEmpty { return label }
         }
-        return tripSession.surgeState.label.isEmpty ? "High demand" : tripSession.surgeState.label
+        if let zone = tripSession.zoneContext.primaryZone {
+            switch zone.kind {
+            case .highDemand, .downtown:
+                return zone.kind.displayTitle
+            case .airport:
+                return zone.name
+            default:
+                return zone.name
+            }
+        }
+        return "High demand"
     }
 
     private var surgeBannerSubtitle: String {
         if let message = tripSession.zoneContext.surchargeMessage {
             return message
         }
-        return String(format: "%.2g× fare multiplier applied", tripSession.surgeState.multiplier)
+        if tripSession.surgeState.isActive {
+            return String(format: "%.2g� fare multiplier applied", tripSession.surgeState.multiplier)
+        }
+        return "Higher fares may apply in this area"
+    }
+
+    private var surgeAccessibilityLabel: String {
+        "\(surgeBannerTitle). \(surgeBannerSubtitle)"
     }
 
     private func farePreviewCard(_ fare: FareBreakdown) -> some View {
@@ -1231,7 +1261,7 @@ struct RideOptionsScaffoldView: View {
             }
             if fare.isSurgeActive {
                 farePreviewRow(
-                    String(format: "High demand · %.2g×", fare.surgeMultiplier),
+                    String(format: "High demand � %.2g�", fare.surgeMultiplier),
                     fare.surgeFareCDF
                 )
             }
@@ -1287,7 +1317,7 @@ struct RideOptionsScaffoldView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Suggest a fare")
                         .font(.system(size: 14, weight: .medium))
-                    Text("Optional · driver may accept within ±15%")
+                    Text("Optional � driver may accept within �15%")
                         .font(.caption)
                         .foregroundStyle(VuumColor.secondaryText)
                 }
@@ -1344,7 +1374,7 @@ struct RideOptionsScaffoldView: View {
         switch tripSession.promoStatus {
         case .applied(_, let discount, let title):
             HStack {
-                Text("\(title) · \(formatLocalDiscount(discount))")
+                Text("\(title) � \(formatLocalDiscount(discount))")
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(.green)
                 Spacer()
@@ -1355,7 +1385,7 @@ struct RideOptionsScaffoldView: View {
                 .foregroundStyle(VuumColor.secondaryText)
             }
         case .invalid:
-            Text("This promo code isn’t valid")
+            Text("This promo code isn�t valid")
                 .font(.system(size: 12, weight: .medium))
                 .foregroundStyle(.orange)
         case .expired:
@@ -1453,7 +1483,7 @@ struct RideOptionsScaffoldView: View {
                 .padding(.vertical, 10)
                 .background(VuumColor.fieldBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             if !tripSession.canConfirmRequest {
-                Text("Enter the passenger’s name and phone to continue.")
+                Text("Enter the passenger�s name and phone to continue.")
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(VuumColor.secondaryText)
             }
@@ -1514,25 +1544,51 @@ struct RideOptionsScaffoldView: View {
     }
 
     private func formatLocalDiscount(_ amount: Int) -> String {
-        "−\(Money.local(amount, market: market == .kenya ? .kenya : .drc).formatted)"
+        "-\(Money.local(amount, market: market == .kenya ? .kenya : .drc).formatted)"
     }
 }
 
 struct AdjustPickupSheet: View {
     @EnvironmentObject private var tripSession: TripSession
+    @EnvironmentObject private var location: RiderLocationManager
     @Environment(\.dismiss) private var dismiss
+
+    @State private var showPlaceSearch = false
 
     private var suggestions: [Place] {
         tripSession.nearbyPickupSuggestions()
+    }
+
+    private var searchBias: GeoPoint {
+        if let loc = location.latestLocation {
+            return GeoPoint(latitude: loc.coordinate.latitude, longitude: loc.coordinate.longitude)
+        }
+        return tripSession.pickup.coordinate
     }
 
     var body: some View {
         VStack(spacing: 0) {
             VuumSheetChrome(title: "Adjust pickup") {
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("Current · \(tripSession.pickup.name)")
+                    Text("Current � \(tripSession.pickup.name)")
                         .font(.system(size: 13, weight: .medium))
                         .foregroundStyle(VuumColor.secondaryText)
+
+                    Button {
+                        showPlaceSearch = true
+                    } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: "magnifyingglass")
+                                .foregroundStyle(VuumColor.brand)
+                            Text(L10n.Destination.searchPlaces)
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundStyle(VuumColor.primaryText)
+                            Spacer(minLength: 0)
+                        }
+                        .padding(12)
+                        .background(VuumColor.fieldBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
 
                     VStack(spacing: 0) {
                         ForEach(suggestions) { place in
@@ -1585,6 +1641,15 @@ struct AdjustPickupSheet: View {
         }
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.hidden)
+        .sheet(isPresented: $showPlaceSearch) {
+            PlaceSearchPickerSheet(
+                title: L10n.Products.pickup,
+                bias: searchBias
+            ) { place in
+                tripSession.selectPickup(place)
+                dismiss()
+            }
+        }
     }
 }
 
@@ -1619,7 +1684,7 @@ struct ScheduleRideSheet: View {
                     }
                     .font(.system(size: 16, weight: .semibold))
                 } footer: {
-                    Text("You’ll pick destination, ride type, and payment next. Reserved rides appear under Activity → Upcoming.")
+                    Text("You�ll pick destination, ride type, and payment next. Reserved rides appear under Activity ? Upcoming.")
                 }
             }
             .navigationTitle("Pickup time")

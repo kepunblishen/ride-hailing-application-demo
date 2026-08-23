@@ -126,7 +126,7 @@ struct AirportProductSheet: View {
         let market: AppLocale.Market = AppLocale.current == .kenya ? .kenya : .drc
         let destinations = MockPlaces.destinations(for: market)
         let airport = destinations.first { $0.id.contains("airport") || $0.name.localizedCaseInsensitiveContains("airport") }
-        pickup = MockPlaces.defaultCenter(for: market)
+        pickup = tripSession.pickup
         dropoff = airport ?? destinations.first ?? dropoff
     }
 }

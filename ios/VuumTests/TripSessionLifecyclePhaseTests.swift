@@ -92,6 +92,35 @@ final class TripSessionLifecyclePhaseTests: XCTestCase {
         XCTAssertEqual(session.phase, .idle)
         XCTAssertNil(session.activeTrip)
         XCTAssertNil(session.searchStartedAt)
+        XCTAssertFalse(session.testingHasOutstandingGoogleRouteWork)
+    }
+
+    func testCancelSearchAbortsInFlightGoogleRouteWork() async {
+        session.beginDestinationSelection()
+        session.selectDestination(sampleDestination)
+        session.confirmRequest()
+        XCTAssertEqual(session.phase, .searching)
+
+        try? await Task.sleep(nanoseconds: 30_000_000)
+        session.cancelSearch()
+        XCTAssertEqual(session.phase, .choosingRide)
+        XCTAssertNil(session.activeTrip)
+        XCTAssertFalse(session.testingHasOutstandingGoogleRouteWork)
+    }
+
+    func testResumeDoesNotClearTripOrRetriggerPreview() async {
+        session.beginDestinationSelection()
+        session.selectDestination(sampleDestination)
+        XCTAssertEqual(session.phase, .choosingRide)
+        XCTAssertFalse(session.previewRoute.isEmpty)
+
+        let routeBefore = session.previewRoute
+        session.handleAppDidEnterBackground()
+        session.handleAppWillEnterForeground()
+
+        XCTAssertEqual(session.phase, .choosingRide)
+        XCTAssertEqual(session.previewRoute, routeBefore)
+        XCTAssertEqual(session.dropoff?.id, sampleDestination.id)
     }
 
     /// Polls on the main actor until `phase` is in `targets` or timeout elapses.

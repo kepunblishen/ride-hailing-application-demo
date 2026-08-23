@@ -44,6 +44,12 @@ struct SafetySettingsView: View {
                                 "Safety team",
                                 value: tripSession.safetyTeamNotified ? "Notified · reaching out" : "Sending details…"
                             )
+                            if let coord = location.latestLocation?.coordinate {
+                                LabeledContent(
+                                    "Location",
+                                    value: String(format: "%.5f, %.5f", coord.latitude, coord.longitude)
+                                )
+                            }
                         }
                         .padding(.vertical, 4)
                     } else {
@@ -55,7 +61,7 @@ struct SafetySettingsView: View {
                     }
 
                     Button {
-                        sharePayload = TripShare.message(for: trip, phase: tripSession.phase)
+                        sharePayload = TripShare.message(for: trip, phase: tripSession.phase, coordinate: location.latestLocation?.coordinate)
                         showShareSheet = true
                     } label: {
                         Label("Share live trip", systemImage: "square.and.arrow.up")
@@ -63,7 +69,7 @@ struct SafetySettingsView: View {
 
                     if let contact = trustedContacts.defaultContact {
                         ShareLink(
-                            item: TripShare.message(for: trip, contact: contact, phase: tripSession.phase),
+                            item: TripShare.message(for: trip, contact: contact, phase: tripSession.phase, coordinate: location.latestLocation?.coordinate),
                             subject: Text("My Vuum trip"),
                             message: Text("Live trip with \(contact.name)")
                         ) {
@@ -73,7 +79,7 @@ struct SafetySettingsView: View {
                 } header: {
                     Text("This trip")
                 } footer: {
-                    Text("Sharing includes driver, vehicle, plate, trip ID, destination, ETA, and a live tracking link.")
+                    Text("Sharing includes driver, vehicle, plate, trip ID, destination, ETA, live GPS when available, and a tracking link.")
                 }
             }
 
@@ -165,6 +171,7 @@ struct SafetySettingsView: View {
         .navigationTitle("Safety")
         .navigationBarTitleDisplayMode(.inline)
         .task {
+            location.startUpdatingIfAllowed()
             await permissions.refreshStatuses()
         }
         .sheet(isPresented: $showSOSConfirm) {
@@ -172,7 +179,7 @@ struct SafetySettingsView: View {
                 location: location,
                 contacts: trustedContacts.emergencyContacts
             ) {
-                tripSession.requestSOS()
+                tripSession.requestSOS(coordinate: location.latestLocation?.coordinate)
                 showSOSConfirm = false
             }
         }

@@ -79,6 +79,7 @@ struct SOSConfirmationSheet: View {
                 }
             }
         }
+        .task { location.startUpdatingIfAllowed() }
         .presentationDetents([.medium, .large])
     }
 }

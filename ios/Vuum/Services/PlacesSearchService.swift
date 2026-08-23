@@ -8,6 +8,15 @@ import Foundation
 /// 2. Otherwise — or on network/API failure — fall back to the local market catalog
 ///    (`MockPlaces`) with light fuzzy matching.
 ///
+/// Session lifecycle (Google Autocomplete billing):
+/// - `beginSession()` / first autocomplete → create UUID session token
+/// - autocomplete keystrokes reuse the same token (UI must debounce ~300 ms)
+/// - Place Details sends the same token, then clears it
+/// - abandoned search / dismiss → `abandonSession()`
+///
+/// Cost controls: session tokens, UI debounce, bounded place-details cache, field masks
+/// that include types (for icons) but never photos/reviews.
+///
 /// Keys are never hard-coded; enable **Places API (New)** on the same Cloud project
 /// as Maps when live autocomplete is desired. See `docs/GOOGLE_MAPS_SETUP.md`.
 enum PlacesSearchService {
@@ -19,21 +28,97 @@ enum PlacesSearchService {
         let googlePlaceID: String?
         /// Already-resolved catalog place (local fallback or cached resolve).
         let place: Place?
+        /// Classification for search icons / context (Google types or local heuristics).
+        let category: PlaceCategory
+        /// Optional distance from search bias (e.g. `"1.2 km"`).
+        let distanceHint: String?
 
         var isRemote: Bool { googlePlaceID != nil }
 
-        static func local(_ place: Place) -> PlaceSuggestion {
-            PlaceSuggestion(
+        var systemImage: String { category.systemImage }
+
+        /// Secondary line for list rows: address, then category · distance when useful.
+        var contextLine: String {
+            var parts: [String] = []
+            let secondary = secondaryText.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !secondary.isEmpty { parts.append(secondary) }
+            var meta: [String] = []
+            if let label = category.shortLabel { meta.append(label) }
+            if let distanceHint, !distanceHint.isEmpty { meta.append(distanceHint) }
+            if !meta.isEmpty {
+                parts.append(meta.joined(separator: " · "))
+            }
+            return parts.joined(separator: "\n")
+        }
+
+        /// Single-line subtitle for compact rows (address · category · distance).
+        var compactSubtitle: String {
+            var parts: [String] = []
+            let secondary = secondaryText.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !secondary.isEmpty { parts.append(secondary) }
+            if let label = category.shortLabel { parts.append(label) }
+            if let distanceHint, !distanceHint.isEmpty { parts.append(distanceHint) }
+            return parts.joined(separator: " · ")
+        }
+
+        static func local(_ place: Place, bias: GeoPoint? = nil) -> PlaceSuggestion {
+            let category = PlaceCategory.infer(
+                googleTypes: nil,
+                name: place.name,
+                subtitle: place.subtitle,
+                placeID: place.id
+            )
+            return PlaceSuggestion(
                 id: place.id,
                 primaryText: place.name,
                 secondaryText: place.subtitle,
                 googlePlaceID: nil,
-                place: place
+                place: place,
+                category: category,
+                distanceHint: distanceHint(from: bias, to: place.coordinate)
             )
         }
     }
 
+    /// Outcome of an autocomplete call — UI uses `suggestions`; `remoteError` drives Retry copy.
+    struct AutocompleteOutcome: Sendable {
+        enum Source: String, Sendable {
+            case remote
+            case localCatalog
+            case localAfterRemoteFailure
+        }
+
+        let suggestions: [PlaceSuggestion]
+        let source: Source
+        let remoteError: GoogleAPIError?
+
+        init(suggestions: [PlaceSuggestion], source: Source, remoteError: GoogleAPIError? = nil) {
+            self.suggestions = suggestions
+            self.source = source
+            self.remoteError = remoteError
+        }
+    }
+
+    /// Recommended UI debounce before calling autocomplete (session-token cost control).
+    static let recommendedDebounceMilliseconds: UInt64 = 300
+
     private static let session = SessionState()
+    private static let detailsFieldMask =
+        "id,displayName,formattedAddress,location,types,primaryType"
+    private static let autocompleteFieldMask =
+        "suggestions.placePrediction.place,"
+        + "suggestions.placePrediction.placeId,"
+        + "suggestions.placePrediction.text,"
+        + "suggestions.placePrediction.structuredFormat,"
+        + "suggestions.placePrediction.types"
+    /// Skip remote autocomplete for 1-character queries (billing + noise); local catalog still runs.
+    private static let remoteMinQueryLength = 2
+
+    /// True when a usable Maps/Places API key is present (live path may still fail at runtime).
+    static var isLivePlacesAvailable: Bool {
+        MapBootstrap.configureIfNeeded()
+        return MapBootstrap.hasAPIKey
+    }
 
     /// Start a new Autocomplete billing session (fresh UUID). Call when the search field gains focus
     /// or the query is cleared after a selection.
@@ -51,33 +136,76 @@ enum PlacesSearchService {
         session.clearToken()
     }
 
-    /// Autocomplete suggestions for `query`. Debounce in the UI (~250–350 ms).
+    /// Autocomplete suggestions for `query`. Debounce in the UI (~300 ms).
     static func autocomplete(
         query: String,
         bias: GeoPoint? = nil,
-        market: AppLocale.Market = AppLocale.current
+        market: AppLocale.Market = AppLocale.current,
+        languageCode: String? = nil
     ) async -> [PlaceSuggestion] {
+        await autocompleteOutcome(
+            query: query,
+            bias: bias,
+            market: market,
+            languageCode: languageCode
+        ).suggestions
+    }
+
+    /// Same as `autocomplete` but reports whether results came from Google or the local catalog.
+    static func autocompleteOutcome(
+        query: String,
+        bias: GeoPoint? = nil,
+        market: AppLocale.Market = AppLocale.current,
+        languageCode: String? = nil
+    ) async -> AutocompleteOutcome {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return [] }
+        guard !trimmed.isEmpty else {
+            return AutocompleteOutcome(suggestions: [], source: .localCatalog)
+        }
 
         MapBootstrap.configureIfNeeded()
-        if MapBootstrap.hasAPIKey, let key = MapBootstrap.resolvedAPIKey() {
+        if trimmed.count >= remoteMinQueryLength,
+           MapBootstrap.hasAPIKey,
+           let key = MapBootstrap.resolvedAPIKey()
+        {
             do {
                 let remote = try await fetchRemoteSuggestions(
                     query: trimmed,
                     bias: bias ?? MockPlaces.defaultCenter(for: market).coordinate,
                     market: market,
+                    languageCode: resolvedLanguageCode(languageCode),
                     apiKey: key
                 )
-                if !remote.isEmpty { return remote }
+                if !remote.isEmpty {
+                    return AutocompleteOutcome(suggestions: remote, source: .remote)
+                }
+                // Empty remote → still prefer catalog so the rider always sees options.
+                return AutocompleteOutcome(
+                    suggestions: localSuggestions(query: trimmed, market: market, bias: bias),
+                    source: .localCatalog
+                )
+            } catch let error as GoogleAPIError where error == .cancelled {
+                return AutocompleteOutcome(suggestions: [], source: .localCatalog)
+            } catch is CancellationError {
+                return AutocompleteOutcome(suggestions: [], source: .localCatalog)
             } catch {
-                #if DEBUG
-                print("[Vuum] Places autocomplete failed — using local catalog: \(error.localizedDescription)")
-                #endif
+                let mapped = (error as? GoogleAPIError) ?? .invalidResponse
+                if mapped == .cancelled {
+                    return AutocompleteOutcome(suggestions: [], source: .localCatalog)
+                }
+                await GoogleMapsDiagnostics.shared.noteError(mapped, api: .placesAutocomplete)
+                return AutocompleteOutcome(
+                    suggestions: localSuggestions(query: trimmed, market: market, bias: bias),
+                    source: .localAfterRemoteFailure,
+                    remoteError: mapped
+                )
             }
         }
 
-        return localSuggestions(query: trimmed, market: market)
+        return AutocompleteOutcome(
+            suggestions: localSuggestions(query: trimmed, market: market, bias: bias),
+            source: .localCatalog
+        )
     }
 
     /// Resolve a suggestion to a full `Place` (coordinates + address). Ends the Places session
@@ -88,6 +216,11 @@ enum PlacesSearchService {
             return place
         }
         guard let googleID = suggestion.googlePlaceID else { return nil }
+
+        if let cached = MapsRequestCache.cachedPlace(resourceName: googleID) {
+            session.clearToken()
+            return cached
+        }
 
         MapBootstrap.configureIfNeeded()
         guard MapBootstrap.hasAPIKey, let key = MapBootstrap.resolvedAPIKey() else {
@@ -100,14 +233,23 @@ enum PlacesSearchService {
                 placeResourceName: googleID,
                 fallbackName: suggestion.primaryText,
                 fallbackSubtitle: suggestion.secondaryText,
+                languageCode: resolvedLanguageCode(nil),
                 apiKey: key
             )
+            MapsRequestCache.storePlace(place, resourceName: googleID)
             session.clearToken()
             return place
+        } catch let error as GoogleAPIError where error == .cancelled {
+            session.clearToken()
+            return nil
+        } catch is CancellationError {
+            session.clearToken()
+            return nil
         } catch {
-            #if DEBUG
-            print("[Vuum] Place Details failed: \(error.localizedDescription)")
-            #endif
+            let mapped = (error as? GoogleAPIError) ?? .invalidResponse
+            if mapped != .cancelled {
+                await GoogleMapsDiagnostics.shared.noteError(mapped, api: .placesDetails)
+            }
             session.clearToken()
             return nil
         }
@@ -118,6 +260,7 @@ enum PlacesSearchService {
     static func localSuggestions(
         query: String,
         market: AppLocale.Market,
+        bias: GeoPoint? = nil,
         limit: Int = 12
     ) -> [PlaceSuggestion] {
         let q = query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
@@ -144,7 +287,21 @@ enum PlacesSearchService {
         return scored
             .sorted { $0.1 > $1.1 }
             .prefix(limit)
-            .map { PlaceSuggestion.local($0.0) }
+            .map { PlaceSuggestion.local($0.0, bias: bias) }
+    }
+
+    static func distanceHint(from bias: GeoPoint?, to coordinate: GeoPoint) -> String? {
+        guard let bias else { return nil }
+        let meters = TripGeo.distanceMeters(from: bias, to: coordinate)
+        guard meters.isFinite, meters >= 0 else { return nil }
+        if meters < 1000 {
+            return "\(Int(meters.rounded())) m"
+        }
+        let km = meters / 1000
+        if km < 10 {
+            return String(format: "%.1f km", km)
+        }
+        return "\(Int(km.rounded())) km"
     }
 
     /// Typo-tolerant substring: allow one edit distance per ~4 chars of needle.
@@ -180,24 +337,39 @@ enum PlacesSearchService {
         return prev[n]
     }
 
+    private static func resolvedLanguageCode(_ override: String?) -> String {
+        if let override, !override.isEmpty { return override }
+        switch L10n.language {
+        case .english: return "en"
+        case .french, .lingala: return "fr"
+        case .kiswahili: return "sw"
+        }
+    }
+
     // MARK: - Places API (New) REST
 
     private static func fetchRemoteSuggestions(
         query: String,
         bias: GeoPoint,
         market: AppLocale.Market,
+        languageCode: String,
         apiKey: String
     ) async throws -> [PlaceSuggestion] {
         let token = session.ensureToken()
         let url = URL(string: "https://places.googleapis.com/v1/places:autocomplete")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
-        request.setValue(apiKey, forHTTPHeaderField: "X-Goog-Api-Key")
+        request.timeoutInterval = 12
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        GoogleMapsREST.applyAPIKeyHeaders(
+            to: &request,
+            apiKey: apiKey,
+            fieldMask: autocompleteFieldMask
+        )
         request.httpBody = try JSONSerialization.data(withJSONObject: [
             "input": query,
             "sessionToken": token,
-            "languageCode": "en",
+            "languageCode": languageCode,
             "includedRegionCodes": market == .kenya ? ["ke"] : ["cd"],
             "locationBias": [
                 "circle": [
@@ -210,13 +382,7 @@ enum PlacesSearchService {
             ],
         ])
 
-        let (data, response) = try await URLSession.shared.data(for: request)
-        guard let http = response as? HTTPURLResponse else {
-            throw PlacesError.invalidResponse
-        }
-        guard (200..<300).contains(http.statusCode) else {
-            throw PlacesError.httpStatus(http.statusCode)
-        }
+        let (data, _) = try await GoogleAPIHTTP.data(for: request, api: .placesAutocomplete)
 
         let decoded = try JSONDecoder().decode(AutocompleteResponse.self, from: data)
         return (decoded.suggestions ?? []).compactMap { item in
@@ -227,12 +393,20 @@ enum PlacesSearchService {
             let secondary = pred.structuredFormat?.secondaryText?.text ?? ""
             let resource = pred.place ?? (pred.placeId.map { "places/\($0)" })
             guard let resource else { return nil }
+            let category = PlaceCategory.infer(
+                googleTypes: pred.types,
+                name: main,
+                subtitle: secondary,
+                placeID: resource
+            )
             return PlaceSuggestion(
                 id: resource,
                 primaryText: main,
                 secondaryText: secondary,
                 googlePlaceID: resource,
-                place: nil
+                place: nil,
+                category: category,
+                distanceHint: nil
             )
         }
     }
@@ -241,33 +415,41 @@ enum PlacesSearchService {
         placeResourceName: String,
         fallbackName: String,
         fallbackSubtitle: String,
+        languageCode: String,
         apiKey: String
     ) async throws -> Place {
         let token = session.currentToken
-        var components = URLComponents(
-            string: "https://places.googleapis.com/v1/\(placeResourceName)"
-        )!
+        var components = URLComponents()
+        components.scheme = "https"
+        components.host = "places.googleapis.com"
+        components.path = "/v1/\(placeResourceName)"
+        var queryItems: [URLQueryItem] = [
+            URLQueryItem(name: "languageCode", value: languageCode),
+        ]
         if let token {
-            components.queryItems = [URLQueryItem(name: "sessionToken", value: token)]
+            queryItems.append(URLQueryItem(name: "sessionToken", value: token))
         }
-        guard let url = components.url else { throw PlacesError.invalidResponse }
+        components.queryItems = queryItems
+        guard let url = components.url else { throw GoogleAPIError.invalidResponse }
 
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
-        request.setValue(apiKey, forHTTPHeaderField: "X-Goog-Api-Key")
-        request.setValue(
-            "id,displayName,formattedAddress,location",
-            forHTTPHeaderField: "X-Goog-FieldMask"
+        request.timeoutInterval = 12
+        GoogleMapsREST.applyAPIKeyHeaders(
+            to: &request,
+            apiKey: apiKey,
+            fieldMask: detailsFieldMask
         )
 
-        let (data, response) = try await URLSession.shared.data(for: request)
-        guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
-            throw PlacesError.httpStatus((response as? HTTPURLResponse)?.statusCode ?? -1)
-        }
+        let (data, _) = try await GoogleAPIHTTP.data(for: request, api: .placesDetails)
 
         let details = try JSONDecoder().decode(PlaceDetailsResponse.self, from: data)
-        let lat = details.location?.latitude ?? 0
-        let lon = details.location?.longitude ?? 0
+        guard let lat = details.location?.latitude,
+              let lon = details.location?.longitude,
+              abs(lat) > 0.000_001 || abs(lon) > 0.000_001
+        else {
+            throw GoogleAPIError.invalidResponse
+        }
         let name = details.displayName?.text ?? fallbackName
         let subtitle = details.formattedAddress ?? fallbackSubtitle
         let id = details.id ?? placeResourceName.replacingOccurrences(of: "places/", with: "")
@@ -280,11 +462,6 @@ enum PlacesSearchService {
     }
 
     // MARK: - Types
-
-    private enum PlacesError: Error {
-        case invalidResponse
-        case httpStatus(Int)
-    }
 
     private final class SessionState: @unchecked Sendable {
         private let lock = NSLock()
@@ -331,6 +508,7 @@ enum PlacesSearchService {
         let placeId: String?
         let text: FormattableText?
         let structuredFormat: StructuredFormat?
+        let types: [String]?
     }
 
     private struct StructuredFormat: Decodable {
@@ -347,6 +525,8 @@ enum PlacesSearchService {
         let displayName: FormattableText?
         let formattedAddress: String?
         let location: LatLng?
+        let types: [String]?
+        let primaryType: String?
     }
 
     private struct LatLng: Decodable {

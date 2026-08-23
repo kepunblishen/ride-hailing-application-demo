@@ -4,11 +4,25 @@ import Foundation
 ///
 /// Without `VUUM_GOOGLE_MAPS_API_KEY`, callers get `nil` and should keep using
 /// `TripGeo` local polylines so the app still runs.
+///
+/// Primary routing stack for Vuum (`GoogleRouteProvider`). Directions is fallback only.
 enum RoutesAPIService {
+    struct ComputedLeg: Equatable {
+        let points: [GeoPoint]
+        let distanceMeters: Int
+        /// Traffic-aware when `routingPreference` is `TRAFFIC_AWARE`.
+        let durationSeconds: Int
+        let staticDurationSeconds: Int?
+    }
+
     struct ComputedRoute: Equatable {
         let points: [GeoPoint]
         let distanceMeters: Int
+        /// Traffic-aware duration (`routes.duration` under TRAFFIC_AWARE).
         let durationSeconds: Int
+        /// Duration without live traffic (`routes.staticDuration`), when present.
+        let staticDurationSeconds: Int?
+        let legs: [ComputedLeg]
         /// Additional routes when `computeAlternativeRoutes` was requested.
         let alternates: [ComputedRoute]
 
@@ -61,17 +75,17 @@ enum RoutesAPIService {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.httpBody = httpBody
+        request.timeoutInterval = 12
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue(key, forHTTPHeaderField: "X-Goog-Api-Key")
-        request.setValue(
-            "routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline",
-            forHTTPHeaderField: "X-Goog-FieldMask"
+        GoogleMapsREST.applyAPIKeyHeaders(
+            to: &request,
+            apiKey: key,
+            fieldMask: "routes.duration,routes.staticDuration,routes.distanceMeters,routes.polyline.encodedPolyline,routes.legs.duration,routes.legs.staticDuration,routes.legs.distanceMeters,routes.legs.polyline.encodedPolyline"
         )
 
         do {
-            let (data, response) = try await URLSession.shared.data(for: request)
-            guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode),
-                  let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+            let (data, _) = try await GoogleAPIHTTP.data(for: request, api: .routes)
+            guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
                   let routes = json["routes"] as? [[String: Any]],
                   let first = routes.first,
                   let computed = parseRoute(first)
@@ -86,12 +100,15 @@ enum RoutesAPIService {
                 points: computed.points,
                 distanceMeters: computed.distanceMeters,
                 durationSeconds: computed.durationSeconds,
+                staticDurationSeconds: computed.staticDurationSeconds,
+                legs: computed.legs,
                 alternates: alts
             )
+        } catch let error as GoogleAPIError {
+            await GoogleMapsDiagnostics.shared.noteError(error, api: .routes)
+            return nil
         } catch {
-            #if DEBUG
-            print("[Vuum] RoutesAPIService error: \(error.localizedDescription)")
-            #endif
+            await GoogleMapsDiagnostics.shared.noteError(.invalidResponse, api: .routes)
             return nil
         }
     }
@@ -110,15 +127,46 @@ enum RoutesAPIService {
     private static func parseRoute(_ route: [String: Any]) -> ComputedRoute? {
         let distance = route["distanceMeters"] as? Int ?? 0
         let durationSeconds = parseDurationSeconds(route["duration"] as? String)
+        let staticDurationSeconds: Int? = {
+            let value = parseDurationSeconds(route["staticDuration"] as? String)
+            return value > 0 ? value : nil
+        }()
         guard let poly = (route["polyline"] as? [String: Any])?["encodedPolyline"] as? String else {
             return nil
         }
         let points = decodePolyline(poly)
         guard points.count >= 2 else { return nil }
+
+        let legsJSON = route["legs"] as? [[String: Any]] ?? []
+        let legs: [ComputedLeg] = legsJSON.compactMap { leg in
+            let legDistance = leg["distanceMeters"] as? Int ?? 0
+            let legDuration = parseDurationSeconds(leg["duration"] as? String)
+            let legStatic: Int? = {
+                let value = parseDurationSeconds(leg["staticDuration"] as? String)
+                return value > 0 ? value : nil
+            }()
+            let legPoints: [GeoPoint]
+            if let encoded = (leg["polyline"] as? [String: Any])?["encodedPolyline"] as? String {
+                let decoded = decodePolyline(encoded)
+                legPoints = decoded.count >= 2 ? decoded : []
+            } else {
+                legPoints = []
+            }
+            guard legDistance > 0 || legDuration > 0 || legPoints.count >= 2 else { return nil }
+            return ComputedLeg(
+                points: legPoints,
+                distanceMeters: legDistance,
+                durationSeconds: max(legDuration, 1),
+                staticDurationSeconds: legStatic
+            )
+        }
+
         return ComputedRoute(
             points: points,
             distanceMeters: distance,
-            durationSeconds: durationSeconds,
+            durationSeconds: max(durationSeconds, 1),
+            staticDurationSeconds: staticDurationSeconds,
+            legs: legs,
             alternates: []
         )
     }

@@ -46,13 +46,19 @@
 
 | Check | Status | Notes |
 |-------|--------|-------|
-| `TripMapLayer` → `VuumMapView` | PASS | camera, pins, route, fit, followDriver, `cameraFocusNonce` |
-| Pins by phase | PASS | nearby / pickup-dropoff / driver |
-| Route preview (choose-ride) | PASS | `previewRoute` + `RouteEngine` |
-| Live remaining path | PASS | en-route / in-trip |
-| Follow driver | PASS | matched + en-route + arrived + in-trip |
+| `TripMapLayer` → `VuumMapView` | PASS | camera, pins, route, fit, `shouldFollowDriverOnMap`, `cameraFocusNonce`, `showsUserLocation` |
+| Pins by phase | PASS | idle nearby; selectingDestination pickup+stops(+dropoff); choose/search + dropoff; live driver; tip-anchored teardrops + zIndex |
+| Fit bounds / recenter | PASS | edge-inset fit; recenter clears gesture lock and re-fits waypoints |
+| Blue-dot my-location | PASS | `showsUserLocation: location.isAuthorized` only |
+| Route preview (choose-ride + searching) | PASS | `previewRoute` / waypoints — same ride path |
+| Live remaining path | PASS | en-route / in-trip; cleared at `driverArrived` |
+| Follow driver | PASS | `TripSession.shouldFollowDriverOnMap`; bearing-aware; pauses after rider pan |
+| Marker motion | PASS | CATransaction ease along polyline; heading lerp; class ETA timing (bike~2 / car~5 / XXL~10) |
 | API key absent | PASS | `MapPlaceholderView` when `MapBootstrap` not configured |
-| Places session tokens | PASS (arch) | `PlacesSearchService` autocomplete + session token |
+| Places session tokens | PASS | `PlacesSearchService` + `PlacesSearchController` (begin/reuse/Details/abandon) |
+| Places debounce + cancel | PASS | ~300 ms debounce; stale generations discarded |
+| Places error / empty UX | PASS | Searching / no matches / resolve failure — no demo wording |
+| Places available / failure | PASS (arch) | Live when keyed; local catalog fallback on miss/fail |
 | Live Google Directions | PARTIAL | Falls back to synthetic polyline without credentials |
 
 ---
@@ -62,7 +68,7 @@
 | Check | Status | Notes |
 |-------|--------|-------|
 | Entry from active trip | PASS | Message / Chat opens `DriverChatView` sheet |
-| `isChatAvailable` | PASS | matched → in-trip |
+| `isChatAvailable` | PASS | matched → in-trip; Chat/Call chips gated |
 | Opening driver message | PASS | Seeded on assign |
 | Rider send + driver reply | PASS | Typing indicator + contextual replies |
 | Unread badge | PASS | Increments when chat not presented |
@@ -98,7 +104,7 @@ Marked in the directive file for **Maps / Trip / Safety** rows covered by this p
 | Maps | Routes available / failure | Synthetic fallback |
 | Trip | searching → completion | PASS |
 | Trip | OTP/PIN boarding | PASS |
-| Trip | destination change | PASS (choose-ride + in-trip sheet) |
+| Trip | destination change | PASS (choose-ride + in-trip sheet; polyline+fare hardened) |
 | Trip | cancellation | PASS |
 | Safety | SOS | PASS |
 | Safety | trip share | PASS |
@@ -117,7 +123,7 @@ Marked in the directive file for **Maps / Trip / Safety** rows covered by this p
 | 22 | Open safety center | PASS |
 | 23 | Share trip | PASS |
 | 24 | SOS workflow | PASS (local notify flag) |
-| 25 | Change destination | PASS (sheet + choose-ride) |
+| 25 | Change destination | PASS (sheet + choose-ride; in-trip live polyline+fare hardened) |
 | 26–29 | Complete / fare / rate / receipt | PASS (post-trip flow present) |
 
 ---
@@ -128,6 +134,21 @@ Marked in the directive file for **Maps / Trip / Safety** rows covered by this p
 2. **SOS / trip share** do not call a real Safety backend — local UI + simulated notify state only.
 3. **Share by default** prompts the rider; it does not auto-SMS contacts (no messaging backend).
 4. Parallel agent churn previously removed `ActiveTripFlowView`; file is restored and listed in the Xcode project.
+
+---
+
+## Agent 37 re-audit (TripSession ↔ map glue)
+
+**Date:** 2026-08-23 · **Commit:** none (requested)
+
+| Fix | Detail |
+|-----|--------|
+| One ride → map | `TripMapLayer` uses `shouldFollowDriverOnMap` + `mapPins` / `mapRoute` / `mapFitCoordinates` only |
+| Searching route | Preview polyline + waypoint fit retained through matching |
+| Destination pins | Pickup (+ stops) visible while selecting destination |
+| Arrival polyline | Approach path cleared at `driverArrived` |
+| Chat | Chat/Call chips gated by `isChatAvailable`; `DriverChatView` unchanged |
+| Checklist | Directive Agent 37 items marked `[x]` |
 
 ---
 

@@ -95,4 +95,43 @@ final class RouteDeviationTests: XCTestCase {
         XCTAssertEqual(nearB.latitude, b.latitude, accuracy: 1e-9)
         XCTAssertEqual(nearB.longitude, b.longitude, accuracy: 1e-9)
     }
+
+    /// Live Routes/Directions polylines are dense; corridor math + notice must still work.
+    func testDenseLiveLikePolylineCorridorAndNotice() {
+        let origin = GeoPoint(latitude: -11.6644, longitude: 27.4794)
+        let destination = GeoPoint(latitude: -11.5913, longitude: 27.5308)
+        let liveLike = TripGeo.routePolyline(from: origin, to: destination, samples: 96)
+        XCTAssertGreaterThan(liveLike.count, 40)
+
+        let onPath = TripGeo.pointAlong(path: liveLike, fraction: 0.4).point
+        XCTAssertLessThan(
+            TripGeo.distanceToPolylineMeters(onPath, path: liveLike),
+            RouteDeviationMonitor.defaultCorridorMeters
+        )
+
+        let leg = TripGeo.pathBetween(along: liveLike, from: origin, to: destination)
+        XCTAssertGreaterThanOrEqual(leg.count, 2)
+        let midLeg = TripGeo.pointAlong(path: leg, fraction: 0.5).point
+        XCTAssertLessThan(
+            TripGeo.distanceToPolylineMeters(midLeg, path: liveLike),
+            25
+        )
+
+        var monitor = RouteDeviationMonitor(
+            corridorMeters: 90,
+            persistSeconds: 6,
+            recoverSeconds: 3,
+            recoverMeters: 55
+        )
+        let far = TripGeo.offset(onPath, northMeters: 0, eastMeters: 180)
+        let t0 = Date(timeIntervalSince1970: 1_700_000_200)
+        _ = monitor.evaluate(position: far, expectedRoute: liveLike, now: t0)
+        let late = monitor.evaluate(
+            position: far,
+            expectedRoute: liveLike,
+            now: t0.addingTimeInterval(6.1)
+        )
+        XCTAssertTrue(late.isNoticeActive)
+        XCTAssertEqual(late.noticeText, RouteDeviationMonitor.riderNotice)
+    }
 }

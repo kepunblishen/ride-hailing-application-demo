@@ -8,7 +8,7 @@ SwiftUI target under `ios/Vuum/`.
 2. Resolve SPM packages (ComponentsKit, Google Maps SDK, KeychainSwift)
 3. Set Maps key (never commit a real key):
    - Copy `Secrets.example.xcconfig` → `Secrets.xcconfig` (gitignored), **or**
-   - Xcode scheme **Vuum** → Run → Environment Variables → `VUUM_GOOGLE_MAPS_API_KEY`
+   - Xcode scheme **Vuum** → Run → Environment Variables → enable `VUUM_GOOGLE_MAPS_API_KEY` with a real key (shared scheme entry is disabled by default so the placeholder cannot shadow Secrets)
 4. Run on simulator or device
 
 Details: [docs/GOOGLE_MAPS_SETUP.md](../docs/GOOGLE_MAPS_SETUP.md)
@@ -17,8 +17,8 @@ Details: [docs/GOOGLE_MAPS_SETUP.md](../docs/GOOGLE_MAPS_SETUP.md)
 
 CI workflow **`ios-release`** in repo-root [`codemagic.yaml`](../codemagic.yaml) builds an unsigned `build/Vuum.ipa`.
 
-1. Set Codemagic secure env `VUUM_GOOGLE_MAPS_API_KEY` (credential-only)
-2. Run the workflow → download IPA → install with Sideloadly
+1. Create Codemagic group **`vuum_secrets`**, then set Secure `VUUM_GOOGLE_MAPS_API_KEY` inside it (credential-only)
+2. Run workflow **`ios-release`** → download IPA → install with Sideloadly
 
 Setup: [docs/CODEMAGIC_SETUP.md](../docs/CODEMAGIC_SETUP.md)
 

@@ -121,7 +121,7 @@ struct FoodProductSheet: View {
 
     private func seedPlaces() {
         let market: AppLocale.Market = AppLocale.current == .kenya ? .kenya : .drc
-        pickup = MockPlaces.defaultCenter(for: market)
+        pickup = tripSession.pickup
         dropoff = MockPlaces.destinations(for: market).first ?? dropoff
         if cart.isEmpty, let first = FoodCatalog.restaurants.first?.menu.first {
             cart[first.id] = 1

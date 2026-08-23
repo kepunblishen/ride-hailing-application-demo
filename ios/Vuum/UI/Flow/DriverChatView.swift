@@ -92,21 +92,25 @@ struct DriverChatView: View {
 
     private var driverHeader: some View {
         HStack(spacing: 12) {
-            Circle()
-                .fill(VuumColor.brand.opacity(0.22))
-                .frame(width: 40, height: 40)
-                .overlay(
-                    Text(String(driverName.prefix(1)))
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundStyle(VuumColor.primaryText)
-                )
+            if let driver = tripSession.activeTrip?.driver {
+                DriverAvatarView(driver: driver, size: 40)
+            } else {
+                Circle()
+                    .fill(VuumColor.brand.opacity(0.22))
+                    .frame(width: 40, height: 40)
+                    .overlay(
+                        Text(String(driverName.prefix(1)))
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundStyle(VuumColor.primaryText)
+                    )
+            }
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(driverName)
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(VuumColor.primaryText)
                 if let trip = tripSession.activeTrip {
-                    Text("\(trip.driver.vehicle) · \(trip.driver.plate)")
+                    Text("\(trip.driver.vehicleMakeModel) · \(trip.driver.plate)")
                         .font(.system(size: 12, weight: .medium))
                         .foregroundStyle(VuumColor.secondaryText)
                         .lineLimit(1)
@@ -126,6 +130,7 @@ struct DriverChatView: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Call driver")
+            .accessibilityHint("Places a phone call to your driver")
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)

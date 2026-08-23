@@ -533,6 +533,9 @@ struct ActiveTrip: Equatable {
     var driverHeading: Double
     var pickupRoute: [GeoPoint]
     var tripRoute: [GeoPoint]
+    /// Booked trip-route duration from `RouteEngine` (traffic-aware when live). Used for in-trip ETA.
+    /// Zero means fall back to class speed for remaining distance.
+    var routeDurationSeconds: TimeInterval = 0
     var etaMinutes: Int
     var distanceRemainingMeters: Double
     var statusHeadline: String

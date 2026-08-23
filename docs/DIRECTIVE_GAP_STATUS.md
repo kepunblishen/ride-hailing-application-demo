@@ -46,15 +46,17 @@ Rider presentation software is largely in place under `ios/Vuum/`. Live Google M
 | ID | Topic | Evidence |
 |----|-------|----------|
 | §13 / §64 / §65 / §87 software | Maps + Places + Routes stack | `MapBootstrap`, `VuumMapView`, `PlacesSearchService`, `RoutesAPIService`, `DirectionsRouteService`, `RouteEngine`, `docs/GOOGLE_MAPS_SETUP.md` |
+| Map class markers | Bike / car / XXL SF Symbol overlays | `MapPin.vehicleClass` + `VuumMapView.vehicleIcon` (`bicycle` / `car.fill` / `car.2.fill`) |
+| §73 Info.plist / bundle | Location strings, `comgooglemaps` query scheme, dual key slots, default ATS, `com.vuum.app` | `ios/Vuum/Info.plist`, `PRODUCT_BUNDLE_IDENTIFIER`, `docs/GOOGLE_MAPS_SETUP.md` audit table |
 | §14 | Map fallback | Placeholder without key |
-| §18 / §20 | PIN + in-trip destination change | `TripSession.updateInTripDestination`, `ChangeDestinationSheet` |
+| §18 / §20 | PIN + in-trip destination change | `TripSession.updateInTripDestination`, `ChangeDestinationSheet`; **hardened** live polyline+fare apply via `destinationRouteGeneration` + `InTripDestinationChangeTests` |
 | §24 / §25 / §68 | Payment providers + history | `PaymentProviders`, `PaymentMethodStore.transactions`, `PaymentHistoryView` |
 | §32 / §45 | Cancel fee + surge | `CancellationPolicy`, `CancelTripSheet`, `MockSurge` / `surgeState` |
 | §49 / §50 | Field sales / eligibility | `FieldSalesModels`, `FieldSalesStore`, referral lifecycle |
 | §51 / §52 | Offline / status UI | `NetworkReachability`, `VuumOfflineBanner` on `ContentView`, `VuumStatusViews` |
 | §66 | Zone availability | `ServiceZone`, `ServiceZoneCatalog` |
 | §42 | Geofencing / airport / demand zones + route deviation | `TripGeo` geofence + polyline corridor helpers; `ServiceZoneCatalog`; `RouteDeviationMonitor` + in-trip notice in `TripSession` / `ActiveTripFlowView` |
-| §6 | Reverse geocode path | `ReverseGeocodingService` (Google when keyed, else `CLGeocoder`) |
+| §6 | Reverse geocode path | `ReverseGeocodingService` (Google when keyed, else `CLGeocoder`); “Current location” only for unresolved GPS pickup — market centers use real street names |
 | §8 | Money / FX types | `Money.swift`, `ExchangeRateConfiguration` |
 | §67 | Contextual FX / dual display | `ExchangeRateConfiguration`, `CurrencyConfiguration`, `MoneyPair` |
 | §44 | Pricing engine | `PricingEngine.swift` + `MockFares` |
@@ -77,7 +79,7 @@ Rider presentation software is largely in place under `ios/Vuum/`. Live Google M
 | §38 | Trip audio | On-device record + mic permission; no cloud retention pipeline (by design) |
 | §40 / §69 | Permissions UX | Contextual strings exist; some batching remains |
 | §42 | Geo utilities depth | Geofences + service zones + persistent route-deviation corridor shipped; full city-boundary polygons still thinner than Uber |
-| §61 / §71 | Premium polish / motion | Subjective; keep iterating on device |
+| §61 / §71 | Premium polish / motion | Map vehicle motion hardened + active-trip/searching overlays polished (compact driver card, height-capped sheets, reduce-motion pulse); device polish still OK |
 | §85 | Acceptance walkthrough | Runnable without key (synthetic maps); live tiles need credentials |
 
 ---

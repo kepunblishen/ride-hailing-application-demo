@@ -70,7 +70,7 @@ Mark **P** / **F** / **N/A**. Add a one-line note on Fail.
 | 10 | Destination search / suggestions → choose ride | | |
 | 11 | Confirm / Reserve booking | | |
 | 12 | Active trip map: pins / route / driver follow (as available) | | |
-| 13 | In-trip change destination | | |
+| 13 | In-trip change destination | | Expect polyline + fare update; software hardened — confirm on device |
 
 ### 3.4 Trip lifecycle & safety
 

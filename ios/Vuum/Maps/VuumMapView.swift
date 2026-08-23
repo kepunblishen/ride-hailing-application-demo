@@ -6,6 +6,8 @@ import GoogleMaps
 #endif
 
 struct VuumMapView: UIViewRepresentable {
+    @Environment(\.colorScheme) private var colorScheme
+
     var cameraTarget: GeoPoint
     var zoom: Float = 14
     var pins: [MapPin] = []
@@ -16,9 +18,11 @@ struct VuumMapView: UIViewRepresentable {
     var cameraFocusNonce: Int = 0
     /// Shows the Google Maps “my location” control (default off — sheets cover the corner).
     var showsMyLocationButton: Bool = false
+    /// Blue-dot user location — enable only when Core Location is authorized.
+    var showsUserLocation: Bool = false
     /// Extra map padding so markers/routes stay above bottom sheets.
     var contentPadding: EdgeInsets = EdgeInsets(top: 24, leading: 16, bottom: 220, trailing: 16)
-    var showsTraffic: Bool = true
+    var showsTraffic: Bool = false
     /// Lite / low-data: prefer simpler basemap styling and thinner polylines.
     var lowDataMode: Bool = false
 
@@ -37,13 +41,19 @@ struct VuumMapView: UIViewRepresentable {
                     zoom: zoom
                 )
             )
-            map.isMyLocationEnabled = true
+            map.isMyLocationEnabled = showsUserLocation
             map.settings.myLocationButton = showsMyLocationButton
             map.settings.compassButton = false
             map.isTrafficEnabled = showsTraffic
-            map.mapType = lowDataMode ? .normal : .normal
+            map.mapType = .normal
             map.padding = uiEdgeInsets(from: contentPadding)
-            Self.applyOptionalBrandMapStyle(to: map, lowDataMode: lowDataMode)
+            map.delegate = context.coordinator
+            context.coordinator.applyBrandMapStyleIfNeeded(
+                to: map,
+                lowDataMode: lowDataMode,
+                colorScheme: colorScheme,
+                force: true
+            )
             context.coordinator.mapView = map
             return map
         }
@@ -51,25 +61,23 @@ struct VuumMapView: UIViewRepresentable {
         return MapPlaceholderView(frame: .zero)
     }
 
-    /// Prep hook for Uber-like styled tiles: drop `VuumMapStyle.json` in the app bundle
-    /// (Google Maps JSON style). No-op until that resource exists — default Google basemap.
-    #if canImport(GoogleMaps)
-    private static func applyOptionalBrandMapStyle(to map: GMSMapView, lowDataMode: Bool) {
-        let resourceName = lowDataMode ? "VuumMapStyleLite" : "VuumMapStyle"
-        guard let url = Bundle.main.url(forResource: resourceName, withExtension: "json")
-            ?? Bundle.main.url(forResource: "VuumMapStyle", withExtension: "json"),
-              let style = try? GMSMapStyle(contentsOfFileURL: url)
-        else { return }
-        map.mapStyle = style
-    }
-    #endif
-
     func updateUIView(_ uiView: UIView, context: Context) {
+        if let placeholder = uiView as? MapPlaceholderView {
+            placeholder.refreshCopy()
+            return
+        }
         #if canImport(GoogleMaps)
         guard let map = uiView as? GMSMapView else { return }
+        map.isMyLocationEnabled = showsUserLocation
         map.settings.myLocationButton = showsMyLocationButton
         map.padding = uiEdgeInsets(from: contentPadding)
         map.isTrafficEnabled = showsTraffic
+        context.coordinator.applyBrandMapStyleIfNeeded(
+            to: map,
+            lowDataMode: lowDataMode,
+            colorScheme: colorScheme,
+            force: false
+        )
         context.coordinator.sync(
             map: map,
             pins: pins,
@@ -79,6 +87,7 @@ struct VuumMapView: UIViewRepresentable {
             zoom: zoom,
             followDriver: followDriver,
             cameraFocusNonce: cameraFocusNonce,
+            contentPadding: uiEdgeInsets(from: contentPadding),
             lowDataMode: lowDataMode
         )
         #endif
@@ -93,14 +102,54 @@ struct VuumMapView: UIViewRepresentable {
         )
     }
 
-    final class Coordinator {
+    final class Coordinator: NSObject {
         #if canImport(GoogleMaps)
         weak var mapView: GMSMapView?
         private var markers: [String: GMSMarker] = [:]
         private var polyline: GMSPolyline?
         private var lastFitSignature: String = ""
+        private var lastRouteSignature: String = ""
         private var didInitialCamera = false
         private var lastCameraFocusNonce: Int = 0
+        private var lastFollowSampleAt: CFTimeInterval = 0
+        private var lastAppliedStyleResource: String?
+        private var renderedHeadings: [String: Double] = [:]
+        private var iconCache: [String: UIImage] = [:]
+        /// True after the rider pans/zooms; cleared on programmatic recenter / fit.
+        fileprivate var userAdjustedCamera = false
+
+        /// Quiet POI / desaturated road styles from bundle JSON. Requires a configured Maps key.
+        func applyBrandMapStyleIfNeeded(
+            to map: GMSMapView,
+            lowDataMode: Bool,
+            colorScheme: ColorScheme,
+            force: Bool
+        ) {
+            guard MapBootstrap.isConfigured, MapBootstrap.hasAPIKey else { return }
+            let resource = Self.styleResourceName(lowDataMode: lowDataMode, colorScheme: colorScheme)
+            guard force || resource != lastAppliedStyleResource else { return }
+            lastAppliedStyleResource = resource
+
+            guard let url = Self.resolveStyleURL(named: resource),
+                  let style = try? GMSMapStyle(contentsOfFileURL: url)
+            else { return }
+            map.mapStyle = style
+        }
+
+        private static func styleResourceName(lowDataMode: Bool, colorScheme: ColorScheme) -> String {
+            if lowDataMode { return "VuumMapStyleLite" }
+            return colorScheme == .dark ? "VuumMapStyleNight" : "VuumMapStyle"
+        }
+
+        private static func resolveStyleURL(named resource: String) -> URL? {
+            if let url = Bundle.main.url(forResource: resource, withExtension: "json") {
+                return url
+            }
+            if resource == "VuumMapStyleNight" || resource == "VuumMapStyleLite" {
+                return Bundle.main.url(forResource: "VuumMapStyle", withExtension: "json")
+            }
+            return nil
+        }
 
         func sync(
             map: GMSMapView,
@@ -111,24 +160,134 @@ struct VuumMapView: UIViewRepresentable {
             zoom: Float,
             followDriver: Bool,
             cameraFocusNonce: Int,
+            contentPadding: UIEdgeInsets,
             lowDataMode: Bool = false
         ) {
+            let followPin = pins.first(where: { $0.kind == .driver })
+            syncPinLayers(map: map, pins: pins, animateVehicle: followDriver && followPin != nil)
+            syncRoute(map: map, route: route, lowDataMode: lowDataMode)
+            syncCamera(
+                map: map,
+                fitCoordinates: fitCoordinates,
+                cameraTarget: cameraTarget,
+                zoom: zoom,
+                followDriver: followDriver,
+                followHeading: followPin.map { renderedHeadings[$0.id] ?? $0.heading },
+                cameraFocusNonce: cameraFocusNonce,
+                contentPadding: contentPadding
+            )
+        }
+
+        // MARK: - Pin layers
+
+        private func syncPinLayers(map: GMSMapView, pins: [MapPin], animateVehicle: Bool) {
             let ids = Set(pins.map(\.id))
             for key in markers.keys where !ids.contains(key) {
                 markers[key]?.map = nil
                 markers.removeValue(forKey: key)
+                renderedHeadings.removeValue(forKey: key)
             }
 
-            for pin in pins {
+            // Draw order: nearby → stop → pickup/dropoff → driver (zIndex).
+            let ordered = pins.sorted { lhs, rhs in
+                pinZIndex(lhs.kind) < pinZIndex(rhs.kind)
+            }
+
+            CATransaction.begin()
+            CATransaction.setDisableActions(!animateVehicle)
+            if animateVehicle {
+                // Match TripSession's ~80 ms motion tick so the marker eases along the polyline.
+                CATransaction.setAnimationDuration(0.085)
+                CATransaction.setAnimationTimingFunction(
+                    CAMediaTimingFunction(name: .linear)
+                )
+            }
+
+            for pin in ordered {
+                let isVehicle = pin.kind == .driver || pin.kind == .nearby
                 let marker = markers[pin.id] ?? GMSMarker()
+                let isNew = markers[pin.id] == nil
                 marker.position = pin.coordinate.coordinate
-                marker.groundAnchor = CGPoint(x: 0.5, y: 0.5)
+                marker.groundAnchor = groundAnchor(for: pin.kind)
                 marker.icon = icon(for: pin)
-                marker.rotation = pin.kind == .driver || pin.kind == .nearby ? pin.heading : 0
-                marker.flat = pin.kind == .driver || pin.kind == .nearby
+                marker.zIndex = pinZIndex(pin.kind)
+                marker.title = pinTitle(for: pin)
+                if isVehicle {
+                    let previous = renderedHeadings[pin.id] ?? pin.heading
+                    let smoothed = isNew
+                        ? pin.heading
+                        : TripGeo.lerpHeading(from: previous, to: pin.heading, fraction: 0.55)
+                    renderedHeadings[pin.id] = smoothed
+                    marker.rotation = smoothed
+                    marker.flat = true
+                } else {
+                    marker.rotation = 0
+                    marker.flat = false
+                }
                 marker.map = map
                 markers[pin.id] = marker
             }
+
+            CATransaction.commit()
+        }
+
+        private func pinZIndex(_ kind: MapPinKind) -> Int32 {
+            switch kind {
+            case .nearby: return 10
+            case .stop: return 20
+            case .pickup: return 30
+            case .dropoff: return 40
+            case .driver: return 50
+            }
+        }
+
+        private func groundAnchor(for kind: MapPinKind) -> CGPoint {
+            switch kind {
+            case .pickup, .dropoff, .stop:
+                return CGPoint(x: 0.5, y: 1.0)
+            case .driver, .nearby:
+                return CGPoint(x: 0.5, y: 0.5)
+            }
+        }
+
+        private func pinTitle(for pin: MapPin) -> String {
+            switch pin.kind {
+            case .pickup: return "Pickup"
+            case .dropoff: return "Drop-off"
+            case .stop: return "Stop"
+            case .driver: return "Your driver"
+            case .nearby: return "Nearby vehicle"
+            }
+        }
+
+        // MARK: - Route
+
+        private func syncRoute(map: GMSMapView, route: [GeoPoint], lowDataMode: Bool) {
+            let signature: String
+            if route.count >= 2 {
+                // Coarse signature so micro progress updates don't rebuild the GMS path every frame.
+                let head = route[0]
+                let mid = route[route.count / 2]
+                let tail = route[route.count - 1]
+                signature = String(
+                    format: "%d|%.5f,%.5f|%.5f,%.5f|%.5f,%.5f|%@",
+                    route.count,
+                    head.latitude, head.longitude,
+                    mid.latitude, mid.longitude,
+                    tail.latitude, tail.longitude,
+                    lowDataMode ? "lite" : "full"
+                )
+            } else {
+                signature = lowDataMode ? "empty|lite" : "empty"
+            }
+
+            if signature == lastRouteSignature, polyline != nil || route.count < 2 {
+                if let line = polyline {
+                    line.strokeWidth = lowDataMode ? 3.5 : 5
+                }
+                return
+            }
+            lastRouteSignature = signature
 
             polyline?.map = nil
             if route.count >= 2 {
@@ -139,118 +298,216 @@ struct VuumMapView: UIViewRepresentable {
                 let line = GMSPolyline(path: path)
                 line.strokeColor = UIColor(red: 245 / 255, green: 165 / 255, blue: 36 / 255, alpha: 1)
                 line.strokeWidth = lowDataMode ? 3.5 : 5
+                line.zIndex = 5
                 line.map = map
                 polyline = line
             } else {
                 polyline = nil
             }
+        }
+
+        // MARK: - Camera
+
+        private func syncCamera(
+            map: GMSMapView,
+            fitCoordinates: [GeoPoint],
+            cameraTarget: GeoPoint,
+            zoom: Float,
+            followDriver: Bool,
+            followHeading: Double?,
+            cameraFocusNonce: Int,
+            contentPadding: UIEdgeInsets
+        ) {
+            let focusRequested = cameraFocusNonce != lastCameraFocusNonce
+            if focusRequested {
+                lastCameraFocusNonce = cameraFocusNonce
+                userAdjustedCamera = false
+            }
 
             if fitCoordinates.count >= 2 {
                 let signature = fitCoordinates
-                    .map { "\($0.latitude),\($0.longitude)" }
+                    .map { String(format: "%.5f,%.5f", $0.latitude, $0.longitude) }
                     .joined(separator: "|")
-                if signature != lastFitSignature {
+
+                if signature != lastFitSignature || focusRequested {
                     lastFitSignature = signature
+                    userAdjustedCamera = false
                     var bounds = GMSCoordinateBounds()
                     for point in fitCoordinates {
                         bounds = bounds.includingCoordinate(point.coordinate)
                     }
-                    let update = GMSCameraUpdate.fit(bounds, withPadding: 64)
-                    map.animate(with: update)
-                } else if followDriver {
-                    let camera = GMSCameraPosition.camera(
-                        withLatitude: cameraTarget.latitude,
-                        longitude: cameraTarget.longitude,
-                        zoom: max(map.camera.zoom, 14)
+                    // Edge insets keep pins clear of sheet chrome (map.padding alone is not enough for fit).
+                    let insets = UIEdgeInsets(
+                        top: max(contentPadding.top, 48) + 24,
+                        left: max(contentPadding.left, 24) + 16,
+                        bottom: max(contentPadding.bottom, 48) + 24,
+                        right: max(contentPadding.right, 24) + 16
                     )
-                    map.animate(to: camera)
+                    let update = GMSCameraUpdate.fit(bounds, with: insets)
+                    map.animate(with: update)
+                } else if followDriver, !userAdjustedCamera {
+                    animateFollow(
+                        to: cameraTarget,
+                        zoom: max(map.camera.zoom, 14),
+                        bearing: followHeading,
+                        on: map
+                    )
                 }
-            } else if followDriver {
-                let camera = GMSCameraPosition.camera(
-                    withLatitude: cameraTarget.latitude,
-                    longitude: cameraTarget.longitude,
-                    zoom: max(map.camera.zoom, 15)
-                )
-                map.animate(to: camera)
-            } else if cameraFocusNonce != lastCameraFocusNonce {
-                lastCameraFocusNonce = cameraFocusNonce
-                let camera = GMSCameraPosition.camera(
-                    withLatitude: cameraTarget.latitude,
-                    longitude: cameraTarget.longitude,
-                    zoom: zoom
-                )
-                map.animate(to: camera)
-            } else if !didInitialCamera {
-                didInitialCamera = true
-                let camera = GMSCameraPosition.camera(
-                    withLatitude: cameraTarget.latitude,
-                    longitude: cameraTarget.longitude,
-                    zoom: zoom
-                )
-                map.animate(to: camera)
+            } else {
+                if !lastFitSignature.isEmpty {
+                    lastFitSignature = ""
+                }
+
+                if followDriver, !userAdjustedCamera {
+                    animateFollow(
+                        to: cameraTarget,
+                        zoom: max(map.camera.zoom, 15),
+                        bearing: followHeading,
+                        on: map
+                    )
+                } else if focusRequested {
+                    animateTo(cameraTarget, zoom: zoom, on: map)
+                } else if !didInitialCamera {
+                    didInitialCamera = true
+                    animateTo(cameraTarget, zoom: zoom, on: map)
+                }
             }
         }
 
+        private func animateFollow(
+            to target: GeoPoint,
+            zoom: Float,
+            bearing: Double?,
+            on map: GMSMapView
+        ) {
+            let now = CACurrentMediaTime()
+            guard now - lastFollowSampleAt >= 0.12 else { return }
+            lastFollowSampleAt = now
+            let camera = GMSCameraPosition.camera(
+                withLatitude: target.latitude,
+                longitude: target.longitude,
+                zoom: zoom,
+                bearing: Float(bearing ?? map.camera.bearing),
+                viewingAngle: 0
+            )
+            CATransaction.begin()
+            CATransaction.setAnimationDuration(0.2)
+            map.animate(to: camera)
+            CATransaction.commit()
+        }
+
+        private func animateTo(_ target: GeoPoint, zoom: Float, on map: GMSMapView) {
+            let camera = GMSCameraPosition.camera(
+                withLatitude: target.latitude,
+                longitude: target.longitude,
+                zoom: zoom
+            )
+            map.animate(to: camera)
+        }
+
+        // MARK: - Icons
+
         private func icon(for pin: MapPin) -> UIImage {
+            let cacheKey: String
             switch pin.kind {
             case .pickup:
-                return circleIcon(color: UIColor.systemGreen, diameter: 18)
+                cacheKey = "pickup"
             case .stop:
-                return circleIcon(color: UIColor(red: 245 / 255, green: 165 / 255, blue: 36 / 255, alpha: 1), diameter: 16)
+                cacheKey = "stop"
             case .dropoff:
-                return circleIcon(color: UIColor(red: 15 / 255, green: 20 / 255, blue: 25 / 255, alpha: 1), diameter: 18)
+                cacheKey = "dropoff"
             case .driver:
-                return vehicleIcon(
+                cacheKey = "driver-\(pin.vehicleClass ?? .standard)"
+            case .nearby:
+                cacheKey = "nearby-\(pin.vehicleClass ?? .standard)"
+            }
+            if let cached = iconCache[cacheKey] { return cached }
+
+            let image: UIImage
+            switch pin.kind {
+            case .pickup:
+                image = teardropIcon(
+                    fill: UIColor(red: 34 / 255, green: 160 / 255, blue: 90 / 255, alpha: 1),
+                    diameter: 22
+                )
+            case .stop:
+                image = teardropIcon(
+                    fill: UIColor(red: 245 / 255, green: 165 / 255, blue: 36 / 255, alpha: 1),
+                    diameter: 18
+                )
+            case .dropoff:
+                image = teardropIcon(
+                    fill: UIColor(red: 15 / 255, green: 20 / 255, blue: 25 / 255, alpha: 1),
+                    diameter: 22
+                )
+            case .driver:
+                image = vehicleIcon(
                     color: UIColor(red: 245 / 255, green: 165 / 255, blue: 36 / 255, alpha: 1),
                     size: 34,
                     vehicleClass: pin.vehicleClass ?? .standard
                 )
             case .nearby:
-                return vehicleIcon(
+                image = vehicleIcon(
                     color: UIColor.darkGray,
                     size: 26,
                     vehicleClass: pin.vehicleClass ?? .standard
                 )
             }
+            iconCache[cacheKey] = image
+            return image
         }
 
-        private func circleIcon(color: UIColor, diameter: CGFloat) -> UIImage {
-            let size = CGSize(width: diameter, height: diameter)
+        /// Pointed marker so the tip sits on the coordinate (Uber-style pickup / drop-off).
+        private func teardropIcon(fill: UIColor, diameter: CGFloat) -> UIImage {
+            let stem: CGFloat = diameter * 0.55
+            let size = CGSize(width: diameter, height: diameter + stem)
             let renderer = UIGraphicsImageRenderer(size: size)
             return renderer.image { _ in
-                let rect = CGRect(origin: .zero, size: size).insetBy(dx: 1, dy: 1)
+                let circle = CGRect(x: 0, y: 0, width: diameter, height: diameter).insetBy(dx: 1, dy: 1)
+                let tip = CGPoint(x: diameter / 2, y: size.height - 1)
+
+                let path = UIBezierPath()
+                path.move(to: tip)
+                path.addLine(to: CGPoint(x: diameter * 0.22, y: diameter * 0.72))
+                path.addArc(
+                    withCenter: CGPoint(x: diameter / 2, y: diameter / 2),
+                    radius: diameter / 2 - 1,
+                    startAngle: .pi * 0.85,
+                    endAngle: .pi * 0.15,
+                    clockwise: true
+                )
+                path.close()
+
                 UIColor.white.setFill()
-                UIBezierPath(ovalIn: CGRect(origin: .zero, size: size)).fill()
-                color.setFill()
-                UIBezierPath(ovalIn: rect).fill()
+                path.fill()
+
+                fill.setFill()
+                UIBezierPath(ovalIn: circle).fill()
+
+                UIColor.white.setFill()
+                let inner = circle.insetBy(dx: diameter * 0.28, dy: diameter * 0.28)
+                UIBezierPath(ovalIn: inner).fill()
             }
         }
 
+        /// SF Symbol overlays on a disc — upright = map north so `rotation` is travel heading.
         private func vehicleIcon(color: UIColor, size: CGFloat, vehicleClass: VehicleClass) -> UIImage {
+            let config = UIImage.SymbolConfiguration(pointSize: size * 0.48, weight: .bold)
+            let symbol = UIImage(systemName: vehicleClass.systemImage, withConfiguration: config)
             let renderer = UIGraphicsImageRenderer(size: CGSize(width: size, height: size))
             return renderer.image { _ in
+                let rect = CGRect(x: 0, y: 0, width: size, height: size)
+                UIColor.white.setFill()
+                UIBezierPath(ovalIn: rect.insetBy(dx: 1, dy: 1)).fill()
                 color.setFill()
-                switch vehicleClass {
-                case .bike:
-                    let body = UIBezierPath(
-                        roundedRect: CGRect(x: size * 0.28, y: size * 0.36, width: size * 0.44, height: size * 0.22),
-                        cornerRadius: 3
+                UIBezierPath(ovalIn: rect.insetBy(dx: 3, dy: 3)).fill()
+                if let symbol {
+                    let tinted = symbol.withTintColor(.white, renderingMode: .alwaysOriginal)
+                    let origin = CGPoint(
+                        x: (size - tinted.size.width) / 2,
+                        y: (size - tinted.size.height) / 2
                     )
-                    body.fill()
-                    UIBezierPath(ovalIn: CGRect(x: size * 0.18, y: size * 0.52, width: size * 0.22, height: size * 0.22)).fill()
-                    UIBezierPath(ovalIn: CGRect(x: size * 0.60, y: size * 0.52, width: size * 0.22, height: size * 0.22)).fill()
-                case .large:
-                    let rect = CGRect(x: size * 0.12, y: size * 0.30, width: size * 0.76, height: size * 0.40)
-                    UIBezierPath(roundedRect: rect, cornerRadius: 5).fill()
-                    UIColor.white.setFill()
-                    UIBezierPath(ovalIn: CGRect(x: size * 0.22, y: size * 0.40, width: size * 0.14, height: size * 0.14)).fill()
-                    UIBezierPath(ovalIn: CGRect(x: size * 0.64, y: size * 0.40, width: size * 0.14, height: size * 0.14)).fill()
-                case .standard:
-                    let rect = CGRect(x: size * 0.2, y: size * 0.28, width: size * 0.6, height: size * 0.44)
-                    UIBezierPath(roundedRect: rect, cornerRadius: 4).fill()
-                    UIColor.white.setFill()
-                    UIBezierPath(ovalIn: CGRect(x: size * 0.28, y: size * 0.38, width: size * 0.16, height: size * 0.16)).fill()
-                    UIBezierPath(ovalIn: CGRect(x: size * 0.56, y: size * 0.38, width: size * 0.16, height: size * 0.16)).fill()
+                    tinted.draw(at: origin)
                 }
             }
         }
@@ -258,42 +515,132 @@ struct VuumMapView: UIViewRepresentable {
     }
 }
 
-/// Shown when Maps SDK is not configured (missing API key or package).
+#if canImport(GoogleMaps)
+extension VuumMapView.Coordinator: GMSMapViewDelegate {
+    func mapView(_ mapView: GMSMapView, willMove gesture: Bool) {
+        if gesture {
+            userAdjustedCamera = true
+        }
+    }
+}
+#endif
+
+/// Rider-facing map plane when Maps SDK is not configured (missing/unusable key or package).
+/// Product copy only — no API-key / config / “demo” language.
 private final class MapPlaceholderView: UIView {
+    private let iconView = UIImageView()
     private let titleLabel = UILabel()
     private let subtitleLabel = UILabel()
+    private let stack = UIStackView()
+    private let gridLayer = CAShapeLayer()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
-        backgroundColor = UIColor(red: 0.93, green: 0.94, blue: 0.95, alpha: 1)
+        clipsToBounds = true
+        backgroundColor = UIColor { traits in
+            if traits.userInterfaceStyle == .dark {
+                return UIColor(red: 0.14, green: 0.16, blue: 0.18, alpha: 1)
+            }
+            return UIColor(red: 0.92, green: 0.93, blue: 0.94, alpha: 1)
+        }
 
-        titleLabel.text = "Map unavailable"
+        gridLayer.fillColor = UIColor.clear.cgColor
+        gridLayer.lineWidth = 1
+        layer.insertSublayer(gridLayer, at: 0)
+        updateGridStrokeColor()
+
+        let symbol = UIImage(
+            systemName: "map",
+            withConfiguration: UIImage.SymbolConfiguration(pointSize: 28, weight: .semibold)
+        )
+        iconView.image = symbol
+        iconView.tintColor = UIColor { traits in
+            traits.userInterfaceStyle == .dark
+                ? UIColor(white: 0.72, alpha: 1)
+                : UIColor(white: 0.38, alpha: 1)
+        }
+        iconView.contentMode = .scaleAspectFit
+        iconView.setContentHuggingPriority(.required, for: .vertical)
+
         titleLabel.font = .systemFont(ofSize: 17, weight: .semibold)
-        titleLabel.textColor = UIColor(white: 0.25, alpha: 1)
+        titleLabel.textColor = UIColor { traits in
+            traits.userInterfaceStyle == .dark
+                ? UIColor(white: 0.92, alpha: 1)
+                : UIColor(white: 0.22, alpha: 1)
+        }
         titleLabel.textAlignment = .center
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        titleLabel.numberOfLines = 0
 
-        subtitleLabel.text = "Add Maps API key"
-        subtitleLabel.font = .systemFont(ofSize: 14, weight: .medium)
-        subtitleLabel.textColor = UIColor(white: 0.45, alpha: 1)
+        subtitleLabel.font = .systemFont(ofSize: 14, weight: .regular)
+        subtitleLabel.textColor = UIColor { traits in
+            traits.userInterfaceStyle == .dark
+                ? UIColor(white: 0.68, alpha: 1)
+                : UIColor(white: 0.42, alpha: 1)
+        }
         subtitleLabel.textAlignment = .center
         subtitleLabel.numberOfLines = 0
-        subtitleLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        addSubview(titleLabel)
-        addSubview(subtitleLabel)
+        stack.axis = .vertical
+        stack.alignment = .center
+        stack.spacing = 8
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        stack.addArrangedSubview(iconView)
+        stack.addArrangedSubview(titleLabel)
+        stack.addArrangedSubview(subtitleLabel)
+        stack.setCustomSpacing(14, after: iconView)
+
+        addSubview(stack)
         NSLayoutConstraint.activate([
-            titleLabel.centerXAnchor.constraint(equalTo: centerXAnchor),
-            titleLabel.centerYAnchor.constraint(equalTo: centerYAnchor, constant: -10),
-            titleLabel.leadingAnchor.constraint(greaterThanOrEqualTo: leadingAnchor, constant: 24),
-            titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -24),
-            subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 6),
-            subtitleLabel.centerXAnchor.constraint(equalTo: centerXAnchor),
-            subtitleLabel.leadingAnchor.constraint(greaterThanOrEqualTo: leadingAnchor, constant: 24),
-            subtitleLabel.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -24),
+            stack.centerXAnchor.constraint(equalTo: centerXAnchor),
+            stack.centerYAnchor.constraint(equalTo: centerYAnchor),
+            stack.leadingAnchor.constraint(greaterThanOrEqualTo: leadingAnchor, constant: 32),
+            stack.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -32),
+            iconView.widthAnchor.constraint(equalToConstant: 36),
+            iconView.heightAnchor.constraint(equalToConstant: 36),
         ])
+
+        isAccessibilityElement = true
+        accessibilityTraits = .staticText
+        refreshCopy()
     }
 
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        gridLayer.frame = bounds
+        let path = UIBezierPath()
+        let step: CGFloat = 28
+        var x: CGFloat = 0
+        while x <= bounds.width {
+            path.move(to: CGPoint(x: x, y: 0))
+            path.addLine(to: CGPoint(x: x, y: bounds.height))
+            x += step
+        }
+        var y: CGFloat = 0
+        while y <= bounds.height {
+            path.move(to: CGPoint(x: 0, y: y))
+            path.addLine(to: CGPoint(x: bounds.width, y: y))
+            y += step
+        }
+        gridLayer.path = path.cgPath
+    }
+
+    func refreshCopy() {
+        titleLabel.text = L10n.Maps.unavailableTitle
+        subtitleLabel.text = L10n.Maps.unavailableDetail
+        accessibilityLabel = titleLabel.text
+        accessibilityHint = subtitleLabel.text
+    }
+
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        updateGridStrokeColor()
+    }
+
+    private func updateGridStrokeColor() {
+        let dark = traitCollection.userInterfaceStyle == .dark
+        gridLayer.strokeColor = (dark ? UIColor.white.withAlphaComponent(0.06) : UIColor.black.withAlphaComponent(0.05)).cgColor
+    }
 }

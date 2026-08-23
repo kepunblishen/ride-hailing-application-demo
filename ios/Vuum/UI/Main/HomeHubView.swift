@@ -25,6 +25,14 @@ struct HomeHubView: View {
         permissions.isLocationDenied || !location.locationServicesEnabled
     }
 
+    /// Authorized but iOS Precise Location is off — pickup still works, blue-dot is coarse.
+    private var showApproximateLocationBanner: Bool {
+        !showLocationDeniedBanner
+            && location.isAuthorized
+            && location.locationServicesEnabled
+            && !location.isPreciseLocation
+    }
+
     private var recentPlaces: [Place] {
         var seen = Set<String>()
         var places: [Place] = []
@@ -93,6 +101,17 @@ struct HomeHubView: View {
                             actionTitle: "Try again"
                         ) {
                             location.refreshCurrentLocation()
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.top, 8)
+                    } else if showApproximateLocationBanner {
+                        PermissionDeniedBanner(
+                            icon: "location.circle",
+                            title: "Approximate location",
+                            message: "Precise location improves pickup accuracy and the map blue-dot. You can allow it for this session.",
+                            actionTitle: "Improve accuracy"
+                        ) {
+                            location.requestPreciseLocationUpgrade()
                         }
                         .padding(.horizontal, 16)
                         .padding(.top, 8)
