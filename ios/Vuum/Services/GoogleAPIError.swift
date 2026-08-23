@@ -43,33 +43,33 @@ enum GoogleAPIError: Error, Equatable, Sendable {
     var riderMessageKey: String {
         switch self {
         case .missingAPIKey:
-            return "maps.error_unavailable"
+            return "maps.error.unavailable"
         case .httpStatus(let code):
-            if code == 401 || code == 403 { return "maps.error_unavailable" }
-            if code == 429 { return "maps.error_busy" }
-            if (500...599).contains(code) { return "maps.error_busy" }
-            if code == 408 { return "maps.error_timeout" }
-            return "maps.error_generic"
+            if code == 401 || code == 403 { return "maps.error.unavailable" }
+            if code == 429 { return "maps.error.busy" }
+            if (500...599).contains(code) { return "maps.error.temporary" }
+            if code == 408 { return "maps.error.temporary" }
+            return "maps.error.generic"
         case .googleStatus(let status):
             switch status.uppercased() {
             case "REQUEST_DENIED", "INVALID_REQUEST":
-                return "maps.error_unavailable"
+                return "maps.error.unavailable"
             case "OVER_QUERY_LIMIT", "OVER_DAILY_LIMIT", "RESOURCE_EXHAUSTED":
-                return "maps.error_busy"
+                return "maps.error.busy"
             case "UNKNOWN_ERROR":
-                return "maps.error_busy"
+                return "maps.error.temporary"
             case "ZERO_RESULTS", "NOT_FOUND":
-                return "maps.error_no_route"
+                return "maps.error.no_route"
             default:
-                return "maps.error_generic"
+                return "maps.error.generic"
             }
         case .network(let code):
-            if code == .timedOut { return "maps.error_timeout" }
-            return "maps.error_offline"
+            if code == .timedOut { return "maps.error.temporary" }
+            return "maps.error.network"
         case .invalidResponse:
-            return "maps.error_generic"
+            return "maps.error.generic"
         case .cancelled:
-            return "maps.error_generic"
+            return "maps.error.generic"
         }
     }
 

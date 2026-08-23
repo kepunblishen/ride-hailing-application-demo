@@ -528,13 +528,13 @@ enum L10n {
         static var a11yActive: String { t("map.a11y_active") }
         static var a11yCompleted: String { t("map.a11y_completed") }
 
-        // Aliases used by older call sites
-        static var errorUnavailable: String { unavailable }
-        static var errorBusy: String { busy }
-        static var errorTimeout: String { timeout }
-        static var errorOffline: String { network }
-        static var errorGeneric: String { generic }
-        static var errorNoRoute: String { noRoute }
+        // Underscore keys used by `GoogleAPIError.riderMessageKey`
+        static var errorUnavailable: String { t("maps.error_unavailable") }
+        static var errorBusy: String { t("maps.error_busy") }
+        static var errorTimeout: String { t("maps.error_timeout") }
+        static var errorOffline: String { t("maps.error_offline") }
+        static var errorGeneric: String { t("maps.error_generic") }
+        static var errorNoRoute: String { t("maps.error_no_route") }
     }
 
     // MARK: - Permissions
@@ -597,24 +597,7 @@ enum L10n {
         static var diagnosticsUnlockedMsg: String { t("legal.diagnostics_unlocked_msg") }
     }
 
-    // MARK: - Maps / Places / Route errors
-
-    enum Maps {
-        static var unavailableTitle: String { t("map.unavailable_title") }
-        static var unavailableDetail: String { t("map.unavailable_detail") }
-        static var errorUnavailable: String { t("maps.error_unavailable") }
-        static var errorBusy: String { t("maps.error_busy") }
-        static var errorTimeout: String { t("maps.error_timeout") }
-        static var errorOffline: String { t("maps.error_offline") }
-        static var errorGeneric: String { t("maps.error_generic") }
-        static var errorNoRoute: String { t("maps.error_no_route") }
-        static var a11yHome: String { t("map.a11y_home") }
-        static var a11yPreview: String { t("map.a11y_preview") }
-        static var a11yMatching: String { t("map.a11y_matching") }
-        static var a11yApproach: String { t("map.a11y_approach") }
-        static var a11yActive: String { t("map.a11y_active") }
-        static var a11yCompleted: String { t("map.a11y_completed") }
-    }
+    // MARK: - Places / Route rider errors
 
     enum Places {
         static var errorUnavailable: String { t("places.error_unavailable") }

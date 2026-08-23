@@ -1,4 +1,4 @@
-// !$*UTF8*$!
+﻿// !$*UTF8*$!
 {
 	archiveVersion = 1;
 	classes = {
@@ -267,7 +267,6 @@
 		MDL2A29002 /* Money.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Money.swift; sourceTree = "<group>"; };
 		SVC2A29006 /* PricingEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PricingEngine.swift; sourceTree = "<group>"; };
 		MDL2A29003 /* ServiceZone.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceZone.swift; sourceTree = "<group>"; };
-		MDL2A29004 /* PlaceCategory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceCategory.swift; sourceTree = "<group>"; };
 		SVC2A29004 /* DeveloperDiagnostics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeveloperDiagnostics.swift; sourceTree = "<group>"; };
 		SVC2A29005 /* FieldSalesStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FieldSalesStore.swift; sourceTree = "<group>"; };
 		SVC2A29007 /* ReservedTripStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReservedTripStore.swift; sourceTree = "<group>"; };

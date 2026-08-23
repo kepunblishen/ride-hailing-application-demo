@@ -3,8 +3,9 @@ import Foundation
 
 /// Reverse-geocodes a GPS fix into pickup labels.
 ///
-/// Order: Google Geocoding API (when `MapBootstrap` has a key) → `CLGeocoder` →
-/// coordinate fallback so the rider always sees a usable pickup name.
+/// **Apple-first (product policy):** `CLGeocoder` → optional Google Geocoding API
+/// (keyed) → coordinate fallback. Prefer Apple so Geocoding REST is not the
+/// common path; Google is secondary when Apple returns nothing useful.
 ///
 /// **"Current location"** is reserved for an unresolved GPS pickup (`id == "current"`)
 /// before a street/place label arrives — never for market catalog centers.
@@ -30,15 +31,15 @@ enum ReverseGeocodingService {
             return cached
         }
         MapBootstrap.configureIfNeeded()
+        if let apple = await appleReverseGeocode(location) {
+            MapsRequestCache.storeGeocode(apple, for: location.coordinate)
+            return apple
+        }
         if MapBootstrap.hasAPIKey, let key = MapBootstrap.resolvedAPIKey() {
             if let google = await googleReverseGeocode(location, apiKey: key) {
                 MapsRequestCache.storeGeocode(google, for: location.coordinate)
                 return google
             }
-        }
-        if let apple = await appleReverseGeocode(location) {
-            MapsRequestCache.storeGeocode(apple, for: location.coordinate)
-            return apple
         }
         return coordinateFallback(location)
     }

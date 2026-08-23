@@ -120,10 +120,11 @@ enum DirectionsRouteService {
                 trafficDurationSeconds: hasTraffic ? trafficTotal : nil,
                 legs: segments
             )
+        } catch let error as GoogleAPIError {
+            await GoogleMapsDiagnostics.shared.noteError(error, api: .directions)
+            return nil
         } catch {
-            #if DEBUG
-            print("[Vuum] Directions request failed: \(error.localizedDescription)")
-            #endif
+            await GoogleMapsDiagnostics.shared.noteError(.invalidResponse, api: .directions)
             return nil
         }
     }

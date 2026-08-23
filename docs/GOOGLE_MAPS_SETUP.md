@@ -1,4 +1,4 @@
-# Google Maps / Places / Routes — Vuum iOS
+﻿# Google Maps / Places / Routes — Vuum iOS
 
 **GOOGLE MAPS / PLACES / ROUTES CREDENTIAL CHECKPOINT**
 
@@ -77,7 +77,7 @@ The same resolved key is used for:
 | Path | Credential | Notes |
 |------|------------|--------|
 | **Maps SDK for iOS** | Same `VUUM_GOOGLE_MAPS_API_KEY` via `GMSServices.provideAPIKey` | Native; iOS bundle restriction applies |
-| **Client REST** (Places New, Routes, Directions, optional Geocoding) | Same key | Every REST call sends **`X-Ios-Bundle-Identifier: com.vuum.app`** (`MapBootstrap.applyIOSBundleIdentifierHeader`) so an iOS-restricted key works from `URLSession` |
+| **Client REST** (Places New, Routes, Directions, optional Geocoding) | Same key | Every REST call sends **`X-Ios-Bundle-Identifier: com.vuum.app`** (`MapBootstrap.applyIOSBundleIdentifierHeader` / `GoogleMapsREST`) so an iOS-restricted key works from `URLSession` |
 
 **Same key is OK for the presentation / Sideload build.** Google prefers separate credentials when platform usage differs (native SDK vs web services vs backend). Defer a split until you introduce a backend proxy or dedicated REST key:
 
@@ -95,7 +95,8 @@ Do not put Distance Matrix / Route Optimization / Places Aggregate on the rider 
 2. **Google Geocoding API** only if Apple returns nothing and a usable key is present
 3. Coordinate subtitle fallback (`Current location` + lat/lon)
 
-Pickup labeling works without enabling Geocoding API on the key. “Current location” is only the unresolved GPS placeholder — market centers use real street names.
+Pickup labeling works without enabling Geocoding API on the key. "Current location" is only the unresolved GPS placeholder — market centers use real street names.
+
 
 **App Transport Security:** default ATS (no `NSAppTransportSecurity` override / no `NSAllowsArbitraryLoads`). HTTPS-only Maps / Places / Routes calls are fine.
 
@@ -114,7 +115,7 @@ Pickup labeling works without enabling Geocoding API on the key. “Current loca
 | Placeholder detection + fallthrough in `MapBootstrap` | [x] |
 | Shared scheme env disabled by default | [x] |
 | REST `X-Ios-Bundle-Identifier: com.vuum.app` | [x] |
-| Reverse geocode Apple-first | [x] |
+| Reverse geocode Google when keyed -> CLGeocoder | [x] |
 
 `ios/Vuum/Config/Vuum.xcconfig` defaults `VUUM_GOOGLE_MAPS_API_KEY` to the non-functional placeholder `YOUR_GOOGLE_MAPS_API_KEY` (ignored by `MapBootstrap`) and optionally `#include?`s gitignored `ios/Secrets.xcconfig` (`../../Secrets.xcconfig` from Config/).
 
@@ -166,8 +167,9 @@ Implemented in `PlacesSearchService` + `PlacesSearchController`:
 - [x] Autocomplete requests reuse that token
 - [x] Place Details sends the same token, then clears the session (`endSession` / after successful `resolve`)
 - [x] Abandoned searches / dismiss call `abandonSession` / `tearDown`
-- [x] UI debounce ~300 ms + task cancellation (stale responses discarded)
-- [x] Field mask on Autocomplete + Details (`id,displayName,formattedAddress,location` on Details)
+- [x] UI debounce ~300 ms + generation / query-string stale-response ignore
+- [x] Field mask on Autocomplete + Details (`types` / `primaryType` for icons; no photos/reviews)
+- [x] Bounded place-details cache via `MapsRequestCache`
 - [x] Rider-facing error / searching states (no “demo” / catalog / credential wording)
 - [x] **Fallback:** if the key is missing or the Places request fails, fuzzy-match the local market catalog (`MockPlaces`) so booking always has results
 

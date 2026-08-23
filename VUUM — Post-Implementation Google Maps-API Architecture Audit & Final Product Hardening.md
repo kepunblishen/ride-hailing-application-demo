@@ -61,6 +61,9 @@ Gap matrix: [`docs/MAPS_AUDIT_GAP_STATUS.md`](docs/MAPS_AUDIT_GAP_STATUS.md).
 - [x] §12–§13 (software) — Place type icons + distance chrome on pickers; `includedTypes` filtering still optional
 - [x] REST `X-Ios-Bundle-Identifier: com.vuum.app` — `GoogleMapsREST` / `MapBootstrap.applyIOSBundleIdentifierHeader`
 - [x] §52 / §54 — Background/resume: no duplicate Google route/Places calls; cancel in-flight on trip cancel (`TripSession.cancelInFlightGoogleWork`, preview waypoint dedupe, `GoogleRouteProvider` cancel between hops, Places background cancel). Units in `TripSessionLifecyclePhaseTests`. Device resume under live key still in F-plan.
+- [x] **safety-map** — Share-trip / SOS include live GPS when `RiderLocationManager.latestLocation` is available (`TripShare.message` / `sosDetailBody` + Maps deep link); omit coords when unavailable
+- [x] **safety-map** — Active-trip / Safety toolkit / Safety settings / driver share bars pass live coordinate into share + `requestSOS(coordinate:)`
+- [x] **safety-map** — Map hardening: `TripMapLayer` enables blue-dot only when authorized and starts updates on appear (`showsUserLocation: location.isAuthorized`)
 
 ### Explicitly not verified / open (do not check until proven)
 
@@ -1779,17 +1782,17 @@ Pay special attention to the RFQ's Trust & Safety requirements.
 
 Verify:
 
-- active-trip recording only
-- visible recording state
-- permission
-- notification
-- automatic stop
-- incident linking
-- SOS
-- trip sharing
-- route deviation
-- poor connectivity
-- retention architecture
+- [x] active-trip recording only
+- [x] visible recording state
+- [x] permission
+- [x] notification
+- [x] automatic stop
+- [x] incident linking
+- [x] SOS — confirmation sheet + `requestSOS(coordinate:)` includes live lat/lng in safety notification when Core Location has a fix
+- [x] trip sharing — `TripShare.message` appends live location + Maps link when available (Safety toolkit / settings / active trip / driver card)
+- [x] route deviation
+- [x] poor connectivity
+- [ ] retention architecture — on-device audio retention only; no cloud safety console in this build
 
 The RFQ explicitly prohibits covert/general-purpose recording and requires jurisdiction-specific consent and retention handling.
 

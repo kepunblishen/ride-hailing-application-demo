@@ -1,4 +1,4 @@
-import Foundation
+﻿import Foundation
 
 /// Optional Google Maps traffic layer + live ETA refresh policy.
 ///
@@ -9,6 +9,9 @@ import Foundation
 enum MapTrafficSettings {
     static let trafficKey = "vuum.mapTraffic"
     static let etaRefreshKey = "vuum.etaRefresh"
+    /// Aliases used by older call sites / AppStorage bindings.
+    static var mapTrafficKey: String { trafficKey }
+    static var liveETARefreshKey: String { etaRefreshKey }
 
     /// How often to re-query Routes/Directions for remaining ETA while a trip is live.
     static let etaRefreshIntervalSeconds: TimeInterval = 90

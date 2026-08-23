@@ -1,4 +1,4 @@
-﻿import SwiftUI
+import SwiftUI
 
 struct TripMapLayer: View {
     @EnvironmentObject private var tripSession: TripSession
@@ -1199,7 +1199,7 @@ struct RideOptionsScaffoldView: View {
             }
             Spacer(minLength: 8)
             if tripSession.surgeState.isActive {
-                Text(String(format: "%.2g�", tripSession.surgeState.multiplier))
+                Text(String(format: "%.2g?", tripSession.surgeState.multiplier))
                     .font(.system(size: 13, weight: .bold, design: .rounded))
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
@@ -1239,7 +1239,7 @@ struct RideOptionsScaffoldView: View {
             return message
         }
         if tripSession.surgeState.isActive {
-            return String(format: "%.2g� fare multiplier applied", tripSession.surgeState.multiplier)
+            return String(format: "%.2g? fare multiplier applied", tripSession.surgeState.multiplier)
         }
         return "Higher fares may apply in this area"
     }
@@ -1261,7 +1261,7 @@ struct RideOptionsScaffoldView: View {
             }
             if fare.isSurgeActive {
                 farePreviewRow(
-                    String(format: "High demand � %.2g�", fare.surgeMultiplier),
+                    String(format: "High demand ? %.2g?", fare.surgeMultiplier),
                     fare.surgeFareCDF
                 )
             }
@@ -1317,7 +1317,7 @@ struct RideOptionsScaffoldView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Suggest a fare")
                         .font(.system(size: 14, weight: .medium))
-                    Text("Optional � driver may accept within �15%")
+                    Text("Optional ? driver may accept within ?15%")
                         .font(.caption)
                         .foregroundStyle(VuumColor.secondaryText)
                 }
@@ -1374,7 +1374,7 @@ struct RideOptionsScaffoldView: View {
         switch tripSession.promoStatus {
         case .applied(_, let discount, let title):
             HStack {
-                Text("\(title) � \(formatLocalDiscount(discount))")
+                Text("\(title) ? \(formatLocalDiscount(discount))")
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(.green)
                 Spacer()
@@ -1385,7 +1385,7 @@ struct RideOptionsScaffoldView: View {
                 .foregroundStyle(VuumColor.secondaryText)
             }
         case .invalid:
-            Text("This promo code isn�t valid")
+            Text("This promo code isn?t valid")
                 .font(.system(size: 12, weight: .medium))
                 .foregroundStyle(.orange)
         case .expired:
@@ -1483,7 +1483,7 @@ struct RideOptionsScaffoldView: View {
                 .padding(.vertical, 10)
                 .background(VuumColor.fieldBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             if !tripSession.canConfirmRequest {
-                Text("Enter the passenger�s name and phone to continue.")
+                Text("Enter the passenger?s name and phone to continue.")
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(VuumColor.secondaryText)
             }
@@ -1570,7 +1570,7 @@ struct AdjustPickupSheet: View {
         VStack(spacing: 0) {
             VuumSheetChrome(title: "Adjust pickup") {
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("Current � \(tripSession.pickup.name)")
+                    Text("Current ? \(tripSession.pickup.name)")
                         .font(.system(size: 13, weight: .medium))
                         .foregroundStyle(VuumColor.secondaryText)
 
@@ -1684,7 +1684,7 @@ struct ScheduleRideSheet: View {
                     }
                     .font(.system(size: 16, weight: .semibold))
                 } footer: {
-                    Text("You�ll pick destination, ride type, and payment next. Reserved rides appear under Activity ? Upcoming.")
+                    Text("You?ll pick destination, ride type, and payment next. Reserved rides appear under Activity ? Upcoming.")
                 }
             }
             .navigationTitle("Pickup time")

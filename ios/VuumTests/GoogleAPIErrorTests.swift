@@ -28,7 +28,7 @@ final class GoogleAPIErrorTests: XCTestCase {
     func testNetworkTimeoutIsRetryable() {
         let error = GoogleAPIError.mapURLError(URLError(.timedOut))
         XCTAssertTrue(error.isRetryable)
-        XCTAssertEqual(error.riderMessageKey, "maps.error_timeout")
+        XCTAssertEqual(error.riderMessageKey, "maps.error.temporary")
     }
 
     func testRetryCap() {
