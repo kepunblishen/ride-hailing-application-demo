@@ -109,6 +109,6 @@ struct ConfirmInfoView: View {
             .font(AuthType.body)
             .authFieldBackground(focused: isFocused)
             .accessibilityLabel(placeholder)
-            .accessibilityHint("Required for your rider profile")
+            .accessibilityHint(L10n.Auth.nameRequiredHintA11y)
     }
 }

@@ -63,7 +63,7 @@ struct TermsAgreeView: View {
             .buttonStyle(.plain)
             .padding(.bottom, 22)
             .accessibilityLabel(L10n.Auth.iAgree)
-            .accessibilityHint("Agrees to Vuum Terms of Use and Privacy Notice")
+            .accessibilityHint(L10n.Auth.termsAgreeHintA11y)
             .accessibilityAddTraits(auth.agreedToTerms ? [.isSelected] : [])
 
             HStack {

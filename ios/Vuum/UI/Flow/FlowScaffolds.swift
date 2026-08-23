@@ -344,41 +344,43 @@ struct HomeMapScaffoldView: View {
 
 struct PermissionsExplainerSheet: View {
     var onContinue: () -> Void
+    /// First-run permissions after auth — follow AuthLocale without forcing main Home copy.
+    @ObservedObject private var authLocale = AuthLocale.shared
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
-                    Text(L10n.Permissions.intro)
+                    Text(copy("permissions.intro"))
                         .font(.system(size: 15))
                         .foregroundStyle(VuumColor.secondaryText)
 
                     permissionRow(
                         icon: "location.fill",
-                        title: L10n.Permissions.location,
-                        detail: L10n.Permissions.locationDetail
+                        title: copy("permissions.location"),
+                        detail: copy("permissions.location_detail")
                     )
                     permissionRow(
                         icon: "bell.fill",
-                        title: L10n.Permissions.notifications,
-                        detail: L10n.Permissions.notificationsDetail
+                        title: copy("permissions.notifications"),
+                        detail: copy("permissions.notifications_detail")
                     )
                     permissionRow(
                         icon: "mic.fill",
-                        title: L10n.Permissions.microphone,
-                        detail: L10n.Permissions.microphoneDetail
+                        title: copy("permissions.microphone"),
+                        detail: copy("permissions.microphone_detail")
                     )
 
-                    Text(L10n.Permissions.changeAnytime)
+                    Text(copy("permissions.change_anytime"))
                         .font(.system(size: 13))
                         .foregroundStyle(VuumColor.secondaryText)
                 }
                 .padding(20)
             }
-            .navigationTitle(L10n.Permissions.title)
+            .navigationTitle(copy("permissions.title"))
             .navigationBarTitleDisplayMode(.inline)
             .safeAreaInset(edge: .bottom) {
-                VuumPrimaryButton(title: L10n.Common.continue) {
+                VuumPrimaryButton(title: L10n.t("common.continue", authLanguage: authLocale.language)) {
                     onContinue()
                 }
                 .padding(.horizontal, 20)
@@ -388,6 +390,11 @@ struct PermissionsExplainerSheet: View {
         }
         .presentationDetents([.large])
         .interactiveDismissDisabled()
+        .id(authLocale.language)
+    }
+
+    private func copy(_ key: String) -> String {
+        L10n.t(key, authLanguage: authLocale.language)
     }
 
     private func permissionRow(icon: String, title: String, detail: String) -> some View {

@@ -1,8 +1,8 @@
 import Combine
 import Foundation
 
-/// Auth/onboarding UI language only. Persists in UserDefaults and does **not** change
-/// main-app `AppPreferences` — Home and trip flow stay on the default app language.
+/// Auth + first-run onboarding UI language only. Persists in UserDefaults and does **not**
+/// change main-app `AppPreferences` — Home and trip flow stay on the default app language.
 final class AuthLocale: ObservableObject {
     static let shared = AuthLocale()
     static let storageKey = "vuum.auth.language"
@@ -36,7 +36,7 @@ final class AuthLocale: ObservableObject {
             }
         }
 
-        /// Maps to the shared L10n catalog (US/UK share English copy).
+        /// Maps to the shared L10n catalog (US/UK share English copy; UK spelling overlays apply separately).
         var appLanguage: AppLanguage {
             switch self {
             case .englishUS, .englishUK: return .english
@@ -55,6 +55,7 @@ final class AuthLocale: ObservableObject {
     }
 
     /// When true, `L10n` resolves against this store instead of `AppPreferences`.
+    /// Driven by signed-out auth — not by view remounts (language `.id` changes must not clear this).
     @Published var isActive = false
 
     init(defaults: UserDefaults = .standard) {
@@ -64,7 +65,14 @@ final class AuthLocale: ObservableObject {
 
     var resolvedAppLanguage: AppLanguage { language.appLanguage }
 
+    var prefersUKSpelling: Bool { language == .englishUK }
+
     func select(_ value: Language) {
         language = value
+    }
+
+    /// Keep AuthLocale driving copy while the rider is signed out (entire AuthFlow).
+    func syncWithSession(isSignedIn: Bool) {
+        isActive = !isSignedIn
     }
 }

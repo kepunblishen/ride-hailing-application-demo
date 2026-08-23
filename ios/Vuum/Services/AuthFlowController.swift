@@ -219,6 +219,32 @@ final class AuthFlowController: ObservableObject {
         Task { await performResend() }
     }
 
+    /// Refresh any visible validation copy after the auth language picker changes.
+    func relocalizePresentedErrors() {
+        if phoneError != nil {
+            phoneError = L10n.Auth.phoneInvalid
+        }
+        if otpError != nil {
+            // Prefer the most specific message still applicable.
+            if otpAttempts >= Self.maxOTPAttempts {
+                otpError = L10n.Auth.otpTooManyAttempts
+            } else if isOTPExpired {
+                otpError = L10n.Auth.otpExpired
+            } else {
+                otpError = L10n.Auth.otpInvalid
+            }
+        }
+        if profileError != nil {
+            if !isValidName(firstName) || !isValidName(lastName) {
+                profileError = L10n.Auth.nameInvalid
+            } else if !isValidEmailIfPresent {
+                profileError = L10n.Auth.emailInvalid
+            } else {
+                profileError = nil
+            }
+        }
+    }
+
     func goBack() {
         phoneSendPhase = .idle
         otpVerifyPhase = .idle

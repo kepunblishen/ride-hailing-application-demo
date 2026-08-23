@@ -64,7 +64,7 @@ final class AppPreferences: ObservableObject {
 
 /// In-app string catalog. Prefer `L10n.Home.whereTo` or `L10n.t("home.where_to")`.
 enum L10n {
-    /// Uses `AuthLocale` while auth/onboarding is on screen; otherwise `AppPreferences`
+    /// Uses `AuthLocale` while signed-out auth is active; otherwise `AppPreferences`
     /// so main tabs are unaffected by the auth language picker.
     static var language: AppLanguage {
         let auth = AuthLocale.shared
@@ -75,7 +75,21 @@ enum L10n {
     }
 
     static func t(_ key: String) -> String {
-        t(key, language: language)
+        let auth = AuthLocale.shared
+        if auth.isActive {
+            return t(key, authLanguage: auth.language)
+        }
+        return t(key, language: language)
+    }
+
+    /// Resolve a key with an explicit auth language (first-run permissions sheet, etc.)
+    /// without flipping global `AuthLocale.isActive` (so Home underneath stays on AppPreferences).
+    static func t(_ key: String, authLanguage: AuthLocale.Language) -> String {
+        let base = t(key, language: authLanguage.appLanguage)
+        if authLanguage == .englishUK, let uk = ukSpelling[key] {
+            return uk
+        }
+        return base
     }
 
     static func t(_ key: String, language: AppLanguage) -> String {
@@ -91,6 +105,14 @@ enum L10n {
     static func format(_ key: String, _ args: CVarArg...) -> String {
         String(format: t(key), arguments: args)
     }
+
+    /// EN-UK spelling / wording overlays on top of shared English catalog entries.
+    private static let ukSpelling: [String: String] = [
+        "auth.customizing": "Customising your experience…",
+        "auth.sms_disclaimer":
+            "By continuing, you may receive SMS or WhatsApp messages for verification. Message and data rates may apply.",
+        "common.got_it": "Got it",
+    ]
 
     private static func s(_ en: String, _ fr: String, _ ln: String, _ sw: String) -> [AppLanguage: String] {
         [.english: en, .french: fr, .lingala: ln, .kiswahili: sw]
@@ -167,6 +189,15 @@ enum L10n {
         static var privacyDocument: String { t("auth.privacy_document") }
         static var sendingCode: String { t("auth.sending_code") }
         static var verifyingCode: String { t("auth.verifying_code") }
+        static var verificationCodeA11y: String { t("auth.verification_code_a11y") }
+        static var digitHintA11y: String { t("auth.digit_hint_a11y") }
+        static var emptyA11y: String { t("auth.empty_a11y") }
+        static var nameRequiredHintA11y: String { t("auth.name_required_hint_a11y") }
+        static var termsAgreeHintA11y: String { t("auth.terms_agree_hint_a11y") }
+        static var continueHintA11y: String { t("auth.continue_hint_a11y") }
+        static var continueDisabledHintA11y: String { t("auth.continue_disabled_hint_a11y") }
+        static var countryCodeA11y: String { t("auth.country_code_a11y") }
+        static var countryPickerHintA11y: String { t("auth.country_picker_hint_a11y") }
     }
 
     // MARK: - Home
@@ -776,6 +807,55 @@ enum L10n {
         ),
         "auth.sending_code": s("Sending code…", "Envoi du code…", "Kotinda code…", "Inatuma msimbo…"),
         "auth.verifying_code": s("Verifying…", "Vérification…", "Vérification…", "Inathibitisha…"),
+        "auth.verification_code_a11y": s(
+            "Verification code",
+            "Code de vérification",
+            "Code ya vérification",
+            "Msimbo wa uthibitishaji"
+        ),
+        "auth.digit_hint_a11y": s(
+            "Enter the verification code digit",
+            "Saisissez un chiffre du code",
+            "Kotia chiffre ya code",
+            "Weka tarakimu ya msimbo"
+        ),
+        "auth.empty_a11y": s("Empty", "Vide", "Mpamba", "Tupu"),
+        "auth.name_required_hint_a11y": s(
+            "Required for your rider profile",
+            "Requis pour votre profil passager",
+            "Esengeli mpo na profil na yo",
+            "Inahitajika kwa wasifu wako wa abiria"
+        ),
+        "auth.terms_agree_hint_a11y": s(
+            "Agrees to Vuum Terms of Use and Privacy Notice",
+            "Accepte les conditions d’utilisation et la notice de confidentialité Vuum",
+            "Ndimisa ba Conditions mpe Privacy Notice ya Vuum",
+            "Inakubali Masharti ya Matumizi na Ilani ya Faragha ya Vuum"
+        ),
+        "auth.continue_hint_a11y": s(
+            "Continues to the next step",
+            "Passe à l’étape suivante",
+            "Kende na etape oyo elandi",
+            "Inaendelea hatua inayofuata"
+        ),
+        "auth.continue_disabled_hint_a11y": s(
+            "Enter a valid mobile number to continue",
+            "Saisissez un numéro valide pour continuer",
+            "Tyá numéro oyo eza malamu mpo na kokoba",
+            "Weka nambari sahihi ya simu ili kuendelea"
+        ),
+        "auth.country_code_a11y": s(
+            "Country code %@",
+            "Indicatif pays %@",
+            "Code ya mboka %@",
+            "Msimbo wa nchi %@"
+        ),
+        "auth.country_picker_hint_a11y": s(
+            "Opens country and dialing code picker",
+            "Ouvre le sélecteur de pays et d’indicatif",
+            "Fungola picker ya mboka mpe code",
+            "Inafungua kichagua cha nchi na msimbo"
+        ),
 
         // Home
         "home.where_to": s("Where to?", "Où allez-vous ?", "Okende wapi ?", "Unakwenda wapi?"),

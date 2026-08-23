@@ -35,6 +35,12 @@ struct ContentView: View {
         }
         .animation(.easeInOut(duration: 0.4), value: showSplash)
         .animation(.easeInOut(duration: 0.35), value: session.isSignedIn)
+        // AuthLocale must stay active for the whole signed-out AuthFlow — do not
+        // clear it on language-driven view remounts inside AuthFlowView.
+        .onAppear { AuthLocale.shared.syncWithSession(isSignedIn: session.isSignedIn) }
+        .onChange(of: session.isSignedIn) { _, signedIn in
+            AuthLocale.shared.syncWithSession(isSignedIn: signedIn)
+        }
         .task {
             await runSplashGate()
         }

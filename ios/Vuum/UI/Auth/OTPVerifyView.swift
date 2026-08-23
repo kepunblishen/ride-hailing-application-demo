@@ -33,7 +33,7 @@ struct OTPVerifyView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.top, 28)
                 .accessibilityElement(children: .contain)
-                .accessibilityLabel("Verification code")
+                .accessibilityLabel(L10n.Auth.verificationCodeA11y)
 
                 if let otpError = auth.otpError {
                     AuthInlineError(message: otpError)
@@ -219,8 +219,8 @@ struct OTPVerifyView: View {
                 )
         )
         .accessibilityLabel(String(format: L10n.Auth.digitA11y, index + 1))
-        .accessibilityHint("Enter the verification code digit")
-        .accessibilityValue(auth.otpDigits[index].isEmpty ? "Empty" : auth.otpDigits[index])
+        .accessibilityHint(L10n.Auth.digitHintA11y)
+        .accessibilityValue(auth.otpDigits[index].isEmpty ? L10n.Auth.emptyA11y : auth.otpDigits[index])
     }
 
     /// Only move focus after the rider has already tapped a digit field — never on appear.

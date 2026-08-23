@@ -28,10 +28,15 @@ struct AuthFlowView: View {
                 }
             }
         }
+        // Remount visible step when language changes so every auth screen refreshes copy.
         .id(authLocale.language)
         .environmentObject(authLocale)
         .animation(.easeInOut(duration: 0.25), value: auth.step)
+        .animation(.easeInOut(duration: 0.2), value: authLocale.language)
+        .onChange(of: authLocale.language) { _, _ in
+            auth.relocalizePresentedErrors()
+        }
+        // Activate without a matching onDisappear — language `.id` remounts must not clear isActive.
         .onAppear { authLocale.isActive = true }
-        .onDisappear { authLocale.isActive = false }
     }
 }

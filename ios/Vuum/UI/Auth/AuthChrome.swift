@@ -130,7 +130,7 @@ struct AuthBlackButton: View {
         .buttonStyle(AuthPressStyle())
         .disabled(!interactive)
         .accessibilityLabel(isLoading ? L10n.Auth.sendingCode : title)
-        .accessibilityHint(interactive ? "Continues to the next step" : "Enter a valid mobile number to continue")
+        .accessibilityHint(interactive ? L10n.Auth.continueHintA11y : L10n.Auth.continueDisabledHintA11y)
     }
 }
 
@@ -357,8 +357,8 @@ struct AuthCountryCodeButton: View {
             )
         }
         .buttonStyle(AuthPressStyle())
-        .accessibilityLabel("Country code \(dialCode)")
-        .accessibilityHint("Opens country and dialing code picker")
+        .accessibilityLabel(String(format: L10n.Auth.countryCodeA11y, dialCode))
+        .accessibilityHint(L10n.Auth.countryPickerHintA11y)
     }
 }
 
