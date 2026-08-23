@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "R00000000000000000000005"
-               BuildableName = "Raide.app"
-               BlueprintName = "Raide"
-               ReferencedContainer = "container:Raide.xcodeproj">
+               BuildableName = "Vuum.app"
+               BlueprintName = "Vuum"
+               ReferencedContainer = "container:Vuum.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -44,14 +44,14 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "R00000000000000000000005"
-            BuildableName = "Raide.app"
-            BlueprintName = "Raide"
-            ReferencedContainer = "container:Raide.xcodeproj">
+            BuildableName = "Vuum.app"
+            BlueprintName = "Vuum"
+            ReferencedContainer = "container:Vuum.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
       <EnvironmentVariables>
          <EnvironmentVariable
-            key = "RAIDE_GOOGLE_MAPS_API_KEY"
+            key = "VUUM_GOOGLE_MAPS_API_KEY"
             value = "YOUR_GOOGLE_MAPS_API_KEY"
             isEnabled = "YES">
          </EnvironmentVariable>
@@ -68,9 +68,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "R00000000000000000000005"
-            BuildableName = "Raide.app"
-            BlueprintName = "Raide"
-            ReferencedContainer = "container:Raide.xcodeproj">
+            BuildableName = "Vuum.app"
+            BlueprintName = "Vuum"
+            ReferencedContainer = "container:Vuum.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

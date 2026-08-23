@@ -1,7 +1,7 @@
 import ComponentsKit
 import SwiftUI
 
-enum RaideColor {
+enum VuumColor {
     /// Signal amber
     static let brand = Color(red: 245 / 255, green: 165 / 255, blue: 36 / 255)
     static let brandInk = Color(red: 15 / 255, green: 20 / 255, blue: 25 / 255)
@@ -26,11 +26,11 @@ enum RaideColor {
     }
 }
 
-enum RaideTheme {
+enum VuumTheme {
     static let brandHex = "#F5A524"
-    static let displayName = "Raide"
+    static let displayName = "Vuum"
 
-    /// Align ComponentsKit accent with Raide brand (same bootstrap pattern as Wells).
+    /// Align ComponentsKit accent with Vuum brand (same bootstrap pattern as Wells).
     static func configureComponentsKit() {
         Theme.current.update {
             $0.colors.accent = .init(
@@ -46,21 +46,21 @@ enum RaideTheme {
 }
 
 extension View {
-    func raidePageBackground() -> some View {
-        background(RaideColor.pageBackground.ignoresSafeArea())
+    func VuumPageBackground() -> some View {
+        background(VuumColor.pageBackground.ignoresSafeArea())
     }
 
-    func raideGlassCard(cornerRadius: CGFloat = RaideGlass.cardCornerRadius) -> some View {
-        modifier(RaideGlassCard(cornerRadius: cornerRadius))
+    func VuumGlassCard(cornerRadius: CGFloat = VuumGlass.cardCornerRadius) -> some View {
+        modifier(VuumGlassCard(cornerRadius: cornerRadius))
     }
 }
 
-private struct RaideGlassCard: ViewModifier {
+private struct VuumGlassCard: ViewModifier {
     var cornerRadius: CGFloat
 
     func body(content: Content) -> some View {
         content
             .padding()
-            .raideGlassSurface(cornerRadius: cornerRadius)
+            .VuumGlassSurface(cornerRadius: cornerRadius)
     }
 }

@@ -1,11 +1,11 @@
 import SwiftUI
 
 @main
-struct RaideApp: App {
+struct VuumApp: App {
     @StateObject private var tripSession = TripSession()
 
     init() {
-        RaideTheme.configureComponentsKit()
+        VuumTheme.configureComponentsKit()
         MapBootstrap.configureIfNeeded()
     }
 

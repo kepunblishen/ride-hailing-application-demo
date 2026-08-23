@@ -15,7 +15,7 @@ struct SplashView: View {
                 .accessibilityHidden(true)
 
             // Swap this for Image("SplashLogo") when the top logo asset is added.
-            Text(RaideTheme.displayName)
+            Text(VuumTheme.displayName)
                 .font(.system(size: 40, weight: .bold, design: .rounded))
                 .foregroundStyle(.white)
                 .scaleEffect(logoScale)

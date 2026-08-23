@@ -1,9 +1,9 @@
 ---
-description: Raide iOS project layout — where things live
+description: Vuum iOS project layout — where things live
 alwaysApply: true
 ---
 
-# Project structure (iOS app under `ios/Raide/`)
+# Project structure (iOS app under `ios/Vuum/`)
 
 Keep code in its existing module. Do **not** create parallel/duplicate files.
 Search before adding a new file.
@@ -14,8 +14,8 @@ Search before adding a new file.
 - `Models/` — trip / place / driver / tier types
 - `Services/` — `TripSession` (demo state machine only)
 - `Mock/` — sample places, drivers, fares
-- `Maps/` — Google Maps bootstrap + `RaideMapView`
-- `UI/Theme/` — `RaideColor`, `RaideTheme` (ComponentsKit accent bootstrap)
+- `Maps/` — Google Maps bootstrap + `VuumMapView`
+- `UI/Theme/` — `VuumColor`, `VuumTheme` (ComponentsKit accent bootstrap)
 - `UI/Components/` — glass surfaces, chrome, UIKit bridges
 - `UI/Flow/` — rider-flow screens (scaffold → polish)
 - `reference/` — docs for ComponentsKit + Explore SwiftUI (not product screens)
@@ -37,4 +37,4 @@ SwiftUI + UIKit are system frameworks (always available).
 ## Adding files to the build
 
 Classic Xcode project: register new `.swift` files in
-`ios/Raide.xcodeproj/project.pbxproj` (PBXFileReference + PBXBuildFile + group + Sources).
+`ios/Vuum.xcodeproj/project.pbxproj` (PBXFileReference + PBXBuildFile + group + Sources).

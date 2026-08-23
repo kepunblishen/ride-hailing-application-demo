@@ -1,4 +1,4 @@
-# Raide — Ride Hailing Demo
+# Vuum — Ride Hailing Demo
 
 ## Purpose
 
@@ -8,7 +8,7 @@ Client demo of an iOS ride-hailing product (Uber/Bolt-style experience). Goal is
 
 - **Platform:** iOS
 - **UI:** SwiftUI first; UIKit only where needed (e.g. some map integration)
-- **Brand:** Original app brand and visuals (not a white-label or clone of another company)
+- **Brand:** **Vuum** (original app brand and visuals — not a white-label or clone of another company)
 - **Build / CI:** Codemagic (no local Mac required for compiling and distributing builds)
 
 ## Demo scope (what we are building)

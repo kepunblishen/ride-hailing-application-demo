@@ -6,29 +6,29 @@ struct HomeMapScaffoldView: View {
 
     var body: some View {
         ZStack(alignment: .bottom) {
-            RaideMapView(cameraTarget: tripSession.pickup.coordinate)
+            VuumMapView(cameraTarget: tripSession.pickup.coordinate)
                 .ignoresSafeArea()
 
-            RaideSheetChrome(title: nil) {
+            VuumSheetChrome(title: nil) {
                 VStack(alignment: .leading, spacing: 12) {
-                    Text(RaideTheme.displayName)
+                    Text(VuumTheme.displayName)
                         .font(.system(size: 13, weight: .semibold, design: .rounded))
-                        .foregroundStyle(RaideColor.brand)
+                        .foregroundStyle(VuumColor.brand)
 
                     Button {
                         tripSession.beginDestinationSelection()
                     } label: {
                         HStack(spacing: 12) {
                             Image(systemName: "magnifyingglass")
-                                .foregroundStyle(RaideColor.secondaryText)
+                                .foregroundStyle(VuumColor.secondaryText)
                             Text("Where to?")
                                 .font(.system(size: 17, weight: .medium, design: .rounded))
-                                .foregroundStyle(RaideColor.primaryText)
+                                .foregroundStyle(VuumColor.primaryText)
                             Spacer()
                         }
                         .padding(.horizontal, 16)
                         .padding(.vertical, 16)
-                        .background(RaideColor.pageBackground, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        .background(VuumColor.pageBackground, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                     }
                     .buttonStyle(.plain)
                 }
@@ -44,10 +44,10 @@ struct DestinationScaffoldView: View {
 
     var body: some View {
         ZStack(alignment: .bottom) {
-            RaideMapView(cameraTarget: tripSession.pickup.coordinate)
+            VuumMapView(cameraTarget: tripSession.pickup.coordinate)
                 .ignoresSafeArea()
 
-            RaideSheetChrome(title: "Choose destination") {
+            VuumSheetChrome(title: "Choose destination") {
                 VStack(spacing: 0) {
                     ForEach(MockPlaces.destinations) { place in
                         Button {
@@ -55,14 +55,14 @@ struct DestinationScaffoldView: View {
                         } label: {
                             HStack(alignment: .top, spacing: 12) {
                                 Image(systemName: "mappin.circle.fill")
-                                    .foregroundStyle(RaideColor.brand)
+                                    .foregroundStyle(VuumColor.brand)
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(place.name)
                                         .font(.system(size: 16, weight: .semibold, design: .rounded))
-                                        .foregroundStyle(RaideColor.primaryText)
+                                        .foregroundStyle(VuumColor.primaryText)
                                     Text(place.subtitle)
                                         .font(.system(size: 13, weight: .regular, design: .rounded))
-                                        .foregroundStyle(RaideColor.secondaryText)
+                                        .foregroundStyle(VuumColor.secondaryText)
                                 }
                                 Spacer()
                             }
@@ -79,7 +79,7 @@ struct DestinationScaffoldView: View {
                         tripSession.resetToHome()
                     }
                     .font(.system(size: 15, weight: .medium, design: .rounded))
-                    .foregroundStyle(RaideColor.secondaryText)
+                    .foregroundStyle(VuumColor.secondaryText)
                     .padding(.top, 8)
                 }
             }
@@ -94,10 +94,10 @@ struct RideOptionsScaffoldView: View {
 
     var body: some View {
         ZStack(alignment: .bottom) {
-            RaideMapView(cameraTarget: tripSession.dropoff?.coordinate ?? tripSession.pickup.coordinate)
+            VuumMapView(cameraTarget: tripSession.dropoff?.coordinate ?? tripSession.pickup.coordinate)
                 .ignoresSafeArea()
 
-            RaideSheetChrome(title: "Choose a ride") {
+            VuumSheetChrome(title: "Choose a ride") {
                 VStack(spacing: 10) {
                     ForEach(tripSession.availableTiers) { tier in
                         Button {
@@ -111,18 +111,18 @@ struct RideOptionsScaffoldView: View {
                                         .font(.system(size: 16, weight: .semibold, design: .rounded))
                                     Text("\(tier.etaMinutes) min · \(tier.detail)")
                                         .font(.system(size: 13, weight: .regular, design: .rounded))
-                                        .foregroundStyle(RaideColor.secondaryText)
+                                        .foregroundStyle(VuumColor.secondaryText)
                                 }
                                 Spacer()
                                 Text(tier.priceEstimate)
                                     .font(.system(size: 15, weight: .semibold, design: .rounded))
                             }
-                            .foregroundStyle(RaideColor.primaryText)
+                            .foregroundStyle(VuumColor.primaryText)
                             .padding(12)
                             .background(
                                 RoundedRectangle(cornerRadius: 14, style: .continuous)
                                     .stroke(
-                                        tripSession.selectedTier?.id == tier.id ? RaideColor.brand : RaideColor.divider,
+                                        tripSession.selectedTier?.id == tier.id ? VuumColor.brand : VuumColor.divider,
                                         lineWidth: tripSession.selectedTier?.id == tier.id ? 2 : 1
                                     )
                             )
@@ -130,7 +130,7 @@ struct RideOptionsScaffoldView: View {
                         .buttonStyle(.plain)
                     }
 
-                    RaidePrimaryButton(title: "Confirm Raide") {
+                    VuumPrimaryButton(title: "Confirm Vuum") {
                         tripSession.confirmRequest()
                     }
                     .padding(.top, 4)
@@ -145,10 +145,10 @@ struct RideOptionsScaffoldView: View {
 struct SearchingScaffoldView: View {
     var body: some View {
         ZStack {
-            RaideColor.brandInk.ignoresSafeArea()
+            VuumColor.brandInk.ignoresSafeArea()
             VStack(spacing: 20) {
                 ProgressView()
-                    .tint(RaideColor.brand)
+                    .tint(VuumColor.brand)
                     .scaleEffect(1.3)
                 Text("Finding your driver…")
                     .font(.system(size: 20, weight: .semibold, design: .rounded))
@@ -163,25 +163,25 @@ struct ActiveTripScaffoldView: View {
 
     var body: some View {
         ZStack(alignment: .bottom) {
-            RaideMapView(cameraTarget: tripSession.activeTrip?.driverCoordinate ?? tripSession.pickup.coordinate)
+            VuumMapView(cameraTarget: tripSession.activeTrip?.driverCoordinate ?? tripSession.pickup.coordinate)
                 .ignoresSafeArea()
 
-            RaideSheetChrome(title: tripSession.phase == .assigned ? "Driver on the way" : "Trip in progress") {
+            VuumSheetChrome(title: tripSession.phase == .assigned ? "Driver on the way" : "Trip in progress") {
                 if let trip = tripSession.activeTrip {
                     VStack(alignment: .leading, spacing: 12) {
                         Text(trip.driver.name)
                             .font(.system(size: 18, weight: .bold, design: .rounded))
                         Text("\(trip.driver.vehicle) · \(trip.driver.plate)")
-                            .foregroundStyle(RaideColor.secondaryText)
+                            .foregroundStyle(VuumColor.secondaryText)
                         Text("ETA \(trip.driver.etaMinutes) min · \(trip.fare)")
                             .font(.system(size: 15, weight: .medium, design: .rounded))
 
                         if tripSession.phase == .assigned {
-                            RaidePrimaryButton(title: "Start trip (demo)") {
+                            VuumPrimaryButton(title: "Start trip (demo)") {
                                 tripSession.startTrip()
                             }
                         } else {
-                            RaidePrimaryButton(title: "Complete trip (demo)") {
+                            VuumPrimaryButton(title: "Complete trip (demo)") {
                                 tripSession.completeTrip()
                             }
                         }
@@ -199,18 +199,18 @@ struct TripCompleteScaffoldView: View {
 
     var body: some View {
         ZStack {
-            RaideColor.pageBackground.ignoresSafeArea()
+            VuumColor.pageBackground.ignoresSafeArea()
             VStack(spacing: 20) {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.system(size: 56))
-                    .foregroundStyle(RaideColor.brand)
+                    .foregroundStyle(VuumColor.brand)
                 Text("Trip complete")
                     .font(.system(size: 28, weight: .bold, design: .rounded))
                 if let fare = tripSession.activeTrip?.fare {
                     Text(fare)
-                        .foregroundStyle(RaideColor.secondaryText)
+                        .foregroundStyle(VuumColor.secondaryText)
                 }
-                RaidePrimaryButton(title: "Back to home") {
+                VuumPrimaryButton(title: "Back to home") {
                     tripSession.resetToHome()
                 }
                 .padding(.horizontal, 24)

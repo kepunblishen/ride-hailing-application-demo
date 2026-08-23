@@ -6,7 +6,7 @@ import GoogleMaps
 #endif
 
 /// Map surface for the demo. Shows Google Maps when configured; otherwise a branded placeholder.
-struct RaideMapView: UIViewRepresentable {
+struct VuumMapView: UIViewRepresentable {
     var cameraTarget: GeoPoint
     var zoom: Float = 14
 

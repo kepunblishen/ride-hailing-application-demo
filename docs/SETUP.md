@@ -1,4 +1,4 @@
-# iOS Setup — Raide
+# iOS Setup — Vuum
 
 **Typical machine:** Windows laptop  
 **Target:** iPhone via Sideloadly + Codemagic (no local Mac required for IPA builds)
@@ -36,7 +36,7 @@ Deployment target: **iOS 17.0+**
 
 ## Maps API key
 
-Scheme env: `RAIDE_GOOGLE_MAPS_API_KEY`  
+Scheme env: `VUUM_GOOGLE_MAPS_API_KEY`  
 Without a key the app still runs with a map placeholder.
 
 ---
@@ -48,7 +48,7 @@ Edit Swift on Windows (Cursor)
         ↓
 Push to GitHub
         ↓
-Codemagic → build/Raide.ipa
+Codemagic → build/Vuum.ipa
         ↓
 Sideloadly → iPhone
 ```

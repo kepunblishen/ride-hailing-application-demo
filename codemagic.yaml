@@ -3,15 +3,15 @@
 
 workflows:
   ios-release:
-    name: Raide iOS Build (unsigned)
+    name: Vuum iOS Build (unsigned)
     max_build_duration: 60
     instance_type: mac_mini_m2
 
     environment:
       vars:
-        XCODE_PROJECT: ios/Raide.xcodeproj
-        XCODE_SCHEME: Raide
-        # Optional: set RAIDE_GOOGLE_MAPS_API_KEY in Codemagic env for live maps
+        XCODE_PROJECT: ios/Vuum.xcodeproj
+        XCODE_SCHEME: Vuum
+        # Optional: set VUUM_GOOGLE_MAPS_API_KEY in Codemagic env for live maps
       xcode: latest
 
     scripts:
@@ -37,20 +37,20 @@ workflows:
 
       - name: Package IPA for Sideloadly
         script: |
-          APP_PATH=$(find "$HOME/Library/Developer/Xcode/DerivedData" -name "Raide.app" -path "*/Debug-iphoneos/*" | head -1)
+          APP_PATH=$(find "$HOME/Library/Developer/Xcode/DerivedData" -name "Vuum.app" -path "*/Debug-iphoneos/*" | head -1)
           if [ -z "$APP_PATH" ]; then
-            echo "ERROR: Raide.app not found"
+            echo "ERROR: Vuum.app not found"
             exit 1
           fi
           echo "Found app at: $APP_PATH"
           rm -rf build Payload
           mkdir -p build Payload
           cp -r "$APP_PATH" Payload/
-          zip -r build/Raide.ipa Payload
+          zip -r build/Vuum.ipa Payload
           rm -rf Payload
 
     artifacts:
-      - build/Raide.ipa
+      - build/Vuum.ipa
       - /tmp/xcodebuild_logs/*.log
 
     publishing:

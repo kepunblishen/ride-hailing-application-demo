@@ -5,15 +5,15 @@ Local clones for component lookup during development. **Not compiled into the ap
 | Source | Use |
 |--------|-----|
 | [ComponentsKit](https://github.com/componentskit/ComponentsKit) | Button / card / progress reference |
-| [Explore SwiftUI](https://exploreswiftui.com/latest) | Native Liquid Glass / sheet / list snippets you paste into `ios/Raide/UI/` |
+| [Explore SwiftUI](https://exploreswiftui.com/latest) | Native Liquid Glass / sheet / list snippets you paste into `ios/Vuum/UI/` |
 
 Optional: clone ComponentsKit under `reference/ComponentsKit/` for offline browsing (gitignored if large).
 
-## Raide design system (in repo)
+## Vuum design system (in repo)
 
 | File | Role |
 |------|------|
-| `ios/Raide/UI/Theme/RaideTheme.swift` | Tokens + ComponentsKit accent |
-| `ios/Raide/UI/Components/RaideGlass.swift` | Glass / material surfaces |
-| `ios/Raide/UI/Components/RaideChrome.swift` | Buttons + sheet chrome |
-| `ios/Raide/Maps/RaideMapView.swift` | UIKit map bridge |
+| `ios/Vuum/UI/Theme/VuumTheme.swift` | Tokens + ComponentsKit accent |
+| `ios/Vuum/UI/Components/VuumGlass.swift` | Glass / material surfaces |
+| `ios/Vuum/UI/Components/VuumChrome.swift` | Buttons + sheet chrome |
+| `ios/Vuum/Maps/VuumMapView.swift` | UIKit map bridge |

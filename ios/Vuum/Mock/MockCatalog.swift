@@ -60,8 +60,8 @@ enum MockFares {
     static func tiers(from _: Place, to _: Place) -> [RideTier] {
         [
             RideTier(
-                id: "raide-go",
-                name: "Raide Go",
+                id: "vuum-go",
+                name: "Vuum Go",
                 detail: "Everyday rides",
                 capacity: 4,
                 etaMinutes: 4,
@@ -69,8 +69,8 @@ enum MockFares {
                 systemImage: "car.fill"
             ),
             RideTier(
-                id: "raide-xl",
-                name: "Raide XL",
+                id: "vuum-xl",
+                name: "Vuum XL",
                 detail: "Extra space",
                 capacity: 6,
                 etaMinutes: 7,
@@ -78,8 +78,8 @@ enum MockFares {
                 systemImage: "car.side.fill"
             ),
             RideTier(
-                id: "raide-black",
-                name: "Raide Black",
+                id: "vuum-black",
+                name: "Vuum Black",
                 detail: "Premium comfort",
                 capacity: 4,
                 etaMinutes: 9,
