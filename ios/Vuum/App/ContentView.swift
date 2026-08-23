@@ -9,21 +9,23 @@ struct ContentView: View {
 
     var body: some View {
         ZStack {
-            Group {
-                if session.isSignedIn {
-                    MainTabView()
-                } else {
-                    AuthFlowView()
+            // Mount interactive destinations only after splash dismisses so:
+            // - auth TextFields cannot auto-focus / open the keyboard under splash
+            // - AuthFlowView's forced light scheme cannot tint splash appearance
+            if !showSplash {
+                Group {
+                    if session.isSignedIn {
+                        MainTabView()
+                    } else {
+                        AuthFlowView()
+                    }
                 }
-            }
-            .opacity(showSplash ? 0 : 1)
-            .allowsHitTesting(!showSplash)
-            .safeAreaInset(edge: .top, spacing: 0) {
-                if !showSplash {
+                .safeAreaInset(edge: .top, spacing: 0) {
                     VuumOfflineBanner {
                         NotificationCenter.default.post(name: .vuumNetworkRetry, object: nil)
                     }
                 }
+                .transition(.opacity)
             }
 
             if showSplash {
@@ -39,20 +41,14 @@ struct ContentView: View {
         }
     }
 
-    /// Short premium brand moment while session (Keychain) and permission statuses settle.
+    /// Bootstrap/load first, then hold splash for an additional 4 seconds.
     private func runSplashGate() async {
-        let clock = ContinuousClock()
-        let started = clock.now
         async let permissionRefresh: Void = permissions.refreshStatuses()
 
         // SessionStore already hydrated synchronously; Maps bootstrap runs in `VuumApp.init`.
         _ = await permissionRefresh
 
-        let minimum: Duration = .milliseconds(1_650)
-        let elapsed = clock.now - started
-        if elapsed < minimum {
-            try? await Task.sleep(for: minimum - elapsed)
-        }
+        try? await Task.sleep(for: .seconds(4))
 
         withAnimation(.easeInOut(duration: 0.4)) {
             showSplash = false
