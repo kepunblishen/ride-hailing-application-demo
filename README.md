@@ -45,6 +45,7 @@ No Firebase, BLE, or Snyk.
 - Local: `ios/Secrets.xcconfig` (from `Secrets.example.xcconfig`) or Xcode scheme env
 - CI: Codemagic secure env → `xcodebuild` / Info.plist
 - Full guide: [docs/GOOGLE_MAPS_SETUP.md](docs/GOOGLE_MAPS_SETUP.md)
+- Blank white map + polyline: [docs/MAPS_BLANK_TILES_TRIAGE.md](docs/MAPS_BLANK_TILES_TRIAGE.md)
 
 Without a key the app runs; the map shows an unavailable placeholder.
 

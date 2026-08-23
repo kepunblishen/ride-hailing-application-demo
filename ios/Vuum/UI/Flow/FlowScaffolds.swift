@@ -1,35 +1,65 @@
-import SwiftUI
+﻿import SwiftUI
 
 struct TripMapLayer: View {
     @EnvironmentObject private var tripSession: TripSession
     @EnvironmentObject private var preferences: AppPreferences
     @EnvironmentObject private var location: RiderLocationManager
+    @ObservedObject private var mapsDiagnostics = GoogleMapsDiagnostics.shared
+    @ObservedObject private var developerDiagnostics = DeveloperDiagnostics.shared
 
     var body: some View {
-        VuumMapView(
-            cameraTarget: tripSession.mapCamera,
-            zoom: tripSession.phase == .idle
-                ? (preferences.lowDataMode ? 13 : 14)
-                : (preferences.lowDataMode ? 12.5 : 13.5),
-            pins: tripSession.mapPins,
-            route: preferences.lowDataMode
-                ? simplifiedRoute(tripSession.mapRoute)
-                : tripSession.mapRoute,
-            fitCoordinates: tripSession.mapFitCoordinates,
-            followDriver: tripSession.shouldFollowDriverOnMap,
-            cameraFocusNonce: tripSession.mapCameraFocusNonce,
-            showsUserLocation: location.isAuthorized,
-            showsTraffic: MapTrafficSettings.shouldShowTrafficLayer(lowDataMode: preferences.lowDataMode),
-            lowDataMode: preferences.lowDataMode
-        )
-        // Full-bleed behind sheets — UIViewRepresentable otherwise collapses to
-        // zero / intrinsic size when ZStack sizes around tall sheet content.
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        ZStack(alignment: .topLeading) {
+            VuumMapView(
+                cameraTarget: tripSession.mapCamera,
+                zoom: tripSession.phase == .idle
+                    ? (preferences.lowDataMode ? 13 : 14)
+                    : (preferences.lowDataMode ? 12.5 : 13.5),
+                pins: tripSession.mapPins,
+                route: preferences.lowDataMode
+                    ? simplifiedRoute(tripSession.mapRoute)
+                    : tripSession.mapRoute,
+                fitCoordinates: tripSession.mapFitCoordinates,
+                followDriver: tripSession.shouldFollowDriverOnMap,
+                cameraFocusNonce: tripSession.mapCameraFocusNonce,
+                showsUserLocation: location.isAuthorized,
+                showsTraffic: MapTrafficSettings.shouldShowTrafficLayer(lowDataMode: preferences.lowDataMode),
+                lowDataMode: preferences.lowDataMode,
+                useDefaultBasemapStyle: mapsDiagnostics.useDefaultBasemapStyle
+            )
+            // Full-bleed behind sheets — UIViewRepresentable otherwise collapses to
+            // zero / intrinsic size when ZStack sizes around tall sheet content.
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            if developerDiagnostics.isUnlocked {
+                mapsCredentialChip
+                    .padding(.top, 56)
+                    .padding(.leading, 12)
+            }
+        }
         .onAppear { location.startUpdatingIfAllowed() }
         .ignoresSafeArea()
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(mapAccessibilityLabel)
         .accessibilityHint("Shows pickup, destination, route, and nearby vehicles")
+    }
+
+    /// Temporary QA chip — key boolean + SDK only; never the key value.
+    private var mapsCredentialChip: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text("Maps QA")
+                .font(.caption2.weight(.bold))
+            Text("Key \(mapsDiagnostics.keyPresenceLabel) · SDK \(mapsDiagnostics.mapsSDKConfiguredLabel)")
+                .font(.caption2)
+            if let err = mapsDiagnostics.lastErrorCode {
+                Text("Last err \(err)")
+                    .font(.caption2)
+            }
+        }
+        .foregroundStyle(.primary)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .accessibilityHidden(true)
     }
 
     /// Downsample polyline points in lite mode to cut draw cost on weak networks.
@@ -482,8 +512,10 @@ struct DestinationScaffoldView: View {
 }
 
 /// Pick a place for Home or Work via Places autocomplete (local catalog fallback).
+/// Presented full-screen (or large-only sheet) — never a half-height card.
 struct AssignSavedPlaceSheet: View {
     @EnvironmentObject private var savedPlaces: SavedPlacesStore
+    @Environment(\.dismiss) private var dismiss
     let kind: SavedPlaceKind
 
     var body: some View {
@@ -506,6 +538,9 @@ struct AssignSavedPlaceSheet: View {
                 }
             }
         )
+        .presentationDetents([.large])
+        .presentationDragIndicator(.visible)
+        .interactiveDismissDisabled(false)
     }
 }
 

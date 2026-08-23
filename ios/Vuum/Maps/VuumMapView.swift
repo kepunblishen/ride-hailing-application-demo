@@ -25,6 +25,8 @@ struct VuumMapView: UIViewRepresentable {
     var showsTraffic: Bool = false
     /// Lite / low-data: prefer simpler basemap styling and thinner polylines.
     var lowDataMode: Bool = false
+    /// Diagnostics A/B: skip bundled JSON `mapStyle` and use Google’s default tiles.
+    var useDefaultBasemapStyle: Bool = false
 
     func makeCoordinator() -> Coordinator {
         Coordinator()
@@ -67,6 +69,7 @@ struct VuumMapView: UIViewRepresentable {
                 to: map,
                 lowDataMode: lowDataMode,
                 colorScheme: colorScheme,
+                useDefaultBasemapStyle: useDefaultBasemapStyle,
                 force: true
             )
             context.coordinator.mapView = map
@@ -99,6 +102,7 @@ struct VuumMapView: UIViewRepresentable {
             to: map,
             lowDataMode: lowDataMode,
             colorScheme: colorScheme,
+            useDefaultBasemapStyle: useDefaultBasemapStyle,
             force: false
         )
         context.coordinator.sync(
@@ -146,10 +150,22 @@ struct VuumMapView: UIViewRepresentable {
             to map: GMSMapView,
             lowDataMode: Bool,
             colorScheme: ColorScheme,
+            useDefaultBasemapStyle: Bool,
             force: Bool
         ) {
             guard MapBootstrap.isConfigured, MapBootstrap.hasAPIKey else { return }
             map.overrideUserInterfaceStyle = colorScheme == .dark ? .dark : .light
+
+            if useDefaultBasemapStyle {
+                let sentinel = "__default__"
+                guard force || lastAppliedStyleResource != sentinel else { return }
+                map.mapStyle = nil
+                lastAppliedStyleResource = sentinel
+                Task { @MainActor in
+                    GoogleMapsDiagnostics.shared.noteMapStyleOutcome("skipped (default basemap)")
+                }
+                return
+            }
 
             let resource = Self.styleResourceName(lowDataMode: lowDataMode, colorScheme: colorScheme)
             guard force || resource != lastAppliedStyleResource else { return }
@@ -159,17 +175,28 @@ struct VuumMapView: UIViewRepresentable {
                 print("[Vuum] Map style resource missing: \(resource).json — using default tiles.")
                 #endif
                 map.mapStyle = nil
+                Task { @MainActor in
+                    GoogleMapsDiagnostics.shared.noteMapStyleOutcome("missing \(resource).json → default tiles")
+                }
                 // Do not cache failure — allow retry once the bundle resource is available.
                 return
             }
             do {
                 map.mapStyle = try GMSMapStyle(contentsOfFileURL: url)
                 lastAppliedStyleResource = resource
+                Task { @MainActor in
+                    GoogleMapsDiagnostics.shared.noteMapStyleOutcome("applied \(resource)")
+                }
             } catch {
                 #if DEBUG
                 print("[Vuum] Map style failed (\(resource)): \(error.localizedDescription) — using default tiles.")
                 #endif
                 map.mapStyle = nil
+                Task { @MainActor in
+                    GoogleMapsDiagnostics.shared.noteMapStyleOutcome(
+                        "failed \(resource): \(error.localizedDescription)"
+                    )
+                }
             }
         }
 

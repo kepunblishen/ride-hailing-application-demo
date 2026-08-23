@@ -6,6 +6,11 @@ import Foundation
 final class GoogleMapsDiagnostics: ObservableObject {
     static let shared = GoogleMapsDiagnostics()
 
+    private enum Keys {
+        /// When true, `VuumMapView` skips bundled JSON `mapStyle` (default Google basemap).
+        static let useDefaultBasemap = "vuum.maps.useDefaultBasemapStyle"
+    }
+
     struct RequestLogEntry: Identifiable, Equatable {
         let id = UUID()
         let api: String
@@ -21,15 +26,23 @@ final class GoogleMapsDiagnostics: ObservableObject {
     @Published private(set) var lastSuccessAPI: String?
     @Published private(set) var lastRiderMessage: String?
     @Published private(set) var recentRequests: [RequestLogEntry] = []
+    /// Last JSON map-style apply result (`applied` / `cleared` / `failed:…` / `skipped`).
+    @Published private(set) var lastMapStyleOutcome: String?
+    /// Temporary A/B: skip brand JSON styles to rule out style-induced blank basemaps.
+    @Published var useDefaultBasemapStyle: Bool {
+        didSet { UserDefaults.standard.set(useDefaultBasemapStyle, forKey: Keys.useDefaultBasemap) }
+    }
 
     private let maxLogEntries = 24
 
-    /// Present/absent with masked suffix — never the full key.
+    init() {
+        useDefaultBasemapStyle = UserDefaults.standard.bool(forKey: Keys.useDefaultBasemap)
+    }
+
+    /// Boolean only — never the key value or a suffix.
     var keyPresenceLabel: String {
         MapBootstrap.configureIfNeeded()
-        guard let key = MapBootstrap.resolvedAPIKey() else { return "Absent" }
-        let suffix = String(key.suffix(min(4, key.count)))
-        return "Present · …\(suffix)"
+        return MapBootstrap.hasAPIKey ? "Yes" : "No"
     }
 
     var mapsSDKConfiguredLabel: String {
@@ -42,6 +55,11 @@ final class GoogleMapsDiagnostics: ObservableObject {
         return MapBootstrap.hasAPIKey ? "Yes" : "No"
     }
 
+    var liveMapSurfaceLabel: String {
+        MapBootstrap.configureIfNeeded()
+        return MapBootstrap.surface == .live ? "GMSMapView" : "Unavailable plane"
+    }
+
     var bundleID: String {
         Bundle.main.bundleIdentifier ?? MapBootstrap.iosBundleIdentifier
     }
@@ -52,6 +70,22 @@ final class GoogleMapsDiagnostics: ObservableObject {
         #else
         return "Release"
         #endif
+    }
+
+    /// One-line hypothesis for white basemap + visible overlays (markers/polylines).
+    var blankTilesHypothesis: String {
+        MapBootstrap.configureIfNeeded()
+        if !MapBootstrap.hasAPIKey {
+            return "No usable key → unavailable plane (not GMS tiles)."
+        }
+        if !MapBootstrap.isConfigured {
+            return "Key present but Maps SDK not linked/configured."
+        }
+        return "Key+SDK OK; white+polyline usually means tiles denied (billing, Maps SDK for iOS, or bundle ID). Not cloud Map ID / no-code styling — app uses JSON mapStyle, not mapID."
+    }
+
+    func noteMapStyleOutcome(_ outcome: String) {
+        lastMapStyleOutcome = outcome
     }
 
     func record(
@@ -115,5 +149,6 @@ final class GoogleMapsDiagnostics: ObservableObject {
         lastErrorCode = nil
         lastSuccessAPI = nil
         lastRiderMessage = nil
+        lastMapStyleOutcome = nil
     }
 }

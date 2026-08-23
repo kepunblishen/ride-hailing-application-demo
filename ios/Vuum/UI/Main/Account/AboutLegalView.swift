@@ -2,6 +2,7 @@ import SwiftUI
 
 struct AboutLegalView: View {
     @ObservedObject private var diagnostics = DeveloperDiagnostics.shared
+    @ObservedObject private var mapsDiagnostics = GoogleMapsDiagnostics.shared
     @State private var unlockedToast = false
 
     var body: some View {
@@ -26,7 +27,17 @@ struct AboutLegalView: View {
             }
 
             if diagnostics.isUnlocked {
-                Section {
+                Section("Maps (QA)") {
+                    LabeledContent("API key present", value: mapsDiagnostics.keyPresenceLabel)
+                    LabeledContent("Maps SDK", value: mapsDiagnostics.mapsSDKConfiguredLabel)
+                    LabeledContent("Surface", value: mapsDiagnostics.liveMapSurfaceLabel)
+                    LabeledContent(
+                        "Last error",
+                        value: mapsDiagnostics.lastErrorCode ?? "None"
+                    )
+                    Text(mapsDiagnostics.blankTilesHypothesis)
+                        .font(.footnote)
+                        .foregroundStyle(VuumColor.secondaryText)
                     NavigationLink {
                         DiagnosticsToolsView()
                     } label: {

@@ -238,17 +238,42 @@ Presenter device QA after a keyed Sideload: [`MAPS_POST_KEY_QA.md`](MAPS_POST_KE
 
 ## 8. Blank / white map triage
 
-| What you see | Likely cause | Fix |
-|--------------|--------------|-----|
-| Light/dark **grid** + map icon + “unavailable” copy | **No usable API key** in the build (`MapBootstrap` rejected placeholder / missing Secrets) | Inject a real `VUUM_GOOGLE_MAPS_API_KEY` (§3 or §4) and rebuild |
-| **Empty white/gray plane** + Google logo (no roads) | Key present but **tiles denied** — billing off, Maps SDK for iOS not enabled, or bundle ID ≠ `com.vuum.app` | Complete §7 A–B; watch Xcode console for “API key may be invalid for your bundle ID” |
-| White/blank plane **above** the destination / choose-ride sheet (no Google logo, no grid) | **Layout / wrong host** — destination phase was a list-only screen (`DestinationSearchView`) or map `UIViewRepresentable` collapsed under a tall sheet / NavigationStack | Fixed: `DestinationScaffoldView` → `PlanYourRideView` (full-bleed `TripMapLayer` + capped sheet); choose/confirm use `GeometryReader` + sheet max height; `VuumMapView` uses `GMSMapViewOptions` + `sizeThatFits` |
-| Dark UI + washed **light** basemap | Was a code issue (lite style forced in dark); night style should apply now | Rebuild with current `VuumMapView` styles |
-| Idle Home tab has **no map** | **By design** — content-first `HomeHubView`; map appears after **Where to?** | Opens `PlanYourRideView` via `DestinationScaffoldView` (`TripMapLayer` full-bleed behind sheet) |
+### Symptom that matches this repo today
 
-**If still blank after a build that includes the layout fix:** this is almost certainly credentials, not embedding. Set Codemagic secure group **`vuum_secrets`** → env **`VUUM_GOOGLE_MAPS_API_KEY`** (or local gitignored `ios/Secrets.xcconfig` / scheme env), enable **Maps SDK for iOS**, restrict to bundle **`com.vuum.app`**, then rebuild the IPA. Do not invent or commit keys.
+**White / empty basemap + polyline (or markers) still draw** → `GMSMapView` is alive and overlays work; **map tiles are not loading**. That is almost always **Google Cloud / API key config**, not SwiftUI layout and not “no-code” Map Builder.
 
-Account → Diagnostics (DEBUG builds) shows key Present/Absent and “Maps SDK configured” without exposing the key.
+| What you see | Bucket | Likely cause | Fix |
+|--------------|--------|--------------|-----|
+| Light/dark **grid** + map icon + “unavailable” copy | **A Config** (no key) | No usable `VUUM_GOOGLE_MAPS_API_KEY` in the IPA | Inject key (§3 / §4) and rebuild |
+| **White/gray plane** + Google logo and/or **route polyline / pins** | **A Config** (tiles denied) | Billing off; **Maps SDK for iOS** not enabled; key API restriction missing Maps SDK; iOS bundle ≠ `com.vuum.app` | Complete §7 A–C; rebuild only if the key value changed |
+| Grid unavailable plane after key was “set” | **A Config** | Placeholder / unsubstituted `$(VUUM_GOOGLE_MAPS_API_KEY)` still in Info.plist | Confirm Codemagic log wrote Secrets; Account → About (7× Version) → Maps QA shows **API key present = Yes** |
+| Washed light basemap under dark chrome | **B App** (was) | Light JSON style under dark appearance | Fixed: night JSON via `colorScheme` |
+| White plane, **no** Google logo, **no** polyline, under a tall sheet | **B App** (layout) | Zero-size / wrong host | Fixed: `TripMapLayer` + `sizeThatFits` / sheet scaffolds |
+| Blank after applying a **cloud Map ID** you never wired in code | N/A here | App does **not** pass `mapID` | Ignore Map ID until product adopts cloud styles |
+
+### What “use our code / we need no code from Google” means
+
+During Maps Platform / Cloud setup, Google offers **cloud-based map styling** with a **no-code style editor** in the Console. That path:
+
+1. You design a style in the Console (no JSON in the app).
+2. You create a **Map ID**, associate the style, and pass that Map ID into `GMSMapView` / `GMSMapViewOptions.mapID`.
+
+**Vuum does not use Map ID.** Brand look uses **local JSON** (`VuumMapStyle*.json` → `GMSMapView.mapStyle`). Choosing the no-code Console styling **does not by itself** blank tiles, and **does not replace** enabling **Maps SDK for iOS** or injecting `VUUM_GOOGLE_MAPS_API_KEY`.
+
+Do **not** invent a Map ID in the app unless you intentionally switch to cloud styles (and then stop applying local JSON — Map ID and JSON style must not conflict).
+
+### Operator checklist when white + polyline
+
+1. [ ] Billing linked on the Google Cloud project  
+2. [ ] **Maps SDK for iOS** enabled (Library) — Routes/Places alone are **not** enough for basemap tiles  
+3. [ ] API key **API restrictions** include **Maps SDK for iOS**  
+4. [ ] Application restriction **iOS apps** → bundle **`com.vuum.app`** exactly  
+5. [ ] Key baked into this IPA (`vuum_secrets` / Secrets.xcconfig) — confirm on device: About → tap Version 7× → **API key present = Yes**, **Maps SDK = Yes**  
+6. [ ] Optional A/B: Diagnostics → **Use default Google basemap** (clears JSON `mapStyle`). If still white, it is **not** style JSON  
+
+Account → Diagnostics and the unlocked map **Maps QA** chip show key present / SDK / last error as booleans only (never the key value).
+
+**If still blank after a build that includes the layout fix:** credentials, not embedding. Set Codemagic **`vuum_secrets`** → **`VUUM_GOOGLE_MAPS_API_KEY`**, enable **Maps SDK for iOS**, restrict to **`com.vuum.app`**, rebuild. Do not invent or commit keys.
 
 ---
 

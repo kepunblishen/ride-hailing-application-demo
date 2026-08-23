@@ -22,20 +22,29 @@ struct DiagnosticsToolsView: View {
             }
 
             Section("Maps credentials") {
-                LabeledContent("API key", value: mapsDiagnostics.keyPresenceLabel)
+                LabeledContent("API key present", value: mapsDiagnostics.keyPresenceLabel)
                 LabeledContent("Key usable", value: mapsDiagnostics.hasUsableKeyLabel)
                 LabeledContent("Maps SDK", value: mapsDiagnostics.mapsSDKConfiguredLabel)
+                LabeledContent("Surface", value: mapsDiagnostics.liveMapSurfaceLabel)
                 LabeledContent("Bundle ID", value: mapsDiagnostics.bundleID)
                 LabeledContent("Build", value: mapsDiagnostics.buildConfiguration)
                 LabeledContent(
                     "Last error",
                     value: mapsDiagnostics.lastErrorCode ?? "None"
                 )
+                LabeledContent(
+                    "Map style",
+                    value: mapsDiagnostics.lastMapStyleOutcome ?? "Not applied yet"
+                )
                 if let rider = mapsDiagnostics.lastRiderMessage {
                     Text(rider)
                         .font(.footnote)
                         .foregroundStyle(VuumColor.secondaryText)
                 }
+                Text(mapsDiagnostics.blankTilesHypothesis)
+                    .font(.footnote)
+                    .foregroundStyle(VuumColor.secondaryText)
+                Toggle("Use default Google basemap (skip JSON style)", isOn: $mapsDiagnostics.useDefaultBasemapStyle)
                 #if DEBUG
                 if !mapsDiagnostics.recentRequests.isEmpty {
                     ForEach(mapsDiagnostics.recentRequests.prefix(8)) { entry in
