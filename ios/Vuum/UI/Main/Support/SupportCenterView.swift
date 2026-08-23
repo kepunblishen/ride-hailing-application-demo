@@ -892,7 +892,7 @@ struct SupportTicketComposerView: View {
     @State private var selectedTrip: TripReceipt?
     @State private var issueLabel = ""
     @State private var subject = ""
-    @State private var body = ""
+    @State private var descriptionText = ""
     @State private var didSend = false
 
     init(
@@ -921,7 +921,7 @@ struct SupportTicketComposerView: View {
 
     private var canSubmit: Bool {
         !subject.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            && !body.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && !descriptionText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             && !issueLabel.isEmpty
             && (!needsTrip || selectedTrip != nil || trips.isEmpty)
     }
@@ -1002,7 +1002,7 @@ struct SupportTicketComposerView: View {
                             category == .lostItem
                                 ? "Describe the item and where you may have left it"
                                 : "Describe what happened",
-                            text: $body,
+                            text: $descriptionText,
                             axis: .vertical
                         )
                         .lineLimit(5...12)
@@ -1098,7 +1098,7 @@ struct SupportTicketComposerView: View {
             category: category,
             issueLabel: issueLabel.isEmpty ? category.title : issueLabel,
             subject: subject,
-            body: body,
+            body: descriptionText,
             tripId: trip?.id,
             tripSummary: summary,
             driverName: trip?.driverName,
