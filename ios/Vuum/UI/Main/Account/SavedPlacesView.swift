@@ -106,7 +106,10 @@ struct SavedPlacesView: View {
         .navigationTitle(L10n.Settings.savedPlaces)
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $pickTarget) { target in
-            PlaceSearchPickerSheet(title: target.pickerTitle) { place in
+            PlaceSearchPickerSheet(
+                title: target.pickerTitle,
+                detents: target.usesLargeDetentOnly ? [.large] : [.medium, .large]
+            ) { place in
                 apply(place, to: target)
             }
         }
@@ -159,6 +162,13 @@ private enum SavedPickTarget: String, Identifiable {
         case .favorite: return L10n.Settings.addFavorite
         }
     }
+    /// Home / Work set-location sheets are full-page (large only).
+    var usesLargeDetentOnly: Bool {
+        switch self {
+        case .home, .work: return true
+        case .favorite: return false
+        }
+    }
 }
 
 /// Searchable place picker used by Saved places, Home/Work assignment, and Services booking.
@@ -173,6 +183,8 @@ struct PlaceSearchPickerSheet: View {
     /// Prefer GPS / trip bias when set; otherwise market default center.
     var bias: GeoPoint? = nil
     var excludePlaceIDs: Set<String> = []
+    /// Sheet height — Home/Work assignment uses `[.large]` only.
+    var detents: Set<PresentationDetent> = [.medium, .large]
     let onSelect: (Place) -> Void
 
     @StateObject private var placesSearch = PlacesSearchController()
@@ -318,7 +330,8 @@ struct PlaceSearchPickerSheet: View {
             }
             .onDisappear { placesSearch.tearDown() }
         }
-        .presentationDetents([.medium, .large])
+        .presentationDetents(detents)
+        .presentationDragIndicator(.visible)
     }
 
     private func select(_ suggestion: PlacesSearchService.PlaceSuggestion) {

@@ -146,6 +146,13 @@ enum VuumLayout {
     static let mapSheetPreferredFraction: CGFloat = 0.48
     static let mapSheetMaxFraction: CGFloat = 0.55
 
+    /// Plan-your-ride sheet: roomy mid detent (~¾) with pull-up to near-full.
+    static let planRideSheetMidFraction: CGFloat = 0.75
+    static let planRideSheetLargeFraction: CGFloat = 0.92
+
+    /// Equal-height pickup / stop / destination rows in plan & search chrome.
+    static let endpointRowHeight: CGFloat = 48
+
     /// Cap for map-overlaid bottom sheets (fraction of host height, clamped 40–55%).
     static func mapSheetMaxHeight(in hostHeight: CGFloat, fraction: CGFloat = mapSheetPreferredFraction) -> CGFloat {
         let clamped = min(mapSheetMaxFraction, max(mapSheetMinFraction, fraction))

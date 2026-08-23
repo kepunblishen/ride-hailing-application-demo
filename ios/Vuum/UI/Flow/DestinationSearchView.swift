@@ -9,6 +9,7 @@ struct DestinationSearchView: View {
     @EnvironmentObject private var tripSession: TripSession
     @EnvironmentObject private var savedPlaces: SavedPlacesStore
     @EnvironmentObject private var appLocale: AppLocale
+    @EnvironmentObject private var location: RiderLocationManager
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.dismiss) private var dismiss
 
@@ -115,8 +116,11 @@ struct DestinationSearchView: View {
             }
         }
         .background(VuumColor.pageBackground.ignoresSafeArea())
-        .sheet(item: $assignSlot) { kind in
+        .fullScreenCover(item: $assignSlot) { kind in
             AssignSavedPlaceSheet(kind: kind)
+                .environmentObject(savedPlaces)
+                .environmentObject(appLocale)
+                .environmentObject(location)
         }
         .sheet(isPresented: $showAdjustPickup) {
             AdjustPickupSheet()
@@ -165,7 +169,7 @@ struct DestinationSearchView: View {
 
             VuumTripEndpointsStack(
                 style: .search,
-                intermediateStops: 0,
+                intermediateStops: tripSession.stops.count,
                 spacing: 12,
                 railVerticalInset: 18
             ) {
@@ -173,6 +177,10 @@ struct DestinationSearchView: View {
                     showAdjustPickup = true
                 }
                 .accessibilityHint(L10n.Trip.adjustPickup)
+
+                ForEach(tripSession.stops) { stop in
+                    VuumEndpointSummaryField(title: stop.name, emphasized: false)
+                }
 
                 focusedDestinationField
             }
@@ -228,7 +236,7 @@ struct DestinationSearchView: View {
             }
         }
         .padding(.horizontal, 10)
-        .frame(minHeight: 56)
+        .frame(height: VuumLayout.endpointRowHeight)
         .background(
             VuumDestinationSearchField.searchFill,
             in: RoundedRectangle(cornerRadius: 12, style: .continuous)
@@ -237,7 +245,6 @@ struct DestinationSearchView: View {
             RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .strokeBorder(VuumColor.primaryText.opacity(0.88), lineWidth: 2)
         )
-        .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.35 : 0.08), radius: 8, y: 4)
     }
 
     // MARK: - Lists

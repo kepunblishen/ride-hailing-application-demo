@@ -724,6 +724,7 @@ struct VuumTripEndpointsConnector: View {
 
 /// Lays a `VuumTripEndpointsConnector` beside stacked pickup / destination rows.
 /// Pass one child view per endpoint (and optional stop rows) so the rail stretches with the stack.
+/// Uses vertical `fixedSize` so the flexible stem cannot inflate row heights (Where to? ~3× taller bug).
 struct VuumTripEndpointsStack<Content: View>: View {
     var style: VuumTripEndpointsConnector.Style = .search
     var intermediateStops: Int = 0
@@ -744,7 +745,9 @@ struct VuumTripEndpointsStack<Content: View>: View {
                 content()
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+            .fixedSize(horizontal: false, vertical: true)
         }
+        .fixedSize(horizontal: false, vertical: true)
         .accessibilityElement(children: .contain)
     }
 }
@@ -777,7 +780,7 @@ struct VuumEndpointSummaryField: View {
             .lineLimit(1)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 12)
-            .frame(minHeight: 48)
+            .frame(height: VuumLayout.endpointRowHeight)
             .background(fill, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
 
         Group {

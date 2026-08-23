@@ -74,6 +74,28 @@ struct RideOptionsScaffoldView: View {
 
     private var stickyFooter: some View {
         VStack(spacing: 12) {
+            if tripSession.stops.count < TripSession.maxStops {
+                Button {
+                    tripSession.beginAddingStop()
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "plus")
+                            .font(.system(size: 14, weight: .semibold))
+                        Text(L10n.Destination.addStop)
+                            .font(.system(size: 15, weight: .semibold))
+                    }
+                    .foregroundStyle(VuumColor.primaryText)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(
+                        VuumColor.chipBackground,
+                        in: RoundedRectangle(cornerRadius: VuumLayout.radiusControl, style: .continuous)
+                    )
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(L10n.Destination.addStop)
+            }
+
             PaymentMethodPickerRow()
 
             VuumPrimaryButton(

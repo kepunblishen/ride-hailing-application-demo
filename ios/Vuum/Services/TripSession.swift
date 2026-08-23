@@ -1106,7 +1106,7 @@ final class TripSession: ObservableObject {
     }
 
     func beginAddingStop() {
-        guard stops.count < Self.maxStops, dropoff != nil else { return }
+        guard stops.count < Self.maxStops else { return }
         isAddingStop = true
         phase = .selectingDestination
     }
@@ -1115,7 +1115,7 @@ final class TripSession: ObservableObject {
         isAddingStop = false
         if dropoff != nil {
             phase = .choosingRide
-        } else {
+        } else if phase != .selectingDestination {
             phase = .idle
         }
     }
@@ -1139,14 +1139,21 @@ final class TripSession: ObservableObject {
         guard place.id != pickup.id, place.id != dropoff?.id else { return }
         guard !stops.contains(where: { $0.id == place.id }) else {
             isAddingStop = false
-            phase = .choosingRide
+            if dropoff != nil {
+                phase = .choosingRide
+            }
             return
         }
         stops.append(place)
         isAddingStop = false
-        phase = .choosingRide
-        refreshPreviewRoute()
-        refreshTierPricing()
+        if dropoff != nil {
+            phase = .choosingRide
+            refreshPreviewRoute()
+            refreshTierPricing()
+        } else {
+            // Still need a final destination — stay on plan-your-ride.
+            phase = .selectingDestination
+        }
     }
 
     func removeStop(_ place: Place) {

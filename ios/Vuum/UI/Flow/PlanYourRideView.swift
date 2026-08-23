@@ -14,6 +14,11 @@ struct PlanYourRideView: View {
     @State private var assignSlot: SavedPlaceKind?
     @State private var showAdjustPickup = false
     @State private var showDestinationSearch = false
+    /// Mid (~¾) or large near-full; rider can drag the handle.
+    @State private var sheetExpanded = false
+    @GestureState private var sheetDragTranslation: CGFloat = 0
+
+    private let recentCap = 6
 
     private var isSearching: Bool {
         !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -23,6 +28,11 @@ struct PlanYourRideView: View {
 
     private var sheetTitle: String {
         tripSession.isAddingStop ? L10n.Destination.addStop : L10n.Destination.planYourRide
+    }
+
+    private var canOfferAddStop: Bool {
+        !tripSession.isAddingStop
+            && tripSession.stops.count < TripSession.maxStops
     }
 
     private func isAvailable(_ place: Place) -> Bool {
@@ -55,40 +65,45 @@ struct PlanYourRideView: View {
     private var filteredRecent: [Place] {
         let homeWork = Set([savedPlaces.home?.id, savedPlaces.work?.id].compactMap { $0 })
         let favoriteIds = Set(savedPlaces.favorites.map(\.id))
-        return savedPlaces.recent.filter {
-            isAvailable($0)
-                && matchesQuery($0)
-                && !homeWork.contains($0.id)
-                && !favoriteIds.contains($0.id)
-        }
+        return Array(
+            savedPlaces.recent.filter {
+                isAvailable($0)
+                    && matchesQuery($0)
+                    && !homeWork.contains($0.id)
+                    && !favoriteIds.contains($0.id)
+            }
+            .prefix(recentCap)
+        )
     }
 
     private var filteredFavorites: [Place] {
         let homeWork = Set([savedPlaces.home?.id, savedPlaces.work?.id].compactMap { $0 })
-        return savedPlaces.favorites.filter {
-            isAvailable($0) && matchesQuery($0) && !homeWork.contains($0.id)
-        }
+        return Array(
+            savedPlaces.favorites.filter {
+                isAvailable($0) && matchesQuery($0) && !homeWork.contains($0.id)
+            }
+            .prefix(4)
+        )
     }
 
     private var recentFallbackPlaces: [Place] {
         guard filteredRecent.isEmpty, !isSearching else { return [] }
-        return Array(filteredSuggestions.prefix(8))
+        return Array(filteredSuggestions.prefix(recentCap))
     }
 
     var body: some View {
         GeometryReader { geo in
-            // Shared map-sheet tokens (~40–55%) so the map stays visibly behind the sheet.
-            let sheetHeight = VuumLayout.mapSheetMaxHeight(
-                in: geo.size.height,
-                fraction: VuumLayout.mapSheetMaxFraction
-            )
+            let midHeight = geo.size.height * VuumLayout.planRideSheetMidFraction
+            let largeHeight = geo.size.height * VuumLayout.planRideSheetLargeFraction
+            let baseHeight = sheetExpanded ? largeHeight : midHeight
+            let draggedHeight = min(largeHeight, max(midHeight * 0.92, baseHeight - sheetDragTranslation))
 
             ZStack(alignment: .bottom) {
                 TripMapLayer()
                     .zIndex(0)
 
-                planRideSheet
-                    .frame(height: sheetHeight)
+                planRideSheet(hostHeight: geo.size.height)
+                    .frame(height: draggedHeight)
                     .frame(maxWidth: .infinity)
                     .zIndex(1)
             }
@@ -98,8 +113,11 @@ struct PlanYourRideView: View {
             }
         }
         .ignoresSafeArea(edges: .bottom)
-        .sheet(item: $assignSlot) { kind in
+        .fullScreenCover(item: $assignSlot) { kind in
             AssignSavedPlaceSheet(kind: kind)
+                .environmentObject(savedPlaces)
+                .environmentObject(appLocale)
+                .environmentObject(location)
         }
         .sheet(isPresented: $showAdjustPickup) {
             AdjustPickupSheet()
@@ -145,18 +163,39 @@ struct PlanYourRideView: View {
 
     // MARK: - Bottom sheet
 
-    private var planRideSheet: some View {
-        VStack(alignment: .leading, spacing: 0) {
+    private func planRideSheet(hostHeight: CGFloat) -> some View {
+        let midHeight = hostHeight * VuumLayout.planRideSheetMidFraction
+        let largeHeight = hostHeight * VuumLayout.planRideSheetLargeFraction
+
+        return VStack(alignment: .leading, spacing: 0) {
             VuumSheetHandle()
                 .padding(.top, 12)
                 .padding(.bottom, 8)
+                .frame(maxWidth: .infinity)
+                .contentShape(Rectangle())
+                .gesture(
+                    DragGesture(minimumDistance: 8)
+                        .updating($sheetDragTranslation) { value, state, _ in
+                            state = value.translation.height
+                        }
+                        .onEnded { value in
+                            let projected = (sheetExpanded ? largeHeight : midHeight) - value.translation.height
+                            let mid = midHeight
+                            let large = largeHeight
+                            withAnimation(.interactiveSpring(response: 0.32, dampingFraction: 0.86)) {
+                                sheetExpanded = projected > (mid + large) / 2
+                            }
+                        }
+                )
+                .accessibilityLabel("Resize sheet")
+                .accessibilityHint("Drag up or down to change sheet height")
 
             Text(sheetTitle)
                 .font(.system(size: 24, weight: .bold))
                 .foregroundStyle(VuumColor.primaryText)
                 .frame(maxWidth: .infinity)
                 .padding(.horizontal, 24)
-                .padding(.bottom, 20)
+                .padding(.bottom, 16)
                 .accessibilityAddTraits(.isHeader)
 
             if tripSession.isAddingStop {
@@ -176,7 +215,7 @@ struct PlanYourRideView: View {
 
             endpointsCard
                 .padding(.horizontal, 24)
-                .padding(.bottom, 16)
+                .padding(.bottom, 12)
 
             if let status = placesSearch.statusMessage {
                 HStack(alignment: .top, spacing: 10) {
@@ -196,16 +235,10 @@ struct PlanYourRideView: View {
                 .padding(.bottom, 8)
             }
 
-            if !tripSession.stops.isEmpty, !tripSession.isAddingStop {
-                stopsPreview
-                    .padding(.horizontal, 24)
-                    .padding(.bottom, 8)
-            }
-
             ScrollView {
                 LazyVStack(spacing: 0) {
                     if !isSearching, !tripSession.isAddingStop {
-                        savedSlotsSection
+                        compactSavedSlotsRow
                     }
 
                     if !filteredFavorites.isEmpty {
@@ -215,7 +248,7 @@ struct PlanYourRideView: View {
 
                     if !filteredRecent.isEmpty {
                         sectionHeader(L10n.Destination.recent)
-                        placeRows(filteredRecent, leadingIcon: "mappin")
+                        placeRows(filteredRecent, leadingIcon: "clock")
                     } else if !recentFallbackPlaces.isEmpty {
                         sectionHeader(L10n.Destination.recent)
                         placeRows(recentFallbackPlaces, leadingIcon: "mappin")
@@ -245,7 +278,7 @@ struct PlanYourRideView: View {
                               !filteredSuggestions.isEmpty {
                         sectionHeader(L10n.Destination.suggestions)
                         placeRows(
-                            filteredSuggestions,
+                            Array(filteredSuggestions.prefix(recentCap)),
                             leadingIcon: tripSession.isAddingStop ? "plus" : "mappin"
                         )
                     }
@@ -260,8 +293,16 @@ struct PlanYourRideView: View {
     }
 
     private var endpointsCard: some View {
-        VuumPlanRideEndpointsCard(
-            intermediateStops: 0
+        // Rail: circle (pickup) → stop dots → square on final field (pending stop, Where to?, or dropoff).
+        let intermediateCount: Int = {
+            if tripSession.isAddingStop, tripSession.dropoff != nil {
+                return tripSession.stops.count + 1
+            }
+            return tripSession.stops.count
+        }()
+
+        return VuumPlanRideEndpointsCard(
+            intermediateStops: intermediateCount
         ) {
             Button {
                 showAdjustPickup = true
@@ -271,7 +312,7 @@ struct PlanYourRideView: View {
                     .foregroundStyle(VuumColor.primaryText)
                     .lineLimit(1)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .frame(minHeight: 48)
+                    .frame(height: VuumLayout.endpointRowHeight)
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
@@ -279,120 +320,144 @@ struct PlanYourRideView: View {
             .accessibilityValue(tripSession.pickup.name)
             .accessibilityHint(L10n.Home.adjust)
 
-            VuumPlanRideEndpointsDivider()
+            ForEach(Array(tripSession.stops.enumerated()), id: \.element.id) { index, stop in
+                VuumPlanRideEndpointsDivider()
+                stopFieldRow(stop: stop, index: index)
+            }
 
-            destinationFieldRow
+            if tripSession.isAddingStop {
+                VuumPlanRideEndpointsDivider()
+                pendingStopFieldRow
+                if let dropoff = tripSession.dropoff {
+                    VuumPlanRideEndpointsDivider()
+                    dropoffSummaryRow(dropoff)
+                }
+            } else {
+                VuumPlanRideEndpointsDivider()
+                destinationFieldRow
+            }
         }
+    }
+
+    private func dropoffSummaryRow(_ place: Place) -> some View {
+        Text(place.name)
+            .font(.system(size: 16, weight: .medium))
+            .foregroundStyle(VuumColor.primaryText)
+            .lineLimit(1)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(height: VuumLayout.endpointRowHeight)
+            .accessibilityLabel(L10n.Home.whereTo)
+            .accessibilityValue(place.name)
+    }
+
+    private func stopFieldRow(stop: Place, index: Int) -> some View {
+        HStack(spacing: 8) {
+            Text(stop.name)
+                .font(.system(size: 16, weight: .medium))
+                .foregroundStyle(VuumColor.primaryText)
+                .lineLimit(1)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            Button {
+                tripSession.removeStop(stop)
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(VuumColor.secondaryText)
+                    .frame(width: 28, height: 28)
+                    .contentShape(Circle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Remove stop \(index + 1)")
+        }
+        .frame(height: VuumLayout.endpointRowHeight)
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Stop \(index + 1)")
+        .accessibilityValue(stop.name)
+    }
+
+    private var pendingStopFieldRow: some View {
+        Button {
+            showDestinationSearch = true
+        } label: {
+            Text(L10n.Destination.searchStop)
+                .font(.system(size: 16, weight: .regular))
+                .foregroundStyle(VuumColor.fieldPlaceholder)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(height: VuumLayout.endpointRowHeight)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(L10n.Destination.searchStop)
     }
 
     private var destinationFieldRow: some View {
         let placeholder = tripSession.isAddingStop
             ? L10n.Destination.searchStop
             : L10n.Home.whereTo
-        return Button {
-            showDestinationSearch = true
-        } label: {
-            HStack(spacing: 8) {
-                Text(placeholder)
-                    .font(.system(size: 16, weight: .regular))
-                    .foregroundStyle(VuumColor.fieldPlaceholder)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                Image(systemName: "magnifyingglass")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(VuumColor.secondaryText)
+        return HStack(spacing: 4) {
+            Button {
+                showDestinationSearch = true
+            } label: {
+                HStack(spacing: 8) {
+                    Text(placeholder)
+                        .font(.system(size: 16, weight: .regular))
+                        .foregroundStyle(VuumColor.fieldPlaceholder)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(VuumColor.secondaryText)
+                }
+                .frame(height: VuumLayout.endpointRowHeight)
+                .contentShape(Rectangle())
             }
-            .frame(minHeight: 48)
-            .contentShape(Rectangle())
+            .buttonStyle(.plain)
+            .accessibilityLabel(placeholder)
+            .accessibilityHint(L10n.Home.whereToHint)
+
+            if canOfferAddStop, !tripSession.isAddingStop {
+                Button {
+                    addStopTapped()
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(VuumColor.primaryText)
+                        .frame(width: 36, height: VuumLayout.endpointRowHeight)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(L10n.Destination.addStop)
+            }
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel(placeholder)
-        .accessibilityHint(L10n.Home.whereToHint)
+        .frame(height: VuumLayout.endpointRowHeight)
     }
 
     // MARK: - Lists
 
-    private var stopsPreview: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text(L10n.Destination.stops)
-                .font(VuumType.captionSemibold)
-                .foregroundStyle(VuumColor.secondaryText)
-            ForEach(Array(tripSession.stops.enumerated()), id: \.element.id) { index, stop in
-                HStack(spacing: VuumLayout.chipSpacing) {
-                    Text("\(index + 1). \(stop.name)")
-                        .font(VuumType.callout)
-                        .fontWeight(.medium)
-                        .foregroundStyle(VuumColor.primaryText)
-                    Spacer(minLength: 4)
-                    if index > 0 {
-                        Button {
-                            tripSession.moveStopUp(stop)
-                        } label: {
-                            Image(systemName: "chevron.up.circle.fill")
-                                .foregroundStyle(VuumColor.brand)
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("Move stop \(index + 1) earlier")
-                    }
-                    if index < tripSession.stops.count - 1 {
-                        Button {
-                            tripSession.moveStopDown(stop)
-                        } label: {
-                            Image(systemName: "chevron.down.circle.fill")
-                                .foregroundStyle(VuumColor.brand)
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("Move stop \(index + 1) later")
-                    }
-                    Button {
-                        tripSession.removeStop(stop)
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundStyle(VuumColor.secondaryText)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Remove stop \(index + 1)")
-                }
-            }
-        }
-        .padding(14)
-        .background(
-            VuumColor.chipBackground,
-            in: RoundedRectangle(cornerRadius: VuumLayout.radiusControl, style: .continuous)
-        )
-    }
-
-    private var savedSlotsSection: some View {
-        VStack(spacing: 0) {
-            savedSlotRow(
+    /// Single compact Home / Work row so Recent keeps the scroll room.
+    private var compactSavedSlotsRow: some View {
+        HStack(spacing: 10) {
+            compactSavedChip(
                 kind: .home,
                 place: savedPlaces.home,
-                emptyTitle: L10n.Destination.addHome,
-                emptySubtitle: L10n.Destination.homeSubtitle
+                emptyTitle: L10n.Destination.addHome
             )
-            savedSlotRow(
+            compactSavedChip(
                 kind: .work,
                 place: savedPlaces.work,
-                emptyTitle: L10n.Destination.addWork,
-                emptySubtitle: L10n.Destination.workSubtitle
+                emptyTitle: L10n.Destination.addWork
             )
         }
+        .padding(.horizontal, 24)
+        .padding(.top, 4)
+        .padding(.bottom, 8)
     }
 
-    private func sectionHeader(_ title: String) -> some View {
-        Text(title)
-            .font(VuumType.captionSemibold)
-            .foregroundStyle(VuumColor.secondaryText)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 24)
-            .padding(.top, 20)
-            .padding(.bottom, 8)
-    }
-
-    private func savedSlotRow(
+    private func compactSavedChip(
         kind: SavedPlaceKind,
         place: Place?,
-        emptyTitle: String,
-        emptySubtitle: String
+        emptyTitle: String
     ) -> some View {
         Button {
             if let place, isAvailable(place) {
@@ -402,35 +467,37 @@ struct PlanYourRideView: View {
                 assignSlot = kind
             }
         } label: {
-            HStack(spacing: 16) {
+            HStack(spacing: 8) {
                 Image(systemName: place == nil
                       ? (kind == .home ? "house" : "briefcase")
                       : kind.systemImage)
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(VuumColor.primaryText)
-                    .frame(width: 36, height: 36)
-                    .background(VuumColor.chipBackground, in: Circle())
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(place == nil ? emptyTitle : kind.title)
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(VuumColor.primaryText)
-                    Text(place?.name ?? emptySubtitle)
-                        .font(.system(size: 13))
-                        .foregroundStyle(VuumColor.secondaryText)
-                        .lineLimit(1)
-                }
-                Spacer(minLength: 0)
+                Text(place == nil ? emptyTitle : kind.title)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(VuumColor.primaryText)
+                    .lineLimit(1)
             }
-            .padding(.horizontal, 24)
-            .padding(.vertical, 16)
-            .contentShape(Rectangle())
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 10)
+            .padding(.horizontal, 12)
+            .background(
+                VuumColor.chipBackground,
+                in: Capsule(style: .continuous)
+            )
         }
         .buttonStyle(.plain)
-        .overlay(alignment: .bottom) {
-            VuumHairline()
-                .padding(.leading, 76)
-        }
+        .accessibilityLabel(place == nil ? emptyTitle : kind.title)
+    }
+
+    private func sectionHeader(_ title: String) -> some View {
+        Text(title)
+            .font(VuumType.captionSemibold)
+            .foregroundStyle(VuumColor.secondaryText)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 24)
+            .padding(.top, 12)
+            .padding(.bottom, 8)
     }
 
     private func suggestionRows(_ items: [PlacesSearchService.PlaceSuggestion]) -> some View {
@@ -507,7 +574,7 @@ struct PlanYourRideView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.horizontal, 24)
-        .padding(.vertical, 16)
+        .padding(.vertical, 14)
         .contentShape(Rectangle())
         .overlay(alignment: .bottom) {
             VuumHairline()
@@ -516,6 +583,11 @@ struct PlanYourRideView: View {
     }
 
     // MARK: - Actions
+
+    private func addStopTapped() {
+        tripSession.beginAddingStop()
+        showDestinationSearch = true
+    }
 
     private func dismissPlanning() {
         placesSearch.abandonSession()

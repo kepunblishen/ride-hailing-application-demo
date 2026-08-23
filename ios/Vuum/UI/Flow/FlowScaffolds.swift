@@ -363,7 +363,7 @@ struct HomeMapScaffoldView: View {
         .sheet(isPresented: $showAdjustPickup) {
             AdjustPickupSheet()
         }
-        .sheet(item: $assignSlot) { kind in
+        .fullScreenCover(item: $assignSlot) { kind in
             AssignSavedPlaceSheet(kind: kind)
         }
     }
@@ -515,7 +515,6 @@ struct DestinationScaffoldView: View {
 /// Presented full-screen (or large-only sheet) — never a half-height card.
 struct AssignSavedPlaceSheet: View {
     @EnvironmentObject private var savedPlaces: SavedPlacesStore
-    @Environment(\.dismiss) private var dismiss
     let kind: SavedPlaceKind
 
     var body: some View {
@@ -523,6 +522,7 @@ struct AssignSavedPlaceSheet: View {
             title: kind == .home ? "Set Home" : "Set Work",
             allowClear: (kind == .home && savedPlaces.home != nil)
                 || (kind == .work && savedPlaces.work != nil),
+            detents: [.large],
             onClear: {
                 switch kind {
                 case .home: savedPlaces.setHome(nil)
@@ -538,9 +538,6 @@ struct AssignSavedPlaceSheet: View {
                 }
             }
         )
-        .presentationDetents([.large])
-        .presentationDragIndicator(.visible)
-        .interactiveDismissDisabled(false)
     }
 }
 
@@ -591,7 +588,7 @@ struct SavedPlacesManageView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(VuumColor.groupedBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-        .sheet(item: $assignSlot) { kind in
+        .fullScreenCover(item: $assignSlot) { kind in
             AssignSavedPlaceSheet(kind: kind)
         }
     }
