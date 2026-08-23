@@ -146,7 +146,8 @@ enum VuumLayout {
     static let mapSheetPreferredFraction: CGFloat = 0.48
     static let mapSheetMaxFraction: CGFloat = 0.55
 
-    /// Plan-your-ride sheet: roomy mid detent (~¾) with pull-up to near-full.
+    /// Plan-your-ride sheet: collapsed (map peek) → mid (~¾) → near-full.
+    static let planRideSheetCollapsedFraction: CGFloat = 0.46
     static let planRideSheetMidFraction: CGFloat = 0.75
     static let planRideSheetLargeFraction: CGFloat = 0.92
 

@@ -168,27 +168,24 @@ struct VuumPlanRideMapChrome: View {
     private let chipSize: CGFloat = 48
 
     var body: some View {
-        VStack(spacing: 0) {
-            HStack(alignment: .center, spacing: 12) {
-                planRideBackChip
+        // Intrinsic height only — a full-screen Spacer overlay would sit above the
+        // bottom sheet and steal / confuse drag-to-resize hits.
+        HStack(alignment: .center, spacing: 12) {
+            planRideBackChip
 
-                Spacer(minLength: 4)
+            Spacer(minLength: 4)
 
-                planRideLocationPill
+            planRideLocationPill
 
-                Spacer(minLength: 4)
+            Spacer(minLength: 4)
 
-                // Mirror the back chip so the pill stays visually centered (HTML spacer).
-                Color.clear
-                    .frame(width: chipSize, height: chipSize)
-                    .accessibilityHidden(true)
-            }
-            .padding(.horizontal, 16)
-
-            Spacer(minLength: 0)
+            // Mirror the back chip so the pill stays visually centered (HTML spacer).
+            Color.clear
+                .frame(width: chipSize, height: chipSize)
+                .accessibilityHidden(true)
         }
+        .padding(.horizontal, 16)
         .safeAreaPadding(.top, 8)
-        .allowsHitTesting(true)
     }
 
     private var planRideBackChip: some View {

@@ -502,8 +502,9 @@ struct PermissionsExplainerSheet: View {
     }
 }
 
-/// Destination phase entry — map + plan-your-ride sheet (`PlanYourRideView`).
-/// Focused typing opens `DestinationSearchView` full-screen from that sheet.
+/// Destination phase entry — full-bleed map + one plan-your-ride bottom sheet
+/// (`PlanYourRideView`). Focused typing opens `DestinationSearchView` full-screen
+/// from that sheet (OK); there is no second stacked plan sheet behind it.
 struct DestinationScaffoldView: View {
     var body: some View {
         PlanYourRideView()

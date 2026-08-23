@@ -3,22 +3,49 @@ import SwiftUI
 
 /// Uber-like “Plan your ride” entry after Home search — map + roomy bottom sheet.
 /// Owns From/To planning only (no fare / payment / for-me chrome).
+///
+/// Single custom bottom sheet over `TripMapLayer` (not a system `.sheet` stack).
+/// Three detents: collapsed (map peek) → mid (~¾ default) → large.
 struct PlanYourRideView: View {
+    private enum SheetDetent: Int, CaseIterable, Comparable {
+        case collapsed
+        case mid
+        case large
+
+        static func < (lhs: SheetDetent, rhs: SheetDetent) -> Bool {
+            lhs.rawValue < rhs.rawValue
+        }
+
+        func height(in hostHeight: CGFloat) -> CGFloat {
+            let fraction: CGFloat
+            switch self {
+            case .collapsed: fraction = VuumLayout.planRideSheetCollapsedFraction
+            case .mid: fraction = VuumLayout.planRideSheetMidFraction
+            case .large: fraction = VuumLayout.planRideSheetLargeFraction
+            }
+            return hostHeight * fraction
+        }
+    }
+
     @EnvironmentObject private var tripSession: TripSession
     @EnvironmentObject private var savedPlaces: SavedPlacesStore
     @EnvironmentObject private var appLocale: AppLocale
     @EnvironmentObject private var location: RiderLocationManager
     @EnvironmentObject private var permissions: PermissionCenter
+    @Environment(\.colorScheme) private var colorScheme
     @StateObject private var placesSearch = PlacesSearchController()
     @State private var query = ""
     @State private var assignSlot: SavedPlaceKind?
     @State private var showAdjustPickup = false
     @State private var showDestinationSearch = false
-    /// Mid (~¾) or large near-full; rider can drag the handle.
-    @State private var sheetExpanded = false
+    /// Default mid (~¾); drag handle down to collapsed so the map peeks.
+    @State private var sheetDetent: SheetDetent = .mid
     @GestureState private var sheetDragTranslation: CGFloat = 0
 
     private let recentCap = 6
+    /// Pull past collapsed by this fraction of host height (or fast flick) → Home.
+    private let dismissPullPastCollapsed: CGFloat = 0.12
+    private let dismissVelocity: CGFloat = 900
 
     private var isSearching: Bool {
         !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -93,21 +120,26 @@ struct PlanYourRideView: View {
 
     var body: some View {
         GeometryReader { geo in
-            let midHeight = geo.size.height * VuumLayout.planRideSheetMidFraction
-            let largeHeight = geo.size.height * VuumLayout.planRideSheetLargeFraction
-            let baseHeight = sheetExpanded ? largeHeight : midHeight
-            let draggedHeight = min(largeHeight, max(midHeight * 0.92, baseHeight - sheetDragTranslation))
+            let hostHeight = geo.size.height
+            let collapsedHeight = SheetDetent.collapsed.height(in: hostHeight)
+            let largeHeight = SheetDetent.large.height(in: hostHeight)
+            let baseHeight = sheetDetent.height(in: hostHeight)
+            // Live drag: can shrink to collapsed (map peek), not stuck near mid.
+            let draggedHeight = min(
+                largeHeight,
+                max(collapsedHeight * 0.88, baseHeight - sheetDragTranslation)
+            )
 
             ZStack(alignment: .bottom) {
                 TripMapLayer()
                     .zIndex(0)
 
-                planRideSheet(hostHeight: geo.size.height)
+                planRideSheet(hostHeight: hostHeight)
                     .frame(height: draggedHeight)
                     .frame(maxWidth: .infinity)
                     .zIndex(1)
             }
-            .frame(width: geo.size.width, height: geo.size.height)
+            .frame(width: geo.size.width, height: hostHeight)
             .overlay(alignment: .top) {
                 mapTopChrome
             }
@@ -164,31 +196,15 @@ struct PlanYourRideView: View {
     // MARK: - Bottom sheet
 
     private func planRideSheet(hostHeight: CGFloat) -> some View {
-        let midHeight = hostHeight * VuumLayout.planRideSheetMidFraction
-        let largeHeight = hostHeight * VuumLayout.planRideSheetLargeFraction
-
-        return VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: 0) {
             VuumSheetHandle()
                 .padding(.top, 12)
                 .padding(.bottom, 8)
                 .frame(maxWidth: .infinity)
                 .contentShape(Rectangle())
-                .gesture(
-                    DragGesture(minimumDistance: 8)
-                        .updating($sheetDragTranslation) { value, state, _ in
-                            state = value.translation.height
-                        }
-                        .onEnded { value in
-                            let projected = (sheetExpanded ? largeHeight : midHeight) - value.translation.height
-                            let mid = midHeight
-                            let large = largeHeight
-                            withAnimation(.interactiveSpring(response: 0.32, dampingFraction: 0.86)) {
-                                sheetExpanded = projected > (mid + large) / 2
-                            }
-                        }
-                )
+                .gesture(sheetResizeGesture(hostHeight: hostHeight))
                 .accessibilityLabel("Resize sheet")
-                .accessibilityHint("Drag up or down to change sheet height")
+                .accessibilityHint("Drag up or down to peek the map or expand the sheet")
 
             Text(sheetTitle)
                 .font(.system(size: 24, weight: .bold))
@@ -288,8 +304,64 @@ struct PlanYourRideView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .VuumGlassSurface(cornerRadius: VuumLayout.radiusSheet, style: .panel)
+        // Opaque sheet — translucent `.panel` glass made the nested endpoints card
+        // read as a second stacked sheet through the frost.
+        .background(
+            VuumColor.sheetBackground,
+            in: UnevenRoundedRectangle(
+                topLeadingRadius: VuumLayout.radiusSheet,
+                bottomLeadingRadius: 0,
+                bottomTrailingRadius: 0,
+                topTrailingRadius: VuumLayout.radiusSheet,
+                style: .continuous
+            )
+        )
+        .clipShape(
+            UnevenRoundedRectangle(
+                topLeadingRadius: VuumLayout.radiusSheet,
+                bottomLeadingRadius: 0,
+                bottomTrailingRadius: 0,
+                topTrailingRadius: VuumLayout.radiusSheet,
+                style: .continuous
+            )
+        )
+        .shadow(color: VuumColor.glassShadow(for: colorScheme), radius: 10, y: -2)
         .padding(.horizontal, 0)
+    }
+
+    private func sheetResizeGesture(hostHeight: CGFloat) -> some Gesture {
+        let collapsed = SheetDetent.collapsed.height(in: hostHeight)
+        let mid = SheetDetent.mid.height(in: hostHeight)
+        let large = SheetDetent.large.height(in: hostHeight)
+        let dismissThreshold = collapsed - hostHeight * dismissPullPastCollapsed
+
+        return DragGesture(minimumDistance: 8)
+            .updating($sheetDragTranslation) { value, state, _ in
+                state = value.translation.height
+            }
+            .onEnded { value in
+                let projected = sheetDetent.height(in: hostHeight) - value.translation.height
+                let velocity = value.predictedEndTranslation.height - value.translation.height
+
+                // Strong downward flick / pull past collapsed → leave planning.
+                if projected < dismissThreshold || (sheetDetent == .collapsed && velocity > dismissVelocity) {
+                    dismissPlanning()
+                    return
+                }
+
+                let nearest: SheetDetent
+                if projected < (collapsed + mid) / 2 {
+                    nearest = .collapsed
+                } else if projected < (mid + large) / 2 {
+                    nearest = .mid
+                } else {
+                    nearest = .large
+                }
+
+                withAnimation(.interactiveSpring(response: 0.32, dampingFraction: 0.86)) {
+                    sheetDetent = nearest
+                }
+            }
     }
 
     private var endpointsCard: some View {
