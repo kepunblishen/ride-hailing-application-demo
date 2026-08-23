@@ -15,7 +15,7 @@ import UIKit
 /// - `accentOn` — label on solid `brand` / `emphasizedFill`
 /// - `brandInk` — ink on brand *washes* (e.g. `brand.opacity(0.2)` chips); adaptive
 /// - `emphasizedFill` — solid dark/blue fill that pairs with `accentOn` (not adaptive ink)
-/// - `danger` / `destructive` / `success` — status
+/// - `danger` / `destructive` / `warning` / `success` — status
 enum VuumColor {
     // MARK: Brand (readable in light + dark)
 
@@ -79,6 +79,11 @@ enum VuumColor {
         dark: UIColor(red: 1.00, green: 0.42, blue: 0.42, alpha: 1)
     )
     static let destructive = danger
+    /// Degraded / slow-network banner fill — slightly brighter in dark mode for contrast.
+    static let warning = dynamic(
+        light: UIColor(red: 0.90, green: 0.45, blue: 0.05, alpha: 1),  // #E6730D
+        dark: UIColor(red: 1.00, green: 0.58, blue: 0.20, alpha: 1)   // #FF9433
+    )
     static let success = dynamic(
         light: UIColor(red: 0.20, green: 0.62, blue: 0.38, alpha: 1),
         dark: UIColor(red: 0.40, green: 0.84, blue: 0.57, alpha: 1)

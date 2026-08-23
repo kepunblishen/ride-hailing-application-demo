@@ -18,6 +18,12 @@ struct VuumOfflineBanner: View {
     @EnvironmentObject private var network: NetworkReachability
     var onRetry: (() -> Void)?
 
+    /// Slow-connection tip stays visible this long, then hides even if still constrained.
+    private static let constrainedBannerSeconds: UInt64 = 4
+
+    @State private var showConstrainedBanner = false
+    @State private var constrainedHideTask: Task<Void, Never>?
+
     init(onRetry: (() -> Void)? = nil) {
         self.onRetry = onRetry
     }
@@ -28,12 +34,14 @@ struct VuumOfflineBanner: View {
             case .online:
                 EmptyView()
             case .constrained:
-                banner(
-                    icon: "antenna.radiowaves.left.and.right",
-                    title: L10n.t("status.weak_network_title"),
-                    detail: L10n.t("status.weak_network_detail"),
-                    tint: .orange
-                )
+                if showConstrainedBanner {
+                    banner(
+                        icon: "antenna.radiowaves.left.and.right",
+                        title: L10n.t("status.weak_network_title"),
+                        detail: L10n.t("status.weak_network_detail"),
+                        tint: VuumColor.warning
+                    )
+                }
             case .offline:
                 banner(
                     icon: "wifi.slash",
@@ -45,6 +53,46 @@ struct VuumOfflineBanner: View {
             }
         }
         .animation(.easeInOut(duration: 0.25), value: network.status)
+        .animation(.easeInOut(duration: 0.25), value: showConstrainedBanner)
+        .onAppear {
+            if network.status == .constrained {
+                presentConstrainedBanner()
+            }
+        }
+        .onChange(of: network.status) { previous, next in
+            handleStatusChange(from: previous, to: next)
+        }
+        .onDisappear {
+            constrainedHideTask?.cancel()
+            constrainedHideTask = nil
+        }
+    }
+
+    private func handleStatusChange(
+        from previous: NetworkReachability.Status,
+        to next: NetworkReachability.Status
+    ) {
+        switch next {
+        case .offline, .online:
+            constrainedHideTask?.cancel()
+            constrainedHideTask = nil
+            showConstrainedBanner = false
+        case .constrained:
+            // Re-show only on an edge into constrained (e.g. online → slow), not while it stays slow.
+            if previous != .constrained {
+                presentConstrainedBanner()
+            }
+        }
+    }
+
+    private func presentConstrainedBanner() {
+        showConstrainedBanner = true
+        constrainedHideTask?.cancel()
+        constrainedHideTask = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: Self.constrainedBannerSeconds * 1_000_000_000)
+            guard !Task.isCancelled else { return }
+            showConstrainedBanner = false
+        }
     }
 
     private func banner(
