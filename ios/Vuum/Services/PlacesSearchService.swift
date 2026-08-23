@@ -75,7 +75,7 @@ enum PlacesSearchService {
                 googlePlaceID: nil,
                 place: place,
                 category: category,
-                distanceHint: distanceHint(from: bias, to: place.coordinate)
+                distanceHint: PlacesSearchService.formattedDistanceHint(from: bias, to: place.coordinate)
             )
         }
     }
@@ -290,7 +290,7 @@ enum PlacesSearchService {
             .map { PlaceSuggestion.local($0.0, bias: bias) }
     }
 
-    static func distanceHint(from bias: GeoPoint?, to coordinate: GeoPoint) -> String? {
+    static func formattedDistanceHint(from bias: GeoPoint?, to coordinate: GeoPoint) -> String? {
         guard let bias else { return nil }
         let meters = TripGeo.distanceMeters(from: bias, to: coordinate)
         guard meters.isFinite, meters >= 0 else { return nil }
