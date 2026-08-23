@@ -18,7 +18,7 @@ enum VuumGlass {
     }
 }
 
-struct VuumGlassSurface: ViewModifier {
+struct VuumGlassSurfaceModifier: ViewModifier {
     @Environment(\.colorScheme) private var colorScheme
     var cornerRadius: CGFloat = VuumGlass.cardCornerRadius
     var style: VuumGlass.Style = .panel
@@ -68,6 +68,6 @@ extension View {
         cornerRadius: CGFloat = VuumGlass.cardCornerRadius,
         style: VuumGlass.Style = .panel
     ) -> some View {
-        modifier(VuumGlassSurface(cornerRadius: cornerRadius, style: style))
+        modifier(VuumGlassSurfaceModifier(cornerRadius: cornerRadius, style: style))
     }
 }

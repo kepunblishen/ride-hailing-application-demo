@@ -1,4 +1,4 @@
-import SwiftUI
+﻿import SwiftUI
 
 struct TripMapLayer: View {
     @EnvironmentObject private var tripSession: TripSession
@@ -1186,6 +1186,38 @@ struct RideOptionsScaffoldView: View {
 
     // MARK: - Promo
 
+    private func cancellationBanner(_ cancellation: CancellationRecord) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: cancellation.wasFree ? "checkmark.circle.fill" : "info.circle.fill")
+                .font(.system(size: 14, weight: .bold))
+                .foregroundStyle(cancellation.wasFree ? Color.green : Color.orange)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(cancellation.summaryLine)
+                    .font(.system(size: 13, weight: .semibold))
+                if !cancellation.wasFree, cancellation.feeLocal > 0 {
+                    Text("Fee \(AppLocale.formatPrimary(local: cancellation.feeLocal, market: market))")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(VuumColor.secondaryText)
+                }
+            }
+            Spacer(minLength: 8)
+            Button {
+                tripSession.dismissCancellationBanner()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundStyle(VuumColor.secondaryText)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Dismiss")
+        }
+        .foregroundStyle(VuumColor.primaryText)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(VuumColor.chipBackground, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .accessibilityElement(children: .combine)
+    }
+
     private var surgeBanner: some View {
         HStack(spacing: 10) {
             Image(systemName: tripSession.zoneContext.isAirportArea ? "airplane.departure" : "bolt.fill")
@@ -1199,7 +1231,7 @@ struct RideOptionsScaffoldView: View {
             }
             Spacer(minLength: 8)
             if tripSession.surgeState.isActive {
-                Text(String(format: "%.2g?", tripSession.surgeState.multiplier))
+                Text(String(format: "%.2g×", tripSession.surgeState.multiplier))
                     .font(.system(size: 13, weight: .bold, design: .rounded))
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
@@ -1239,7 +1271,7 @@ struct RideOptionsScaffoldView: View {
             return message
         }
         if tripSession.surgeState.isActive {
-            return String(format: "%.2g? fare multiplier applied", tripSession.surgeState.multiplier)
+            return String(format: "%.2g× fare multiplier applied", tripSession.surgeState.multiplier)
         }
         return "Higher fares may apply in this area"
     }
@@ -1261,7 +1293,7 @@ struct RideOptionsScaffoldView: View {
             }
             if fare.isSurgeActive {
                 farePreviewRow(
-                    String(format: "High demand ? %.2g?", fare.surgeMultiplier),
+                    String(format: "High demand · %.2g×", fare.surgeMultiplier),
                     fare.surgeFareCDF
                 )
             }
@@ -1670,7 +1702,7 @@ struct ScheduleRideSheet: View {
                     }
                 }
 
-                Section("Schedule a pickup") {
+                Section {
                     DatePicker(
                         "Date & time",
                         selection: $date,
@@ -1683,8 +1715,10 @@ struct ScheduleRideSheet: View {
                         dismiss()
                     }
                     .font(.system(size: 16, weight: .semibold))
+                } header: {
+                    Text("Schedule a pickup")
                 } footer: {
-                    Text("You?ll pick destination, ride type, and payment next. Reserved rides appear under Activity ? Upcoming.")
+                    Text("You'll pick destination, ride type, and payment next. Reserved rides appear under Activity → Upcoming.")
                 }
             }
             .navigationTitle("Pickup time")

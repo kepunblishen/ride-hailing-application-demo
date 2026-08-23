@@ -172,20 +172,20 @@ struct VuumIconBadge: View {
             .font(.system(size: size * 0.44, weight: .semibold))
             .foregroundStyle(VuumColor.brandInk)
             .frame(width: size, height: size)
-            .background(
-                Group {
-                    if emphasized {
+            .background {
+                let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                if emphasized {
+                    shape.fill(
                         LinearGradient(
                             colors: [VuumColor.brand.opacity(0.32), VuumColor.brand.opacity(0.16)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
-                    } else {
-                        VuumColor.brand.opacity(0.20)
-                    }
-                },
-                in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-            )
+                    )
+                } else {
+                    shape.fill(VuumColor.brand.opacity(0.20))
+                }
+            }
             .accessibilityHidden(true)
     }
 }
