@@ -98,7 +98,7 @@
 		MAP100000000000000000001 /* DirectionsRouteService.swift in Sources */ = {isa = PBXBuildFile; fileRef = MAP200000000000000000001 /* DirectionsRouteService.swift */; };
 		MAP100000000000000000002 /* RouteEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = MAP200000000000000000002 /* RouteEngine.swift */; };
 		MAP100000000000000000006 /* MapTrafficSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = MAP200000000000000000006 /* MapTrafficSettings.swift */; };
-		MAP100000000000000000006 /* RouteProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = MAP200000000000000000006 /* RouteProvider.swift */; };
+		MAP100000000000000000007 /* RouteProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = MAP200000000000000000007 /* RouteProvider.swift */; };
 		MAP100000000000000000003 /* VuumMapStyle.json in Resources */ = {isa = PBXBuildFile; fileRef = MAP200000000000000000003 /* VuumMapStyle.json */; };
 		MAP100000000000000000004 /* VuumMapStyleLite.json in Resources */ = {isa = PBXBuildFile; fileRef = MAP200000000000000000004 /* VuumMapStyleLite.json */; };
 		MAP100000000000000000005 /* VuumMapStyleNight.json in Resources */ = {isa = PBXBuildFile; fileRef = MAP200000000000000000005 /* VuumMapStyleNight.json */; };
@@ -251,7 +251,7 @@
 		MAP200000000000000000001 /* DirectionsRouteService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DirectionsRouteService.swift; sourceTree = "<group>"; };
 		MAP200000000000000000002 /* RouteEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteEngine.swift; sourceTree = "<group>"; };
 		MAP200000000000000000006 /* MapTrafficSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapTrafficSettings.swift; sourceTree = "<group>"; };
-		MAP200000000000000000006 /* RouteProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteProvider.swift; sourceTree = "<group>"; };
+		MAP200000000000000000007 /* RouteProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteProvider.swift; sourceTree = "<group>"; };
 		MAP200000000000000000003 /* VuumMapStyle.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = VuumMapStyle.json; sourceTree = "<group>"; };
 		MAP200000000000000000004 /* VuumMapStyleLite.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = VuumMapStyleLite.json; sourceTree = "<group>"; };
 		MAP200000000000000000005 /* VuumMapStyleNight.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = VuumMapStyleNight.json; sourceTree = "<group>"; };
@@ -471,7 +471,7 @@
 				MAP200000000000000000001 /* DirectionsRouteService.swift */,
 				MAP200000000000000000002 /* RouteEngine.swift */,
 				MAP200000000000000000006 /* MapTrafficSettings.swift */,
-				MAP200000000000000000006 /* RouteProvider.swift */,
+				MAP200000000000000000007 /* RouteProvider.swift */,
 				MAP200000000000000000003 /* VuumMapStyle.json */,
 				MAP200000000000000000004 /* VuumMapStyleLite.json */,
 				MAP200000000000000000005 /* VuumMapStyleNight.json */,
@@ -766,7 +766,7 @@
 				MAP100000000000000000001 /* DirectionsRouteService.swift in Sources */,
 				MAP100000000000000000002 /* RouteEngine.swift in Sources */,
 				MAP100000000000000000006 /* MapTrafficSettings.swift in Sources */,
-				MAP100000000000000000006 /* RouteProvider.swift in Sources */,
+				MAP100000000000000000007 /* RouteProvider.swift in Sources */,
 				R10000000000000000000009 /* VuumTheme.swift in Sources */,
 				R1000000000000000000000A /* VuumChrome.swift in Sources */,
 				R10000000000000000000010 /* VuumGlass.swift in Sources */,

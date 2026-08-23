@@ -206,7 +206,7 @@ final class NotificationStore: ObservableObject {
     }
 
     func clearRead() {
-        items.removeAll(\.isRead)
+        items.removeAll { $0.isRead }
         persist()
         syncAppBadge()
     }
