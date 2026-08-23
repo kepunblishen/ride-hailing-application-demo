@@ -40,6 +40,8 @@ enum AuthLayout {
     static let otpBoxWidth: CGFloat = 72
     static let otpBoxHeight: CGFloat = 88
     static let otpBoxRadius: CGFloat = 14
+    /// Even gaps between OTP boxes across the full content width.
+    static let otpBoxSpacing: CGFloat = 12
     static let topBarHeight: CGFloat = 56
     static let controlSpacing: CGFloat = 12
     static let sectionGap: CGFloat = 28
@@ -527,5 +529,23 @@ struct AuthLanguagePicker: View {
         }
         .accessibilityLabel(L10n.Auth.language)
         .accessibilityValue(locale.language.displayName)
+    }
+}
+
+// MARK: - Keyboard
+
+extension View {
+    /// Resign first responder when tapping non-editable chrome so the keyboard collapses.
+    func dismissKeyboardOnOutsideTap() -> some View {
+        simultaneousGesture(
+            TapGesture().onEnded { _ in
+                UIApplication.shared.sendAction(
+                    #selector(UIResponder.resignFirstResponder),
+                    to: nil,
+                    from: nil,
+                    for: nil
+                )
+            }
+        )
     }
 }

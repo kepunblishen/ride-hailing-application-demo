@@ -101,6 +101,7 @@ struct ConfirmInfoView: View {
         }
         .padding(.horizontal, AuthLayout.pageInset)
         .background(AuthPalette.page.ignoresSafeArea())
+        .dismissKeyboardOnOutsideTap()
         // No autofocus — keyboard only after the user taps a name/email field.
     }
 

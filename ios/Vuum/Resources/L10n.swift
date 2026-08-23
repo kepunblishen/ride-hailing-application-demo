@@ -110,7 +110,7 @@ enum L10n {
     private static let ukSpelling: [String: String] = [
         "auth.customizing": "Customising your experience…",
         "auth.sms_disclaimer":
-            "By continuing, you may receive SMS or WhatsApp messages for verification. Message and data rates may apply.",
+            "By continuing, you may receive SMS or WhatsApp messages for verification. Message and data rates may apply. By signing up, you agree to Vuum's Terms & Conditions.",
         "common.got_it": "Got it",
     ]
 
@@ -690,10 +690,10 @@ enum L10n {
         "auth.find_account": s("Find my account", "Retrouver mon compte", "Luka konti na ngai", "Tafuta akaunti yangu"),
         "auth.language": s("Language", "Langue", "Monɔkɔ", "Lugha"),
         "auth.sms_disclaimer": s(
-            "By continuing, you may receive SMS or WhatsApp messages for verification. Message and data rates may apply.",
-            "En continuant, vous pouvez recevoir des SMS ou messages WhatsApp pour vérification. Des frais peuvent s'appliquer.",
-            "Soki okobi, okokoka kozwa SMS to WhatsApp mpo na vérification. Ba frais ekoki kozala.",
-            "Ukienendelea, unaweza kupokea SMS au WhatsApp za uthibitishaji. Gharama za ujumbe zinaweza kutumika."
+            "By continuing, you may receive SMS or WhatsApp messages for verification. Message and data rates may apply. By signing up, you agree to Vuum's Terms & Conditions.",
+            "En continuant, vous pouvez recevoir des SMS ou messages WhatsApp pour vérification. Des frais peuvent s'appliquer. En vous inscrivant, vous acceptez les Conditions générales de Vuum.",
+            "Soki okobi, okokoka kozwa SMS to WhatsApp mpo na vérification. Ba frais ekoki kozala. Soki osign-up, ondepei ba Conditions ya Vuum.",
+            "Ukienendelea, unaweza kupokea SMS au WhatsApp za uthibitishaji. Gharama za ujumbe zinaweza kutumika. Kwa kujisajili, unakubali Sheria na Masharti ya Vuum."
         ),
         "auth.otp_prompt": s(
             "Enter the 4-digit code sent to you at %@.",

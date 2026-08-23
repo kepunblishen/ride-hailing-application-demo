@@ -25,9 +25,11 @@ struct OTPVerifyView: View {
                     .padding(.top, 10)
                     .fixedSize(horizontal: false, vertical: true)
 
-                HStack(spacing: 12) {
+                HStack(spacing: AuthLayout.otpBoxSpacing) {
                     ForEach(0..<4, id: \.self) { index in
                         otpBox(index: index)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: AuthLayout.otpBoxHeight)
                     }
                 }
                 .frame(maxWidth: .infinity)
@@ -72,6 +74,7 @@ struct OTPVerifyView: View {
             .padding(.bottom, 12)
         }
         .background(AuthPalette.page.ignoresSafeArea())
+        .dismissKeyboardOnOutsideTap()
         .onChange(of: auth.otpDigits) { _, _ in
             advanceFocusIfNeeded()
         }
@@ -204,7 +207,7 @@ struct OTPVerifyView: View {
         .font(AuthType.otpDigit)
         .foregroundStyle(AuthPalette.ink)
         .focused($focusedIndex, equals: index)
-        .frame(width: AuthLayout.otpBoxWidth, height: AuthLayout.otpBoxHeight)
+        .frame(maxWidth: .infinity, minHeight: AuthLayout.otpBoxHeight, maxHeight: AuthLayout.otpBoxHeight)
         .background(
             RoundedRectangle(cornerRadius: AuthLayout.otpBoxRadius, style: .continuous)
                 .fill(AuthPalette.fieldFill)

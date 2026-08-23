@@ -37,6 +37,7 @@ struct AuthFlowView: View {
             auth.relocalizePresentedErrors()
         }
         // Activate without a matching onDisappear — language `.id` remounts must not clear isActive.
+        .dismissKeyboardOnOutsideTap()
         .onAppear { authLocale.isActive = true }
     }
 }

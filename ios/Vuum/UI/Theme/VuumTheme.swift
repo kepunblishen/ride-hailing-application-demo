@@ -8,9 +8,9 @@ enum VuumColor {
     static let brand = Color(red: 245 / 255, green: 165 / 255, blue: 36 / 255)
     static let brandInk = Color(red: 15 / 255, green: 20 / 255, blue: 25 / 255)
 
-    /// Uber-like interactive blue — primary CTAs, links, focus rings.
-    static let accent = Color(red: 0 / 255, green: 86 / 255, blue: 197 / 255) // #0056c5
-    static let accentBright = Color(red: 15 / 255, green: 109 / 255, blue: 243 / 255) // #0f6df3
+    /// Tailwind blue-600 — primary accents, links, focus rings.
+    static let accent = Color(red: 37 / 255, green: 99 / 255, blue: 235 / 255) // #2563EB
+    static let accentBright = Color(red: 59 / 255, green: 130 / 255, blue: 246 / 255) // #3B82F6 blue-500
     static let accentOn = Color.white
 
     static let pageBackground = Color(.systemBackground)
@@ -89,8 +89,8 @@ enum VuumType {
 
 enum VuumTheme {
     static let brandHex = "#F5A524"
-    static let accentHex = "#0056C5"
-    static let accentBrightHex = "#0F6DF3"
+    static let accentHex = "#2563EB"
+    static let accentBrightHex = "#3B82F6"
     static let displayName = "Vuum"
 
     /// Align ComponentsKit accent with interactive blue (auth + controls).

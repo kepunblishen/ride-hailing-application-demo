@@ -118,7 +118,9 @@ struct GetStartedView: View {
             }
             .padding(.horizontal, AuthLayout.pageInset)
         }
+        .scrollDismissesKeyboard(.interactively)
         .background(AuthPalette.page.ignoresSafeArea())
+        .dismissKeyboardOnOutsideTap()
         .sheet(isPresented: $showCountries) {
             AuthCountryPickerSheet(
                 isPresented: $showCountries,
