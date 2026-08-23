@@ -68,17 +68,21 @@ struct ChangeDestinationSheet: View {
         NavigationStack {
             VStack(spacing: VuumLayout.rowSpacing) {
                 if let current = currentDropoff {
-                    HStack(alignment: .top, spacing: 10) {
-                        Image(systemName: "mappin.circle.fill")
+                    HStack(alignment: .top, spacing: 12) {
+                        Image(systemName: "mappin")
+                            .font(.system(size: 15, weight: .semibold))
                             .foregroundStyle(VuumColor.brand)
+                            .frame(width: 40, height: 40)
+                            .background(VuumColor.chipBackground, in: Circle())
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Current destination")
-                                .font(.system(size: 12, weight: .medium))
+                                .font(VuumType.micro)
                                 .foregroundStyle(VuumColor.secondaryText)
                             Text(current.name)
-                                .font(.system(size: 15, weight: .semibold))
+                                .font(VuumType.rowTitle)
+                                .foregroundStyle(VuumColor.primaryText)
                             Text(current.subtitle)
-                                .font(.system(size: 12))
+                                .font(VuumType.caption)
                                 .foregroundStyle(VuumColor.secondaryText)
                                 .lineLimit(2)
                         }
@@ -125,12 +129,12 @@ struct ChangeDestinationSheet: View {
 
                         if !filteredFavorites.isEmpty {
                             sectionHeader(L10n.Destination.favorites)
-                            placeRows(filteredFavorites, icon: "star.fill")
+                            placeRows(filteredFavorites)
                         }
 
                         if !filteredRecent.isEmpty {
                             sectionHeader(L10n.Destination.recent)
-                            placeRows(filteredRecent, icon: "clock.fill")
+                            placeRows(filteredRecent)
                         }
 
                         if isSearching {
@@ -152,7 +156,7 @@ struct ChangeDestinationSheet: View {
                             }
                         } else if !filteredSuggestions.isEmpty {
                             sectionHeader(L10n.Destination.suggestions)
-                            placeRows(filteredSuggestions, icon: "mappin.circle.fill")
+                            placeRows(filteredSuggestions, icon: "mappin", emphasizedGlyph: false)
                         }
                     }
                 }
@@ -192,58 +196,50 @@ struct ChangeDestinationSheet: View {
     private var savedQuickRows: some View {
         sectionHeader(L10n.Destination.savedPlaces)
         if let home = savedPlaces.home, isAvailable(home) {
-            placeButton(home, icon: "house.fill")
-            Divider()
+            placeButton(home)
+            VuumHairline()
         }
         if let work = savedPlaces.work, isAvailable(work) {
-            placeButton(work, icon: "briefcase.fill")
+            placeButton(work)
         }
     }
 
     private func sectionHeader(_ title: String) -> some View {
         Text(title)
-            .font(.system(size: 12, weight: .semibold))
+            .font(VuumType.captionSemibold)
             .foregroundStyle(VuumColor.secondaryText)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.top, 12)
             .padding(.bottom, 6)
     }
 
-    private func placeRows(_ places: [Place], icon: String) -> some View {
+    private func placeRows(_ places: [Place], icon: String? = nil, emphasizedGlyph: Bool? = nil) -> some View {
         ForEach(places) { place in
-            placeButton(place, icon: icon)
+            placeButton(place, icon: icon, emphasizedGlyph: emphasizedGlyph)
             if place.id != places.last?.id {
-                Divider()
+                VuumHairline()
             }
         }
     }
 
-    private func placeButton(_ place: Place, icon: String) -> some View {
+    private func placeButton(
+        _ place: Place,
+        icon: String? = nil,
+        emphasizedGlyph: Bool? = nil
+    ) -> some View {
         Button {
             confirm(place)
         } label: {
-            HStack(spacing: 12) {
-                Image(systemName: icon)
-                    .foregroundStyle(VuumColor.brand)
-                    .frame(width: 22)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(place.name)
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(VuumColor.primaryText)
-                    Text(place.subtitle)
-                        .font(.system(size: 12))
-                        .foregroundStyle(VuumColor.secondaryText)
-                        .lineLimit(2)
-                }
-                Spacer(minLength: 0)
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(VuumColor.secondaryText)
-            }
-            .padding(.vertical, 10)
+            VuumDestinationPlaceRowContent(
+                title: savedPlaces.displayTitle(for: place),
+                subtitle: savedPlaces.displaySubtitle(for: place),
+                systemImage: icon ?? savedPlaces.systemImage(for: place),
+                emphasizedGlyph: emphasizedGlyph ?? savedPlaces.emphasizesRowGlyph(for: place),
+                showsChevron: true
+            )
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Change destination to \(place.name)")
+        .accessibilityLabel("Change destination to \(savedPlaces.displayTitle(for: place))")
     }
 
     private func suggestionRows(_ items: [PlacesSearchService.PlaceSuggestion]) -> some View {
@@ -251,29 +247,27 @@ struct ChangeDestinationSheet: View {
             Button {
                 selectSuggestion(suggestion)
             } label: {
-                HStack(spacing: 12) {
-                    Image(systemName: suggestion.systemImage)
-                        .foregroundStyle(VuumColor.brand)
-                        .frame(width: 22)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(suggestion.primaryText)
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundStyle(VuumColor.primaryText)
-                        if !suggestion.compactSubtitle.isEmpty {
-                            Text(suggestion.compactSubtitle)
-                                .font(.system(size: 12))
-                                .foregroundStyle(VuumColor.secondaryText)
-                                .lineLimit(2)
-                        }
-                    }
-                    Spacer(minLength: 0)
-                }
-                .padding(.vertical, 10)
+                VuumDestinationPlaceRowContent(
+                    title: suggestion.primaryText,
+                    subtitle: suggestion.compactSubtitle,
+                    systemImage: Self.rowGlyph(from: suggestion.systemImage),
+                    emphasizedGlyph: false
+                )
             }
             .buttonStyle(.plain)
             .disabled(placesSearch.isResolving)
-            Divider()
+            VuumHairline()
         }
+    }
+
+    private static func rowGlyph(from systemImage: String) -> String {
+        if systemImage.contains("mappin") { return "mappin" }
+        if systemImage.contains("clock") { return "clock" }
+        if systemImage.contains("star") { return "star.fill" }
+        if systemImage.hasSuffix(".circle.fill") {
+            return String(systemImage.dropLast(".circle.fill".count))
+        }
+        return systemImage
     }
 
     private func selectSuggestion(_ suggestion: PlacesSearchService.PlaceSuggestion) {

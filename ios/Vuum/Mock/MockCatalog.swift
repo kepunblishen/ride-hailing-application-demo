@@ -789,58 +789,58 @@ enum MockFares {
         let xxlETA = VehiclePickupETA.minutes(for: .large)
         return [
             RideTier(
-                id: "vuum",
+                id: ServiceProductID.vuum,
                 name: "Vuum",
                 detail: "Affordable everyday rides",
                 capacity: 4,
                 etaMinutes: carETA,
                 priceCDF: vuum.local,
                 priceUSD: vuum.usd,
-                systemImage: VehicleClass.standard.systemImage,
+                systemImage: ServiceProductID.systemImage(forProductID: ServiceProductID.vuum),
                 vehicleClass: .standard
             ),
             RideTier(
-                id: "comfort",
+                id: ServiceProductID.comfort,
                 name: "Comfort",
                 detail: "Newer cars · extra space",
                 capacity: 4,
                 etaMinutes: carETA,
                 priceCDF: comfort.local,
                 priceUSD: comfort.usd,
-                systemImage: "car.side.fill",
+                systemImage: ServiceProductID.systemImage(forProductID: ServiceProductID.comfort),
                 vehicleClass: .standard
             ),
             RideTier(
-                id: "xxl",
+                id: ServiceProductID.xxl,
                 name: "Vuum XXL",
                 detail: "Up to 6 passengers",
                 capacity: 6,
                 etaMinutes: xxlETA,
                 priceCDF: xxl.local,
                 priceUSD: xxl.usd,
-                systemImage: VehicleClass.large.systemImage,
+                systemImage: ServiceProductID.systemImage(forProductID: ServiceProductID.xxl),
                 vehicleClass: .large
             ),
             RideTier(
-                id: "executive",
+                id: ServiceProductID.executive,
                 name: "Executive",
                 detail: "Premium cars · top-rated drivers",
                 capacity: 3,
                 etaMinutes: xxlETA,
                 priceCDF: executiveLocal,
                 priceUSD: AppLocale.usdFromLocal(executiveLocal, market: market),
-                systemImage: "crown.fill",
+                systemImage: ServiceProductID.systemImage(forProductID: ServiceProductID.executive),
                 vehicleClass: .large
             ),
             RideTier(
-                id: "airport",
+                id: ServiceProductID.airport,
                 name: "Airport",
                 detail: "Terminal pickup · luggage space",
                 capacity: 4,
                 etaMinutes: xxlETA,
                 priceCDF: airport.local,
                 priceUSD: airport.usd,
-                systemImage: "airplane",
+                systemImage: ServiceProductID.systemImage(forProductID: ServiceProductID.airport),
                 vehicleClass: .large
             ),
         ]

@@ -36,6 +36,36 @@ enum ServiceProductID {
         }
         return false
     }
+
+    /// Vehicle-shaped SF Symbol for fare / product rows (prefer clarity over abstract badges).
+    static func systemImage(forProductID id: String) -> String {
+        switch canonical(id) {
+        case vuum, ride:
+            return "car.fill"
+        case comfort:
+            return "car.side.fill"
+        case xxl, xl:
+            return "car.2.fill"
+        case executive:
+            return "car.side.fill"
+        case airport:
+            return "airplane"
+        case twoWheels:
+            return "bicycle"
+        case courier:
+            return "shippingbox.fill"
+        case hourly:
+            return "clock.fill"
+        case group:
+            return "person.3.fill"
+        case reserve:
+            return "calendar"
+        case rental:
+            return "key.fill"
+        default:
+            return VehicleClass.resolving(tierID: id).systemImage
+        }
+    }
 }
 
 enum ServiceZoneKind: String, Codable, CaseIterable, Identifiable {

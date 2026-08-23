@@ -242,8 +242,11 @@ Presenter device QA after a keyed Sideload: [`MAPS_POST_KEY_QA.md`](MAPS_POST_KE
 |--------------|--------------|-----|
 | Light/dark **grid** + map icon + “unavailable” copy | **No usable API key** in the build (`MapBootstrap` rejected placeholder / missing Secrets) | Inject a real `VUUM_GOOGLE_MAPS_API_KEY` (§3 or §4) and rebuild |
 | **Empty white/gray plane** + Google logo (no roads) | Key present but **tiles denied** — billing off, Maps SDK for iOS not enabled, or bundle ID ≠ `com.vuum.app` | Complete §7 A–B; watch Xcode console for “API key may be invalid for your bundle ID” |
+| White/blank plane **above** the destination / choose-ride sheet (no Google logo, no grid) | **Layout / wrong host** — destination phase was a list-only screen (`DestinationSearchView`) or map `UIViewRepresentable` collapsed under a tall sheet / NavigationStack | Fixed: `DestinationScaffoldView` → `PlanYourRideView` (full-bleed `TripMapLayer` + capped sheet); choose/confirm use `GeometryReader` + sheet max height; `VuumMapView` uses `GMSMapViewOptions` + `sizeThatFits` |
 | Dark UI + washed **light** basemap | Was a code issue (lite style forced in dark); night style should apply now | Rebuild with current `VuumMapView` styles |
-| Idle Home tab has **no map** | **By design** — content-first `HomeHubView`; map appears after destination selection / trip phases | Start a ride to open `TripMapLayer` |
+| Idle Home tab has **no map** | **By design** — content-first `HomeHubView`; map appears after **Where to?** | Opens `PlanYourRideView` via `DestinationScaffoldView` (`TripMapLayer` full-bleed behind sheet) |
+
+**If still blank after a build that includes the layout fix:** this is almost certainly credentials, not embedding. Set Codemagic secure group **`vuum_secrets`** → env **`VUUM_GOOGLE_MAPS_API_KEY`** (or local gitignored `ios/Secrets.xcconfig` / scheme env), enable **Maps SDK for iOS**, restrict to bundle **`com.vuum.app`**, then rebuild the IPA. Do not invent or commit keys.
 
 Account → Diagnostics (DEBUG builds) shows key Present/Absent and “Maps SDK configured” without exposing the key.
 

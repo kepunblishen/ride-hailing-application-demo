@@ -200,7 +200,7 @@ final class TripSession: ObservableObject {
     /// route Tasks alone (generation guards still apply on apply).
     func handleAppDidEnterBackground() {
         switch phase {
-        case .idle, .selectingDestination, .choosingRide:
+        case .idle, .selectingDestination, .choosingRide, .confirmingRide:
             previewRouteTask?.cancel()
             previewRouteTask = nil
             reverseGeocodeTask?.cancel()
@@ -264,7 +264,7 @@ final class TripSession: ObservableObject {
     /// Free cancel while searching, or within the post-assignment window.
     var isCancellationFree: Bool {
         switch phase {
-        case .searching, .matched, .choosingRide, .idle, .selectingDestination, .completed:
+        case .searching, .matched, .choosingRide, .confirmingRide, .idle, .selectingDestination, .completed:
             return true
         case .driverEnRoute, .driverArrived:
             guard let assigned = driverAssignedAt else { return true }
@@ -317,7 +317,7 @@ final class TripSession: ObservableObject {
                 pins.append(MapPin(id: "dropoff", coordinate: dropoff.coordinate, kind: .dropoff, heading: 0))
             }
             appendNearbyVehiclePins(to: &pins)
-        case .choosingRide, .searching:
+        case .choosingRide, .confirmingRide, .searching:
             pins.append(MapPin(id: "pickup", coordinate: pickup.coordinate, kind: .pickup, heading: 0))
             for stop in stops {
                 pins.append(MapPin(id: "stop-\(stop.id)", coordinate: stop.coordinate, kind: .stop, heading: 0))
@@ -355,7 +355,7 @@ final class TripSession: ObservableObject {
     var mapRoute: [GeoPoint] {
         guard let trip = activeTrip else {
             switch phase {
-            case .choosingRide, .searching:
+            case .choosingRide, .confirmingRide, .searching:
                 guard dropoff != nil else { return [] }
                 return previewRoute.isEmpty
                     ? TripGeo.routePolyline(through: tripWaypoints)
@@ -380,7 +380,7 @@ final class TripSession: ObservableObject {
     /// Static fit targets only — live driver position is followed via `shouldFollowDriverOnMap`, not refit every frame.
     var mapFitCoordinates: [GeoPoint] {
         switch phase {
-        case .choosingRide, .searching:
+        case .choosingRide, .confirmingRide, .searching:
             return tripWaypoints
         case .selectingDestination:
             let points = tripWaypoints
@@ -678,11 +678,11 @@ final class TripSession: ObservableObject {
     }
 
     func selectPickup(_ place: Place) {
-        guard phase == .idle || phase == .selectingDestination || phase == .choosingRide else { return }
+        guard phase == .idle || phase == .selectingDestination || phase == .choosingRide || phase == .confirmingRide else { return }
         pickup = place
         seedNearbyVehicles()
         refreshZoneContext()
-        if phase == .choosingRide {
+        if phase == .choosingRide || phase == .confirmingRide {
             // Pickup pin + high-demand zone changed — rebuild preview (live or synthetic)
             // so map polyline and surge-aware fares use the same geography.
             refreshPreviewRoute()
@@ -713,9 +713,40 @@ final class TripSession: ObservableObject {
         seedNearbyVehicles()
     }
 
-    /// Reopens destination search from choose-ride without wiping intermediate stops.
+    /// Plan-ride “Use current location”: force GPS pickup (even after an alternate pin),
+    /// then apply `updatePickup` + recenter when a fresh fix is available.
+    func useCurrentLocationAsPickup(from location: CLLocation?) {
+        guard phase == .idle || phase == .selectingDestination else { return }
+
+        if let location {
+            let fallback = ReverseGeocodingService.coordinateFallback(location)
+            pickup = Place(
+                id: "current",
+                name: fallback.name,
+                subtitle: fallback.subtitle,
+                coordinate: GeoPoint(
+                    latitude: location.coordinate.latitude,
+                    longitude: location.coordinate.longitude
+                )
+            )
+            seedNearbyVehicles()
+            refreshZoneContext()
+            updatePickup(from: location)
+        } else {
+            // Mark as auto-pickup so the next authorized fix from RiderLocationManager applies.
+            pickup = Place(
+                id: "current",
+                name: ReverseGeocodingService.unresolvedPickupName,
+                subtitle: pickup.subtitle,
+                coordinate: pickup.coordinate
+            )
+        }
+        requestMapRecenter()
+    }
+
+    /// Reopens destination search from choose/confirm without wiping intermediate stops.
     func changeDestination() {
-        guard phase == .choosingRide || phase == .selectingDestination else { return }
+        guard phase == .choosingRide || phase == .confirmingRide || phase == .selectingDestination else { return }
         cancelLifecycle()
         isAddingStop = false
         dropoff = nil
@@ -1244,9 +1275,22 @@ final class TripSession: ObservableObject {
     func chooseTier(_ tier: RideTier) {
         selectedTier = tier
         updateFarePreview()
-        if phase == .choosingRide || phase == .idle || phase == .selectingDestination {
+        if phase == .choosingRide || phase == .confirmingRide || phase == .idle || phase == .selectingDestination {
             seedNearbyVehicles(preferring: tier.vehicleClass)
         }
+    }
+
+    /// Advances choose-ride → confirm (payment / passenger) without starting matching.
+    func proceedToConfirmRide() {
+        guard phase == .choosingRide, dropoff != nil, selectedTier != nil else { return }
+        phase = .confirmingRide
+        updateFarePreview()
+    }
+
+    /// Returns confirm → choose-ride to change product / route options.
+    func backToChoosingRide() {
+        guard phase == .confirmingRide else { return }
+        phase = .choosingRide
     }
 
     func applyPromo() {
@@ -1399,6 +1443,7 @@ final class TripSession: ObservableObject {
     }
 
     func confirmRequest() {
+        guard phase == .confirmingRide || phase == .choosingRide else { return }
         guard canConfirmRequest, let dropoff, let selectedTier else { return }
         // Any future schedule reserves; matches the "Reserve" CTA (do not start searching).
         if let when = scheduleForLater, when > Date() {
@@ -1830,6 +1875,15 @@ final class TripSession: ObservableObject {
             }
             phase = .choosingRide
             farePreview = estimatedBreakdown()
+        case .confirmingRide:
+            if dropoff == nil {
+                dropoff = MockPlaces.destinations(for: fareMarket).first
+            }
+            if selectedTier == nil {
+                selectedTierDefault()
+            }
+            phase = .confirmingRide
+            farePreview = estimatedBreakdown()
         case .searching, .matched, .driverEnRoute, .driverArrived, .inTrip, .completed:
             ensureDiagnosticsActiveTrip()
             phase = target
@@ -1997,7 +2051,7 @@ final class TripSession: ObservableObject {
             let built = await RouteEngine.route(through: waypoints)
             await MainActor.run {
                 guard let self, !Task.isCancelled else { return }
-                guard self.phase == .choosingRide || self.phase == .searching else { return }
+                guard self.phase == .choosingRide || self.phase == .confirmingRide || self.phase == .searching else { return }
                 // Ignore stale responses if pickup/stops/dropoff changed mid-flight.
                 guard self.tripWaypoints == waypoints else { return }
                 self.previewRoute = built.coordinates
@@ -2041,7 +2095,7 @@ final class TripSession: ObservableObject {
             paymentMethod = paymentStore?.selectedMethod ?? .cash
         }
         refreshZoneContext()
-        if phase == .choosingRide || dropoff != nil {
+        if phase == .choosingRide || phase == .confirmingRide || dropoff != nil {
             refreshTierPricing()
         } else {
             refreshAvailableTiers(distanceMeters: 4_500)
@@ -3115,7 +3169,7 @@ final class TripSession: ObservableObject {
     }
     private var showsNearbyVehicles: Bool {
         switch phase {
-        case .idle, .selectingDestination, .choosingRide, .searching:
+        case .idle, .selectingDestination, .choosingRide, .confirmingRide, .searching:
             return true
         default:
             return false

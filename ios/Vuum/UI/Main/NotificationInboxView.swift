@@ -131,9 +131,9 @@ struct NotificationInboxView: View {
         VStack(spacing: VuumLayout.stackSpacing) {
             Image(systemName: "bell.slash")
                 .font(.system(size: 32, weight: .medium))
-                .foregroundStyle(VuumColor.accent)
+                .foregroundStyle(VuumColor.brand)
                 .frame(width: 64, height: 64)
-                .background(VuumColor.accent.opacity(0.16), in: RoundedRectangle(cornerRadius: VuumLayout.radiusCard, style: .continuous))
+                .background(VuumColor.chipBackground, in: RoundedRectangle(cornerRadius: VuumLayout.radiusCard, style: .continuous))
 
             VStack(spacing: 6) {
                 Text(

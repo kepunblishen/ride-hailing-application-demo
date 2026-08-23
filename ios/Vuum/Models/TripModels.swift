@@ -3,8 +3,12 @@ import Foundation
 
 enum TripPhase: String, Equatable {
     case idle
+    /// Plan ride — pickup / stops / dropoff.
     case selectingDestination
+    /// Choose product / fare tier only.
     case choosingRide
+    /// Payment, passenger (for me / someone else), promo & confirm CTA.
+    case confirmingRide
     case searching
     /// Driver assigned; brief beat before approach motion starts.
     case matched
@@ -85,7 +89,7 @@ enum SavedPlaceKind: String, Codable, CaseIterable, Identifiable {
         case .home: return "house.fill"
         case .work: return "briefcase.fill"
         case .favorite: return "star.fill"
-        case .recent: return "clock.fill"
+        case .recent: return "clock"
         }
     }
 }

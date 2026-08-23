@@ -60,7 +60,7 @@ struct PostTripCompleteView: View {
                     if let appreciationLine {
                         Text(appreciationLine)
                             .font(.system(size: 14, weight: .medium))
-                            .foregroundStyle(VuumColor.brandInk)
+                            .foregroundStyle(VuumColor.brand)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(VuumLayout.rowSpacing)
                             .background(VuumColor.brand.opacity(0.14), in: RoundedRectangle(cornerRadius: VuumLayout.radiusControl, style: .continuous))

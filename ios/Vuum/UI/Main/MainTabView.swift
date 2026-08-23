@@ -100,10 +100,11 @@ struct MainTabView: View {
     @Environment(\.colorScheme) private var colorScheme
     @State private var selectedTab: MainTab = .home
 
-    /// Immersive map: hide the tab bar while matching / en route / in trip.
+    /// Immersive map: hide the tab bar on map-hosted booking + live trip phases.
     private var hidesTabBarForActiveTrip: Bool {
         switch tripSession.phase {
-        case .searching, .matched, .driverEnRoute, .driverArrived, .inTrip:
+        case .selectingDestination, .choosingRide, .confirmingRide,
+             .searching, .matched, .driverEnRoute, .driverArrived, .inTrip:
             return true
         default:
             return false
@@ -199,7 +200,7 @@ struct MainTabView: View {
         case .inTrip:
             notifications.postTripStarted()
             selectedTab = .home
-        case .selectingDestination, .choosingRide, .searching, .matched:
+        case .selectingDestination, .choosingRide, .confirmingRide, .searching, .matched:
             selectedTab = .home
         }
     }

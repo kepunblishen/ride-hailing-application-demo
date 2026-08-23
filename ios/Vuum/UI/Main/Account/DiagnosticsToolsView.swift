@@ -421,7 +421,7 @@ struct FieldSalesPipelineView: View {
 
 private extension TripPhase {
     static var allCasesForDiagnostics: [TripPhase] {
-        [.idle, .selectingDestination, .choosingRide, .searching, .matched, .driverEnRoute, .driverArrived, .inTrip, .completed]
+        [.idle, .selectingDestination, .choosingRide, .confirmingRide, .searching, .matched, .driverEnRoute, .driverArrived, .inTrip, .completed]
     }
 }
 

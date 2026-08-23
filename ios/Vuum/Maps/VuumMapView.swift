@@ -35,25 +35,31 @@ struct VuumMapView: UIViewRepresentable {
         MapBootstrap.configureIfNeeded()
         #if canImport(GoogleMaps)
         if MapBootstrap.isConfigured {
-            let map = GMSMapView(
-                frame: .zero,
-                camera: GMSCameraPosition.camera(
-                    withLatitude: cameraTarget.latitude,
-                    longitude: cameraTarget.longitude,
-                    zoom: zoom
-                )
+            // Google docs: configure via GMSMapViewOptions (frame/camera/backgroundColor),
+            // then GMSMapView(options:). CGRectZero is OK when the map is the VC's only
+            // view; under SwiftUI UIViewRepresentable a non-zero initial frame + flexible
+            // autoresizing avoids a blank Metal/tile surface until the first layout pass.
+            let options = GMSMapViewOptions()
+            options.camera = GMSCameraPosition.camera(
+                withLatitude: cameraTarget.latitude,
+                longitude: cameraTarget.longitude,
+                zoom: zoom
             )
+            let screenBounds = UIScreen.main.bounds
+            options.frame = CGRect(origin: .zero, size: screenBounds.size)
+            options.backgroundColor = UIColor { traits in
+                traits.userInterfaceStyle == .dark
+                    ? UIColor(red: 0.11, green: 0.13, blue: 0.16, alpha: 1)
+                    : UIColor(red: 0.90, green: 0.91, blue: 0.93, alpha: 1)
+            }
+
+            let map = GMSMapView(options: options)
+            map.autoresizingMask = [.flexibleWidth, .flexibleHeight]
             map.isMyLocationEnabled = showsUserLocation
             map.settings.myLocationButton = showsMyLocationButton
             map.settings.compassButton = false
             map.isTrafficEnabled = showsTraffic
             map.mapType = .normal
-            // Avoid a solid white flash before tiles / brand style apply.
-            map.backgroundColor = UIColor { traits in
-                traits.userInterfaceStyle == .dark
-                    ? UIColor(red: 0.11, green: 0.13, blue: 0.16, alpha: 1)
-                    : UIColor(red: 0.90, green: 0.91, blue: 0.93, alpha: 1)
-            }
             map.padding = uiEdgeInsets(from: contentPadding)
             map.delegate = context.coordinator
             map.overrideUserInterfaceStyle = colorScheme == .dark ? .dark : .light
@@ -67,7 +73,15 @@ struct VuumMapView: UIViewRepresentable {
             return map
         }
         #endif
-        return MapPlaceholderView(frame: .zero)
+        let placeholder = MapPlaceholderView(frame: UIScreen.main.bounds)
+        placeholder.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        return placeholder
+    }
+
+    /// Expand to the proposed container so ZStack + sheet scaffolds never leave the map at 0×0.
+    func sizeThatFits(_ proposal: ProposedViewSize, uiView: UIView, context: Context) -> CGSize? {
+        let fallback = UIScreen.main.bounds.size
+        return proposal.replacingUnspecifiedDimensions(by: fallback)
     }
 
     func updateUIView(_ uiView: UIView, context: Context) {

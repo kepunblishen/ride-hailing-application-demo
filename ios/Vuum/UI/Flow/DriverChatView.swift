@@ -59,7 +59,8 @@ struct DriverChatView: View {
                     }
                 }
 
-                Divider()
+                VuumHairline()
+                    .background(VuumColor.divider)
                 composer
             }
             .background(VuumColor.pageBackground.ignoresSafeArea())
@@ -124,9 +125,9 @@ struct DriverChatView: View {
             } label: {
                 Image(systemName: "phone.fill")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(VuumColor.brandInk)
+                    .foregroundStyle(VuumColor.brand)
                     .frame(width: 36, height: 36)
-                    .background(VuumColor.brand.opacity(0.35), in: Circle())
+                    .background(VuumColor.brand.opacity(0.18), in: Circle())
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Call driver")
@@ -163,7 +164,7 @@ struct DriverChatView: View {
                     .lineLimit(1...4)
                     .textFieldStyle(.plain)
                     .padding(10)
-                    .background(VuumColor.fieldBackground, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .background(VuumDestinationSearchField.searchFill, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                     .focused($composerFocused)
                     .submitLabel(.send)
                     .onSubmit(sendDraft)

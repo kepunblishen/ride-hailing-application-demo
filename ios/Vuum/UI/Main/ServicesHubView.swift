@@ -242,11 +242,7 @@ struct ServicesHubView: View {
                         Image(systemName: "calendar.badge.clock")
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundStyle(VuumColor.brand)
-                            .frame(width: VuumLayout.iconBadge, height: VuumLayout.iconBadge)
-                            .background(
-                                VuumColor.brand.opacity(colorScheme == .dark ? 0.28 : 0.16),
-                                in: RoundedRectangle(cornerRadius: VuumLayout.radiusChip, style: .continuous)
-                            )
+                            .frame(width: 22, alignment: .center)
 
                         VStack(alignment: .leading, spacing: 3) {
                             Text("\(trip.pickupName) → \(trip.dropoffName)")
@@ -264,7 +260,7 @@ struct ServicesHubView: View {
                     if index < tripSession.reservedTrips.count - 1 {
                         Divider()
                             .overlay(VuumColor.divider)
-                            .padding(.leading, 62)
+                            .padding(.leading, 48)
                     }
                 }
             }
@@ -297,11 +293,7 @@ struct ServicesHubView: View {
                 Image(systemName: symbol)
                     .font(.system(size: 22, weight: .semibold))
                     .foregroundStyle(VuumColor.brand)
-                    .frame(width: 44, height: 44)
-                    .background(
-                        VuumColor.brand.opacity(colorScheme == .dark ? 0.28 : 0.14),
-                        in: RoundedRectangle(cornerRadius: VuumLayout.radiusControl, style: .continuous)
-                    )
+                    .frame(width: 28, alignment: .leading)
 
                 Text(title)
                     .font(VuumType.bodySemibold)
@@ -337,11 +329,7 @@ struct ServicesHubView: View {
             Image(systemName: symbol)
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(VuumColor.brand)
-                .frame(width: VuumLayout.iconBadgeLarge, height: VuumLayout.iconBadgeLarge)
-                .background(
-                    VuumColor.brand.opacity(colorScheme == .dark ? 0.28 : 0.14),
-                    in: RoundedRectangle(cornerRadius: VuumLayout.radiusControl, style: .continuous)
-                )
+                .frame(width: 22, alignment: .center)
 
             Text(title)
                 .font(VuumType.bodySemibold)
@@ -371,11 +359,7 @@ struct ServicesHubView: View {
                     Image(systemName: item.symbol)
                         .font(.system(size: 20, weight: .semibold))
                         .foregroundStyle(VuumColor.brand)
-                        .frame(width: 44, height: 44)
-                        .background(
-                            VuumColor.brand.opacity(colorScheme == .dark ? 0.28 : 0.14),
-                            in: RoundedRectangle(cornerRadius: VuumLayout.radiusControl, style: .continuous)
-                        )
+                        .frame(width: 28, alignment: .leading)
 
                     Spacer(minLength: 0)
 

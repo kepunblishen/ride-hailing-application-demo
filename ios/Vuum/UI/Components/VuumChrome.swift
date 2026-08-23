@@ -113,10 +113,127 @@ struct VuumPressStyle: ButtonStyle {
     }
 }
 
+/// Circular material chip for map-flow back/close and sheet leading dismiss.
+struct VuumCircleChromeButton: View {
+    var systemImage: String
+    var accessibilityLabel: String
+    var size: CGFloat = 44
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: systemImage)
+                .font(.system(size: size * 0.36, weight: .semibold))
+                .foregroundStyle(VuumColor.primaryText)
+                .frame(width: size, height: size)
+                .VuumChromeMaterialBackground(in: Circle())
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(accessibilityLabel)
+    }
+}
+
+/// Top-leading map overlay for pushed ride-flow screens (destination → choose → search).
+struct VuumFlowBackChrome: View {
+    var systemImage: String = "chevron.left"
+    var accessibilityLabel: String = L10n.Common.back
+    let action: () -> Void
+
+    var body: some View {
+        // Chip only — place via `.overlay(alignment: .topLeading)` so it does not
+        // compete with `TripMapLayer` for ZStack height or steal map gestures.
+        VuumCircleChromeButton(
+            systemImage: systemImage,
+            accessibilityLabel: accessibilityLabel,
+            action: action
+        )
+        .padding(.leading, 16)
+        .safeAreaPadding(.top, 8)
+    }
+}
+
+/// Plan-your-ride map top chrome — adaptive material back chip + brand-blue location pill.
+/// Pill sets pickup from GPS via `RiderLocationManager` / `updatePickup`,
+/// not a system share sheet.
+struct VuumPlanRideMapChrome: View {
+    var backSystemImage: String = "arrow.left"
+    var backAccessibilityLabel: String = L10n.Common.back
+    var locationTitle: String = L10n.Destination.shareCurrentLocation
+    var onBack: () -> Void
+    var onUseCurrentLocation: () -> Void
+
+    @Environment(\.colorScheme) private var colorScheme
+
+    private let chipSize: CGFloat = 48
+
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack(alignment: .center, spacing: 12) {
+                planRideBackChip
+
+                Spacer(minLength: 4)
+
+                planRideLocationPill
+
+                Spacer(minLength: 4)
+
+                // Mirror the back chip so the pill stays visually centered (HTML spacer).
+                Color.clear
+                    .frame(width: chipSize, height: chipSize)
+                    .accessibilityHidden(true)
+            }
+            .padding(.horizontal, 16)
+
+            Spacer(minLength: 0)
+        }
+        .safeAreaPadding(.top, 8)
+        .allowsHitTesting(true)
+    }
+
+    private var planRideBackChip: some View {
+        Button(action: onBack) {
+            Image(systemName: backSystemImage)
+                .font(.system(size: 18, weight: .semibold))
+                // HTML mock: solid white chip + dark glyph (readable on light and dark maps).
+                .foregroundStyle(Color.black.opacity(0.85))
+                .frame(width: chipSize, height: chipSize)
+                .background(Color.white, in: Circle())
+                .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.35 : 0.16), radius: 8, y: 3)
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(backAccessibilityLabel)
+    }
+
+    private var planRideLocationPill: some View {
+        Button(action: onUseCurrentLocation) {
+            HStack(spacing: 8) {
+                Image(systemName: "location.north.line.fill")
+                    .font(.system(size: 14, weight: .semibold))
+                Text(locationTitle)
+                    .font(.system(size: 15, weight: .semibold))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
+            }
+            .foregroundStyle(VuumColor.accentOn)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 12)
+            .background(VuumColor.brand, in: Capsule())
+            .shadow(color: Color.black.opacity(0.18), radius: 8, y: 3)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(locationTitle)
+        .accessibilityHint("Sets pickup to your GPS position and recenters the map")
+    }
+}
+
 // MARK: - Sheet chrome (map-overlaid trip sheets)
 
 struct VuumSheetChrome<Content: View>: View {
     var title: String?
+    /// Prefer `.quiet` for dense map sheets (choose-ride) so glass doesn’t overpower the map.
+    var glassStyle: VuumGlass.Style = .panel
     @ViewBuilder var content: Content
 
     var body: some View {
@@ -133,7 +250,7 @@ struct VuumSheetChrome<Content: View>: View {
         }
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .VuumGlassSurface(cornerRadius: VuumLayout.radiusSheet, style: .panel)
+        .VuumGlassSurface(cornerRadius: VuumLayout.radiusSheet, style: glassStyle)
     }
 }
 
@@ -143,6 +260,20 @@ struct VuumSheetHandle: View {
             .fill(VuumColor.divider)
             .frame(width: VuumLayout.sheetHandleWidth, height: VuumLayout.sheetHandleHeight)
             .frame(maxWidth: .infinity)
+            .accessibilityHidden(true)
+    }
+}
+
+/// 1pt rule that stays visible on dark sheet / glass surfaces (prefer over `Divider`).
+struct VuumHairline: View {
+    @Environment(\.colorScheme) private var colorScheme
+    var horizontalInset: CGFloat = 0
+
+    var body: some View {
+        Rectangle()
+            .fill(VuumColor.hairline(for: colorScheme))
+            .frame(height: 1)
+            .padding(.horizontal, horizontalInset)
             .accessibilityHidden(true)
     }
 }
@@ -180,10 +311,56 @@ struct VuumIconBadge: View {
             .foregroundStyle(emphasized ? VuumColor.brand : VuumColor.primaryText)
             .frame(width: size, height: size)
             .background(
-                emphasized ? VuumColor.brand.opacity(0.18) : VuumColor.chipBackground,
+                VuumColor.chipBackground,
                 in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
             )
             .accessibilityHidden(true)
+    }
+}
+
+/// Plan-your-ride / Destination list row: neutral circle + title/subtitle hierarchy.
+/// Glyph may be brand or gray — never a blue filled blob behind the icon.
+struct VuumDestinationPlaceRowContent: View {
+    let title: String
+    let subtitle: String
+    let systemImage: String
+    /// Brand glyph for Home / Work / favorites; gray for recent and generic pins.
+    var emphasizedGlyph: Bool = false
+    var showsChevron: Bool = false
+    var verticalPadding: CGFloat = 16
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 14) {
+            Image(systemName: systemImage)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(emphasizedGlyph ? VuumColor.brand : VuumColor.secondaryText)
+                .frame(width: 40, height: 40)
+                .background(VuumColor.chipBackground, in: Circle())
+                .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(VuumType.rowTitle)
+                    .foregroundStyle(VuumColor.primaryText)
+                    .lineLimit(1)
+                if !subtitle.isEmpty {
+                    Text(subtitle)
+                        .font(VuumType.caption)
+                        .foregroundStyle(VuumColor.secondaryText)
+                        .lineLimit(2)
+                }
+            }
+
+            Spacer(minLength: 8)
+
+            if showsChevron {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(VuumColor.secondaryText)
+            }
+        }
+        .padding(.vertical, verticalPadding)
+        .contentShape(Rectangle())
     }
 }
 
@@ -317,7 +494,7 @@ struct PermissionDeniedBanner: View {
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(VuumColor.brand)
                 .frame(width: 32, height: 32)
-                .background(VuumColor.brand.opacity(0.18), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .background(VuumColor.chipBackground, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
 
             VStack(alignment: .leading, spacing: 6) {
                 Text(title)
@@ -421,5 +598,241 @@ struct VuumDestinationSearchField: View {
         }
         .padding(12)
         .background(fill, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+}
+
+// MARK: - Trip endpoints connector (dot – line – square)
+
+/// Vertical pickup → destination rail matching Plan your ride / Destination Search HTML:
+/// filled circle (pickup), stem, rounded square (dropoff). Adaptive light/dark colors.
+struct VuumTripEndpointsConnector: View {
+    enum Style {
+        /// High-contrast markers (Plan your ride sheet).
+        case plan
+        /// Muted pickup + brand dropoff (Destination Search).
+        case search
+    }
+
+    var style: Style = .search
+    /// Intermediate stop dots between pickup and destination (multi-stop).
+    var intermediateStops: Int = 0
+    var markerSize: CGFloat = 8
+    var stemWidth: CGFloat = 2
+
+    @Environment(\.colorScheme) private var colorScheme
+
+    private var pickupColor: Color {
+        switch style {
+        case .plan:
+            return VuumColor.primaryText
+        case .search:
+            return colorScheme == .dark
+                ? Color.primary.opacity(0.55)
+                : VuumColor.secondaryText
+        }
+    }
+
+    private var dropoffColor: Color {
+        switch style {
+        case .plan:
+            return VuumColor.primaryText
+        case .search:
+            return VuumColor.brand
+        }
+    }
+
+    private var stemColor: Color {
+        switch style {
+        case .plan:
+            return colorScheme == .dark
+                ? Color.primary.opacity(0.35)
+                : Color.primary.opacity(0.28)
+        case .search:
+            return colorScheme == .dark
+                ? Color.primary.opacity(0.28)
+                : VuumColor.opaqueSeparator.opacity(0.85)
+        }
+    }
+
+    private var stopColor: Color {
+        colorScheme == .dark
+            ? Color.primary.opacity(0.45)
+            : VuumColor.secondaryText.opacity(0.9)
+    }
+
+    /// Halo so markers read clearly when they sit on the stem (Plan your ride rings).
+    private var ringColor: Color {
+        colorScheme == .dark
+            ? VuumColor.sheetBackground
+            : Color.white
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            markerRing {
+                Circle()
+                    .fill(pickupColor)
+                    .frame(width: markerSize, height: markerSize)
+            }
+            .accessibilityHidden(true)
+
+            stem
+
+            ForEach(0..<max(0, intermediateStops), id: \.self) { _ in
+                markerRing {
+                    Circle()
+                        .fill(stopColor)
+                        .frame(width: markerSize * 0.75, height: markerSize * 0.75)
+                }
+                .accessibilityHidden(true)
+                stem
+            }
+
+            markerRing(isSquare: true) {
+                RoundedRectangle(cornerRadius: 1.5, style: .continuous)
+                    .fill(dropoffColor)
+                    .frame(width: markerSize, height: markerSize)
+            }
+            .accessibilityHidden(true)
+        }
+        .frame(width: max(markerSize + 4, stemWidth + 8))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Route from pickup to destination")
+    }
+
+    private var stem: some View {
+        Rectangle()
+            .fill(stemColor)
+            .frame(width: stemWidth)
+            .frame(maxHeight: .infinity)
+    }
+
+    @ViewBuilder
+    private func markerRing<Content: View>(isSquare: Bool = false, @ViewBuilder content: () -> Content) -> some View {
+        content()
+            .padding(1.5)
+            .background {
+                if isSquare {
+                    RoundedRectangle(cornerRadius: 2.5, style: .continuous)
+                        .fill(ringColor)
+                } else {
+                    Circle().fill(ringColor)
+                }
+            }
+    }
+}
+
+/// Lays a `VuumTripEndpointsConnector` beside stacked pickup / destination rows.
+/// Pass one child view per endpoint (and optional stop rows) so the rail stretches with the stack.
+struct VuumTripEndpointsStack<Content: View>: View {
+    var style: VuumTripEndpointsConnector.Style = .search
+    var intermediateStops: Int = 0
+    var spacing: CGFloat = 10
+    /// Vertical inset so circle/square sit near field centers (~48pt rows).
+    var railVerticalInset: CGFloat = 16
+    @ViewBuilder var content: () -> Content
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            VuumTripEndpointsConnector(
+                style: style,
+                intermediateStops: intermediateStops
+            )
+            .padding(.vertical, railVerticalInset)
+
+            VStack(spacing: spacing) {
+                content()
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .accessibilityElement(children: .contain)
+    }
+}
+
+/// Dim / read-only endpoint row (pickup on Destination Search).
+struct VuumEndpointSummaryField: View {
+    let title: String
+    var emphasized: Bool = false
+    var action: (() -> Void)? = nil
+
+    @Environment(\.colorScheme) private var colorScheme
+
+    private var fill: Color {
+        if emphasized {
+            return VuumDestinationSearchField.searchFill
+        }
+        return colorScheme == .dark
+            ? Color.primary.opacity(0.06)
+            : Color.primary.opacity(0.04)
+    }
+
+    private var foreground: Color {
+        emphasized ? VuumColor.primaryText : VuumColor.secondaryText
+    }
+
+    var body: some View {
+        let label = Text(title)
+            .font(.system(size: 16, weight: emphasized ? .semibold : .medium))
+            .foregroundStyle(foreground)
+            .lineLimit(1)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 12)
+            .frame(minHeight: 48)
+            .background(fill, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+
+        Group {
+            if let action {
+                Button(action: action) { label }
+                    .buttonStyle(.plain)
+            } else {
+                label
+            }
+        }
+        .accessibilityLabel(title)
+    }
+}
+
+/// Bordered From/To card used by Plan your ride (black outline, internal divider).
+struct VuumPlanRideEndpointsCard<Content: View>: View {
+    var intermediateStops: Int = 0
+    @ViewBuilder var content: () -> Content
+
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        VuumTripEndpointsStack(
+            style: .plan,
+            intermediateStops: intermediateStops,
+            spacing: 0,
+            railVerticalInset: 14
+        ) {
+            content()
+        }
+        .padding(.vertical, 4)
+        .padding(.trailing, 8)
+        .padding(.leading, 4)
+        .background(
+            colorScheme == .dark
+                ? VuumColor.chipBackground
+                : Color(uiColor: .systemGray6),
+            in: RoundedRectangle(cornerRadius: 12, style: .continuous)
+        )
+        .overlay {
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .strokeBorder(VuumColor.hairline(for: colorScheme), lineWidth: colorScheme == .dark ? 1 : 2)
+        }
+    }
+}
+
+/// Hairline between From / To inside `VuumPlanRideEndpointsCard`.
+struct VuumPlanRideEndpointsDivider: View {
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        Rectangle()
+            .fill(VuumColor.hairline(for: colorScheme))
+            .frame(height: 1)
+            .padding(.leading, 0)
+            .accessibilityHidden(true)
     }
 }

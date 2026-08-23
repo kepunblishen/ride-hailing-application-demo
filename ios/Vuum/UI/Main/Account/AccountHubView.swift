@@ -201,12 +201,8 @@ struct AccountHubView: View {
         HStack(spacing: VuumLayout.rowSpacing) {
             Image(systemName: icon)
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(VuumColor.accent)
+                .foregroundStyle(VuumColor.brand)
                 .frame(width: VuumLayout.iconBadge, height: VuumLayout.iconBadge)
-                .background(
-                    VuumColor.accent.opacity(0.16),
-                    in: RoundedRectangle(cornerRadius: VuumLayout.radiusChip, style: .continuous)
-                )
             VStack(alignment: .leading, spacing: 3) {
                 Text(title)
                     .font(VuumType.rowTitle)

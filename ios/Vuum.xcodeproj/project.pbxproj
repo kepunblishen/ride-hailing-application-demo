@@ -1,4 +1,4 @@
-﻿// !$*UTF8*$!
+// !$*UTF8*$!
 {
 	archiveVersion = 1;
 	classes = {
@@ -127,10 +127,14 @@
 		FLW1A29011 /* CancelTripSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = FLW2A29011 /* CancelTripSheet.swift */; };
 		FLW1A29012 /* PostTripCompleteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FLW2A29012 /* PostTripCompleteView.swift */; };
 		FLW1A29013 /* SearchingFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FLW2A29013 /* SearchingFlowView.swift */; };
+		FLW1A29020 /* RideOptionsScaffoldView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FLW2A29020 /* RideOptionsScaffoldView.swift */; };
 		FLW1A29014 /* TripCompleteFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FLW2A29014 /* TripCompleteFlowView.swift */; };
 		FLW1A29015 /* ChangeDestinationSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = FLW2A29015 /* ChangeDestinationSheet.swift */; };
+		FLW1A29018 /* DestinationSearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FLW2A29018 /* DestinationSearchView.swift */; };
 		FLW1A29016 /* SafetyToolkitView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FLW2A29016 /* SafetyToolkitView.swift */; };
 		FLW1A29017 /* SOSConfirmationSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = FLW2A29017 /* SOSConfirmationSheet.swift */; };
+		FLW1A29019 /* PlanYourRideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FLW2A29019 /* PlanYourRideView.swift */; };
+		FLW1A29021 /* ConfirmRideScaffoldView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FLW2A29021 /* ConfirmRideScaffoldView.swift */; };
 		ACC1A29015 /* DiagnosticsToolsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC2A29015 /* DiagnosticsToolsView.swift */; };
 		ACC1A29016 /* SecuritySettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC2A29016 /* SecuritySettingsView.swift */; };
 		T10000000000000000000001 /* TripSessionPhaseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = T20000000000000000000001 /* TripSessionPhaseTests.swift */; };
@@ -282,10 +286,14 @@
 		FLW2A29011 /* CancelTripSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CancelTripSheet.swift; sourceTree = "<group>"; };
 		FLW2A29012 /* PostTripCompleteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostTripCompleteView.swift; sourceTree = "<group>"; };
 		FLW2A29013 /* SearchingFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchingFlowView.swift; sourceTree = "<group>"; };
+		FLW2A29020 /* RideOptionsScaffoldView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideOptionsScaffoldView.swift; sourceTree = "<group>"; };
 		FLW2A29014 /* TripCompleteFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripCompleteFlowView.swift; sourceTree = "<group>"; };
 		FLW2A29015 /* ChangeDestinationSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangeDestinationSheet.swift; sourceTree = "<group>"; };
+		FLW2A29018 /* DestinationSearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DestinationSearchView.swift; sourceTree = "<group>"; };
 		FLW2A29016 /* SafetyToolkitView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SafetyToolkitView.swift; sourceTree = "<group>"; };
 		FLW2A29017 /* SOSConfirmationSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SOSConfirmationSheet.swift; sourceTree = "<group>"; };
+		FLW2A29019 /* PlanYourRideView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanYourRideView.swift; sourceTree = "<group>"; };
+		FLW2A29021 /* ConfirmRideScaffoldView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfirmRideScaffoldView.swift; sourceTree = "<group>"; };
 		ACC2A29015 /* DiagnosticsToolsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticsToolsView.swift; sourceTree = "<group>"; };
 		ACC2A29016 /* SecuritySettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecuritySettingsView.swift; sourceTree = "<group>"; };
 		T00000000000000000000010 /* VuumTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VuumTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -532,10 +540,14 @@
 				FLW2A29011 /* CancelTripSheet.swift */,
 				FLW2A29012 /* PostTripCompleteView.swift */,
 				FLW2A29013 /* SearchingFlowView.swift */,
+				FLW2A29020 /* RideOptionsScaffoldView.swift */,
+				FLW2A29021 /* ConfirmRideScaffoldView.swift */,
 				FLW2A29014 /* TripCompleteFlowView.swift */,
 				FLW2A29015 /* ChangeDestinationSheet.swift */,
+				FLW2A29018 /* DestinationSearchView.swift */,
 				FLW2A29016 /* SafetyToolkitView.swift */,
 				FLW2A29017 /* SOSConfirmationSheet.swift */,
+				FLW2A29019 /* PlanYourRideView.swift */,
 			);
 			path = Flow;
 			sourceTree = "<group>";
@@ -874,10 +886,14 @@
 				FLW1A29011 /* CancelTripSheet.swift in Sources */,
 				FLW1A29012 /* PostTripCompleteView.swift in Sources */,
 				FLW1A29013 /* SearchingFlowView.swift in Sources */,
+				FLW1A29020 /* RideOptionsScaffoldView.swift in Sources */,
+				FLW1A29021 /* ConfirmRideScaffoldView.swift in Sources */,
 				FLW1A29014 /* TripCompleteFlowView.swift in Sources */,
 				FLW1A29015 /* ChangeDestinationSheet.swift in Sources */,
+				FLW1A29018 /* DestinationSearchView.swift in Sources */,
 				FLW1A29016 /* SafetyToolkitView.swift in Sources */,
 				FLW1A29017 /* SOSConfirmationSheet.swift in Sources */,
+				FLW1A29019 /* PlanYourRideView.swift in Sources */,
 				ACC1A29015 /* DiagnosticsToolsView.swift in Sources */,
 				ACC1A29016 /* SecuritySettingsView.swift in Sources */,
 

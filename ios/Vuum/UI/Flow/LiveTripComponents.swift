@@ -48,13 +48,15 @@ struct SearchingPulseView: View {
 
 struct LiveETABadge: View {
     let minutes: Int
-    /// Short status under the duration (e.g. ETA / left). Duration already includes “min”.
+    /// Short status under the duration (e.g. ETA / left / MIN).
     var caption: String = "ETA"
     var emphasize: Bool = true
+    /// When false, shows only the minute count (HTML en-route style: `2` + `MIN`).
+    var includeUnitInValue: Bool = true
 
     var body: some View {
         VStack(spacing: 2) {
-            Text(TripGeo.formatDuration(minutes: max(minutes, 0)))
+            Text(valueText)
                 .font(.system(size: emphasize ? 28 : 22, weight: .bold, design: .rounded))
                 .foregroundStyle(VuumColor.brand)
                 .monospacedDigit()
@@ -63,8 +65,24 @@ struct LiveETABadge: View {
                 .foregroundStyle(VuumColor.secondaryText)
                 .textCase(.uppercase)
         }
+        .padding(.horizontal, includeUnitInValue ? 0 : 8)
+        .padding(.vertical, includeUnitInValue ? 0 : 4)
+        .background(
+            includeUnitInValue
+                ? Color.clear
+                : VuumColor.chipBackground,
+            in: RoundedRectangle(cornerRadius: 10, style: .continuous)
+        )
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(TripGeo.formatDuration(minutes: max(minutes, 0))) \(caption)")
+    }
+
+    private var valueText: String {
+        let m = max(minutes, 0)
+        if includeUnitInValue {
+            return TripGeo.formatDuration(minutes: m)
+        }
+        return "\(m)"
     }
 }
 
@@ -94,7 +112,7 @@ struct LiveDriverCard: View {
                     Text(showPIN)
                         .font(.system(size: 18, weight: .bold, design: .monospaced))
                         .tracking(4)
-                        .foregroundStyle(VuumColor.brandInk)
+                        .foregroundStyle(VuumColor.brand)
                     Spacer()
                     Text("Share with driver at pickup")
                         .font(.system(size: 11, weight: .medium))
@@ -187,6 +205,7 @@ struct BoardingPINPanel: View {
         VStack(spacing: 12) {
             Text("Verify your ride")
                 .font(.system(size: 16, weight: .bold, design: .rounded))
+                .foregroundStyle(VuumColor.primaryText)
             Text(
                 requirePIN
                     ? "Share this PIN with your driver, then confirm boarding."
@@ -211,7 +230,7 @@ struct BoardingPINPanel: View {
                     .font(.system(size: 22, weight: .semibold, design: .monospaced))
                     .padding(.vertical, 10)
                     .padding(.horizontal, 16)
-                    .background(VuumColor.fieldBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .background(VuumDestinationSearchField.searchFill, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
 
                 if rejected {
                     Text("PIN doesn’t match — check with your driver")

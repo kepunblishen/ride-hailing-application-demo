@@ -34,7 +34,7 @@ struct TrustedContactsView: View {
                             HStack(spacing: 12) {
                                 Image(systemName: "person.crop.circle.fill")
                                     .font(.system(size: 28))
-                                    .foregroundStyle(VuumColor.accent)
+                                    .foregroundStyle(VuumColor.brand)
                                 VStack(alignment: .leading, spacing: 4) {
                                     HStack(spacing: 6) {
                                         Text(contact.name)

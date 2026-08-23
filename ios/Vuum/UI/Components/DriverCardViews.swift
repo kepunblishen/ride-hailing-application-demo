@@ -7,6 +7,29 @@ extension RideTier {
     var classETABadgeMinutes: Int {
         VehiclePickupETA.minutes(for: vehicleClass)
     }
+
+    /// Product-resolved glyph for choose-ride rows (ServiceProductID over stored badge icons).
+    var productSystemImage: String {
+        ServiceProductID.systemImage(forProductID: id)
+    }
+
+    /// Wall-clock dropoff after pickup wait + trip time for the given route distance.
+    func estimatedDropoffDate(routeDistanceMeters: Double, from date: Date = .init()) -> Date {
+        let pickup = max(1, etaMinutes)
+        let trip = TripGeo.etaMinutes(
+            distanceMeters: max(0, routeDistanceMeters),
+            speedKmh: VehiclePickupETA.tripSpeedKmh(for: vehicleClass)
+        )
+        return date.addingTimeInterval(TimeInterval((pickup + trip) * 60))
+    }
+
+    /// Secondary meta: `"5 min · 3:42 PM"`.
+    func etaAndDropoffLabel(routeDistanceMeters: Double, from date: Date = .init()) -> String {
+        let pickup = max(1, etaMinutes)
+        let dropoff = estimatedDropoffDate(routeDistanceMeters: routeDistanceMeters, from: date)
+            .formatted(date: .omitted, time: .shortened)
+        return "\(pickup) min · \(dropoff)"
+    }
 }
 
 /// Compact pill used on ride-class rows and the active driver card.

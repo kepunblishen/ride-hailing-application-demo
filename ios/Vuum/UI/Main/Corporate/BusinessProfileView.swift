@@ -30,7 +30,7 @@ struct BusinessProfileView: View {
                         .font(.system(size: 22, weight: .semibold))
                         .foregroundStyle(VuumColor.brand)
                         .frame(width: 52, height: 52)
-                        .background(VuumColor.brand.opacity(0.2), in: RoundedRectangle(cornerRadius: 12))
+                        .background(VuumColor.chipBackground, in: RoundedRectangle(cornerRadius: 12))
                     VStack(alignment: .leading, spacing: 4) {
                         Text(account.companyName)
                             .font(.system(size: 18, weight: .semibold))
@@ -253,6 +253,7 @@ struct BusinessProfileView: View {
 /// Compact corporate options shown on the ride-options sheet.
 struct CorporateTripOptionsView: View {
     @EnvironmentObject private var tripSession: TripSession
+    @Environment(\.colorScheme) private var colorScheme
     private let account = MockCorporate.miningCo
 
     private var selectedFareCDF: Int {
@@ -271,6 +272,7 @@ struct CorporateTripOptionsView: View {
                     .foregroundStyle(VuumColor.brand)
                 Text(account.companyName)
                     .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(VuumColor.primaryText)
                 Spacer()
                 Text("CDF \(account.remainingSpendCDF.formatted()) left")
                     .font(.system(size: 12, weight: .medium))
@@ -284,6 +286,7 @@ struct CorporateTripOptionsView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Book on company wallet")
                         .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(VuumColor.primaryText)
                     Text(
                         canUseCompanyWallet
                             ? "\(account.department) · \(account.costCentre)"
@@ -303,6 +306,7 @@ struct CorporateTripOptionsView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("VIP / Executive transfer")
                         .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(VuumColor.primaryText)
                     Text("Routes SOS to \(account.sosContactName)")
                         .font(.system(size: 11))
                         .foregroundStyle(VuumColor.secondaryText)
@@ -317,6 +321,7 @@ struct CorporateTripOptionsView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Meet-and-greet")
                         .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(VuumColor.primaryText)
                     Text("Name board · door instructions")
                         .font(.system(size: 11))
                         .foregroundStyle(VuumColor.secondaryText)
@@ -327,5 +332,9 @@ struct CorporateTripOptionsView: View {
         }
         .padding(12)
         .background(VuumColor.chipBackground, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(VuumColor.hairline(for: colorScheme), lineWidth: 1)
+        }
     }
 }

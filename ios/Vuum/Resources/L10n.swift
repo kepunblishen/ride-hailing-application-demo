@@ -527,6 +527,8 @@ enum L10n {
 
     enum Destination {
         static var choose: String { t("destination.choose") }
+        static var planYourRide: String { t("destination.plan_your_ride") }
+        static var shareCurrentLocation: String { t("destination.share_current_location") }
         static var addStop: String { t("destination.add_stop") }
         static var searchPlaces: String { t("destination.search_places") }
         static var searchStop: String { t("destination.search_stop") }
@@ -548,6 +550,9 @@ enum L10n {
         static var searchingPlaces: String { t("destination.searching_places") }
         static var couldNotOpenPlace: String { t("destination.could_not_open_place") }
         static var searchNewDestination: String { t("destination.search_new") }
+        static var currentLocation: String { t("destination.current_location") }
+        static var setLocationOnMap: String { t("destination.set_location_on_map") }
+        static var useCurrentLocation: String { t("destination.use_current_location") }
         static var routeUnavailable: String { t("maps.error.no_route") }
         static var mapsUnavailable: String { t("maps.error.unavailable") }
     }
@@ -1345,6 +1350,18 @@ enum L10n {
 
         // Destination
         "destination.choose": s("Choose destination", "Choisir une destination", "Pona destination", "Chagua unakoenda"),
+        "destination.plan_your_ride": s(
+            "Plan your ride",
+            "Planifiez votre course",
+            "Bongisa voyage na yo",
+            "Panga safari yako"
+        ),
+        "destination.share_current_location": s(
+            "Share Current Location",
+            "Partager ma position",
+            "Kabisa esika na ngai",
+            "Shiriki eneo lako la sasa"
+        ),
         "destination.add_stop": s("Add a stop", "Ajouter un arrêt", "Bakisa arrêt", "Ongeza kituo"),
         "destination.search_places": s("Search places", "Rechercher un lieu", "Luka bisika", "Tafuta mahali"),
         "destination.search_stop": s("Search for a stop", "Rechercher un arrêt", "Luka arrêt", "Tafuta kituo"),
@@ -1390,6 +1407,30 @@ enum L10n {
             "Ekoki te kofungola esika wana. Meka mosusu.",
             "Haikuweza kufungua mahali hapo. Jaribu lingine."
         ),
+        "destination.current_location": s(
+            "Current location",
+            "Position actuelle",
+            "Esika ya sika",
+            "Mahali ulipo"
+        ),
+        "destination.set_location_on_map": s(
+            "Set location on map",
+            "Définir sur la carte",
+            "Tya esika na carte",
+            "Weka eneo kwenye ramani"
+        ),
+        "destination.search_new": s(
+            "Search for a new destination",
+            "Rechercher une nouvelle destination",
+            "Luka destination ya sika",
+            "Tafuta unakoenda kipya"
+        ),
+        "destination.use_current_location": s(
+            "Use current location",
+            "Utiliser ma position",
+            "Salela localisation na ngai",
+            "Tumia eneo langu sasa"
+        ),
         "maps.error.unavailable": s(
             "Maps isn't available right now.",
             "La carte n'est pas disponible pour le moment.",
@@ -1425,12 +1466,6 @@ enum L10n {
             "Impossible de calculer l'itinéraire pour le moment.",
             "Ekoki te kobongisa nzela sikoyo.",
             "Haiwezi kukokotoa njia sasa."
-        ),
-        "destination.search_new": s(
-            "Search new destination",
-            "Rechercher une nouvelle destination",
-            "Luka destination ya sika",
-            "Tafuta unakoenda mpya"
         ),
 
         // Permissions

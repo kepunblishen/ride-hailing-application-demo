@@ -126,8 +126,6 @@ struct VuumConnectingView: View {
 // MARK: - Empty state (with optional action)
 
 struct VuumEmptyStateView: View {
-    @Environment(\.colorScheme) private var colorScheme
-
     let systemImage: String
     let title: String
     let message: String
@@ -142,7 +140,7 @@ struct VuumEmptyStateView: View {
                 .symbolRenderingMode(.hierarchical)
                 .frame(width: 64, height: 64)
                 .background(
-                    VuumColor.brand.opacity(colorScheme == .dark ? 0.28 : 0.14),
+                    VuumColor.chipBackground,
                     in: RoundedRectangle(cornerRadius: 16, style: .continuous)
                 )
 
@@ -237,8 +235,6 @@ struct VuumErrorStateView: View {
 // MARK: - Compact inline empty (for List sections)
 
 struct VuumInlineEmptyRow: View {
-    @Environment(\.colorScheme) private var colorScheme
-
     let systemImage: String
     let title: String
     let message: String
@@ -251,7 +247,7 @@ struct VuumInlineEmptyRow: View {
                 .symbolRenderingMode(.hierarchical)
                 .frame(width: VuumLayout.iconBadge, height: VuumLayout.iconBadge)
                 .background(
-                    VuumColor.brand.opacity(colorScheme == .dark ? 0.28 : 0.14),
+                    VuumColor.chipBackground,
                     in: RoundedRectangle(cornerRadius: VuumLayout.radiusChip, style: .continuous)
                 )
             VStack(alignment: .leading, spacing: 3) {

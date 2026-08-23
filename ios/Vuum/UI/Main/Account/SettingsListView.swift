@@ -116,12 +116,8 @@ struct SettingsListView: View {
         HStack(spacing: VuumLayout.rowSpacing) {
             Image(systemName: icon)
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(VuumColor.accent)
-                .frame(width: 32, height: 32)
-                .background(
-                    VuumColor.accent.opacity(0.16),
-                    in: RoundedRectangle(cornerRadius: 8, style: .continuous)
-                )
+                .foregroundStyle(VuumColor.brand)
+                .frame(width: 28, alignment: .center)
             VStack(alignment: .leading, spacing: 3) {
                 Text(title)
                     .font(VuumType.rowTitle)

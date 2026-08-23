@@ -135,6 +135,17 @@ enum VuumLayout {
     static let primaryButtonHeight: CGFloat = 54
     static let sheetHandleWidth: CGFloat = 36
     static let sheetHandleHeight: CGFloat = 4
+
+    // Map hosts: bottom sheets leave ~45–60% of the map visible.
+    static let mapSheetMinFraction: CGFloat = 0.40
+    static let mapSheetPreferredFraction: CGFloat = 0.48
+    static let mapSheetMaxFraction: CGFloat = 0.55
+
+    /// Cap for map-overlaid bottom sheets (fraction of host height, clamped 40–55%).
+    static func mapSheetMaxHeight(in hostHeight: CGFloat, fraction: CGFloat = mapSheetPreferredFraction) -> CGFloat {
+        let clamped = min(mapSheetMaxFraction, max(mapSheetMinFraction, fraction))
+        return hostHeight * clamped
+    }
 }
 
 // MARK: - Type scale (mobility-product density, not oversized display)

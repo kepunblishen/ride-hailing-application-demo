@@ -63,8 +63,32 @@ final class SavedPlacesStore: ObservableObject {
         }
     }
 
+    /// Secondary line under `displayTitle` — address for Home/Work, place subtitle otherwise.
+    func displaySubtitle(for place: Place) -> String {
+        switch kind(for: place) {
+        case .home, .work:
+            if place.name != displayTitle(for: place), !place.name.isEmpty {
+                return place.name
+            }
+            return place.subtitle
+        default:
+            return place.subtitle
+        }
+    }
+
+    /// Outline / simple glyphs for neutral-circle row chrome (avoid `*.circle.fill` blue blobs).
     func systemImage(for place: Place) -> String {
-        kind(for: place)?.systemImage ?? "mappin.circle.fill"
+        kind(for: place)?.systemImage ?? "mappin"
+    }
+
+    /// Brand glyph for saved slots; gray for recent / generic destinations.
+    func emphasizesRowGlyph(for place: Place) -> Bool {
+        switch kind(for: place) {
+        case .home, .work, .favorite:
+            return true
+        default:
+            return false
+        }
     }
 
     func setHome(_ place: Place?) {

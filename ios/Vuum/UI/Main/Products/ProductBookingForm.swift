@@ -71,7 +71,7 @@ struct ProductBookingForm<Extra: View>: View {
                         .foregroundStyle(VuumColor.brand)
                         .frame(width: 48, height: 48)
                         .background(
-                            VuumColor.brand.opacity(0.18),
+                            VuumColor.chipBackground,
                             in: RoundedRectangle(cornerRadius: VuumLayout.radiusControl, style: .continuous)
                         )
                         .accessibilityHidden(true)

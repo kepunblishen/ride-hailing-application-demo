@@ -25,7 +25,7 @@ struct PaymentMethodsView: View {
                     } label: {
                         HStack(spacing: 12) {
                             Image(systemName: method.systemImage)
-                                .foregroundStyle(VuumColor.accent)
+                                .foregroundStyle(VuumColor.brand)
                                 .frame(width: 28)
                             VStack(alignment: .leading, spacing: 2) {
                                 HStack(spacing: 6) {
@@ -48,7 +48,7 @@ struct PaymentMethodsView: View {
                             Spacer()
                             if payments.selectedMethod == method {
                                 Image(systemName: "checkmark.circle.fill")
-                                    .foregroundStyle(VuumColor.accent)
+                                    .foregroundStyle(VuumColor.brand)
                             } else if !payments.canSelect(method) {
                                 Image(systemName: "plus.circle")
                                     .foregroundStyle(VuumColor.secondaryText)

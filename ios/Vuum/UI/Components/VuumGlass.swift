@@ -29,9 +29,10 @@ enum VuumGlass {
     }
 
     /// Solid underlay so frosted glass never reads as pure white / washed gray.
+    /// Dark: denser fill so `primaryText` stays readable over night map tiles.
     static func panelFill(for colorScheme: ColorScheme) -> Color {
         colorScheme == .dark
-            ? Color(.secondarySystemBackground).opacity(0.78)
+            ? Color(.secondarySystemBackground).opacity(0.92)
             : Color(.secondarySystemGroupedBackground).opacity(0.62)
     }
 }

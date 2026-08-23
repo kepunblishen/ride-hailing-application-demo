@@ -13,6 +13,8 @@ struct HomeHubView: View {
 
     @State private var hubTab: HubTopTab = .rides
     @State private var showSchedule = false
+    /// After Later / schedule sheet dismisses, continue into full-page Plan-your-ride.
+    @State private var openPlanRideAfterSchedule = false
     @State private var showSafety = false
     @State private var showInbox = false
     @State private var showPermissionsExplainer = false
@@ -126,7 +128,11 @@ struct HomeHubView: View {
                 }
             }
         }
-        .sheet(isPresented: $showSchedule) {
+        .sheet(isPresented: $showSchedule, onDismiss: {
+            guard openPlanRideAfterSchedule else { return }
+            openPlanRideAfterSchedule = false
+            tripSession.beginDestinationSelection()
+        }) {
             ScheduleRideSheet()
         }
         .sheet(isPresented: $showSafety) {
@@ -359,6 +365,8 @@ struct HomeHubView: View {
                 .frame(width: 1, height: 28)
 
             Button {
+                // Later → pick a time, then enter Plan-your-ride (same full-page flow as Where to?).
+                openPlanRideAfterSchedule = true
                 showSchedule = true
             } label: {
                 HStack(spacing: 6) {
@@ -399,7 +407,7 @@ struct HomeHubView: View {
                         .font(VuumType.rowTitle)
                         .foregroundStyle(VuumColor.primaryText)
                         .lineLimit(1)
-                    Text(place.subtitle)
+                    Text(savedPlaces.displaySubtitle(for: place))
                         .font(VuumType.caption)
                         .foregroundStyle(VuumColor.secondaryText)
                         .lineLimit(1)
@@ -422,7 +430,7 @@ struct HomeHubView: View {
             )
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("\(savedPlaces.displayTitle(for: place)), \(place.subtitle)")
+        .accessibilityLabel("\(savedPlaces.displayTitle(for: place)), \(savedPlaces.displaySubtitle(for: place))")
     }
 
     private var savedPlacesSection: some View {
@@ -517,40 +525,22 @@ struct HomeHubView: View {
                 Button {
                     choose(place)
                 } label: {
-                    HStack(spacing: 14) {
-                        Image(systemName: "clock.arrow.circlepath")
-                            .font(.system(size: 15, weight: .medium))
-                            .foregroundStyle(VuumColor.secondaryText)
-                            .frame(width: 38, height: 38)
-                            .background(VuumColor.chipBackground, in: Circle())
-
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text(savedPlaces.displayTitle(for: place))
-                                .font(VuumType.bodySemibold)
-                                .foregroundStyle(VuumColor.primaryText)
-                                .lineLimit(1)
-                            Text(place.subtitle)
-                                .font(VuumType.caption)
-                                .foregroundStyle(VuumColor.secondaryText)
-                                .lineLimit(1)
-                        }
-
-                        Spacer(minLength: 8)
-
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundStyle(VuumColor.secondaryText)
-                    }
-                    .padding(.vertical, 12)
-                    .contentShape(Rectangle())
+                    VuumDestinationPlaceRowContent(
+                        title: savedPlaces.displayTitle(for: place),
+                        subtitle: savedPlaces.displaySubtitle(for: place),
+                        systemImage: savedPlaces.systemImage(for: place),
+                        emphasizedGlyph: savedPlaces.emphasizesRowGlyph(for: place),
+                        showsChevron: true
+                    )
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("\(savedPlaces.displayTitle(for: place)), \(savedPlaces.displaySubtitle(for: place))")
 
                 if index < additionalRecentPlaces.count - 1 {
                     Rectangle()
                         .fill(VuumColor.divider)
                         .frame(height: 1)
-                        .padding(.leading, 52)
+                        .padding(.leading, 54)
                 }
             }
         }
@@ -643,7 +633,7 @@ struct HomeHubView: View {
                     .overlay(
                         Image(systemName: item.systemImage)
                             .font(.system(size: 24, weight: .medium))
-                            .foregroundStyle(VuumColor.primaryText)
+                            .foregroundStyle(VuumColor.brand)
                     )
 
                 if let badge = item.promoBadge {
@@ -665,6 +655,7 @@ struct HomeHubView: View {
         case .bookRide(let tierID):
             tripSession.beginDestinationSelection(preferredTierID: tierID)
         case .schedule:
+            openPlanRideAfterSchedule = true
             showSchedule = true
         case .openServices:
             if item.id == ServiceProductID.twoWheels {
@@ -684,6 +675,7 @@ struct HomeHubView: View {
         case .bookRide(let tierID):
             tripSession.beginDestinationSelection(preferredTierID: tierID)
         case .schedule:
+            openPlanRideAfterSchedule = true
             showSchedule = true
         case .openServices:
             if suggestion.id == ServiceProductID.twoWheels {
@@ -952,7 +944,7 @@ private struct HomeSuggestionSheet: View {
                         .overlay(
                             Image(systemName: suggestion.systemImage)
                                 .font(.system(size: 28, weight: .medium))
-                                .foregroundStyle(VuumColor.primaryText)
+                                .foregroundStyle(VuumColor.brand)
                         )
 
                     VStack(alignment: .leading, spacing: 6) {

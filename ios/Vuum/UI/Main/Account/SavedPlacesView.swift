@@ -234,20 +234,13 @@ struct PlaceSearchPickerSheet: View {
                             Button {
                                 select(suggestion)
                             } label: {
-                                HStack(alignment: .top, spacing: 12) {
-                                    Image(systemName: suggestion.systemImage)
-                                        .foregroundStyle(VuumColor.brand)
-                                        .frame(width: 22)
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text(suggestion.primaryText)
-                                            .foregroundStyle(VuumColor.primaryText)
-                                        if !suggestion.compactSubtitle.isEmpty {
-                                            Text(suggestion.compactSubtitle)
-                                                .font(.footnote)
-                                                .foregroundStyle(VuumColor.secondaryText)
-                                        }
-                                    }
-                                }
+                                VuumDestinationPlaceRowContent(
+                                    title: suggestion.primaryText,
+                                    subtitle: suggestion.compactSubtitle,
+                                    systemImage: Self.rowGlyph(from: suggestion.systemImage),
+                                    emphasizedGlyph: false,
+                                    verticalPadding: 10
+                                )
                             }
                             .disabled(placesSearch.isResolving)
                         }
@@ -259,28 +252,21 @@ struct PlaceSearchPickerSheet: View {
                                 onSelect(place)
                                 dismiss()
                             } label: {
-                                HStack(alignment: .top, spacing: 12) {
-                                    Image(systemName: "mappin.circle.fill")
-                                        .foregroundStyle(VuumColor.brand)
-                                        .frame(width: 22)
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text(place.name)
-                                            .foregroundStyle(VuumColor.primaryText)
-                                        Text(place.subtitle)
-                                            .font(.footnote)
-                                            .foregroundStyle(VuumColor.secondaryText)
-                                        Text(
-                                            TripGeo.formatDistance(
-                                                TripGeo.distanceMeters(
-                                                    from: resolvedBias,
-                                                    to: place.coordinate
-                                                )
+                                VuumDestinationPlaceRowContent(
+                                    title: place.name,
+                                    subtitle: [
+                                        place.subtitle,
+                                        TripGeo.formatDistance(
+                                            TripGeo.distanceMeters(
+                                                from: resolvedBias,
+                                                to: place.coordinate
                                             )
                                         )
-                                        .font(.caption2.weight(.medium))
-                                        .foregroundStyle(VuumColor.secondaryText)
-                                    }
-                                }
+                                    ].filter { !$0.isEmpty }.joined(separator: " · "),
+                                    systemImage: "mappin",
+                                    emphasizedGlyph: false,
+                                    verticalPadding: 10
+                                )
                             }
                         }
                     }
@@ -294,12 +280,15 @@ struct PlaceSearchPickerSheet: View {
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button(L10n.Common.cancel) {
+                ToolbarItem(placement: .topBarLeading) {
+                    VuumCircleChromeButton(
+                        systemImage: "xmark",
+                        accessibilityLabel: L10n.Common.close,
+                        size: 36
+                    ) {
                         placesSearch.abandonSession()
                         dismiss()
                     }
-                    .foregroundStyle(VuumColor.primaryText)
                 }
                 if allowClear, let onClear {
                     ToolbarItem(placement: .destructiveAction) {
@@ -339,5 +328,16 @@ struct PlaceSearchPickerSheet: View {
             onSelect(place)
             dismiss()
         }
+    }
+
+    private static func rowGlyph(from systemImage: String) -> String {
+        if systemImage.contains("airplane") { return "airplane" }
+        if systemImage.contains("mappin") { return "mappin" }
+        if systemImage.contains("clock") { return "clock" }
+        if systemImage.contains("star") { return "star.fill" }
+        if systemImage.hasSuffix(".circle.fill") {
+            return String(systemImage.dropLast(".circle.fill".count))
+        }
+        return systemImage
     }
 }

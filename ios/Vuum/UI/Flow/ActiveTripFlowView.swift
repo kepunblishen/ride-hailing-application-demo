@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Driver matched / en-route / arrived (PIN) / in-trip � map stays dominant.
+/// Driver matched / en-route / arrived (PIN) / in-trip — map-dominant compact sheet.
 struct ActiveTripScaffoldView: View {
     @EnvironmentObject private var tripSession: TripSession
     @EnvironmentObject private var session: SessionStore
@@ -11,8 +11,6 @@ struct ActiveTripScaffoldView: View {
     @State private var showChat = false
     @State private var showCancel = false
     @State private var showChangeDestination = false
-    @State private var confirmSOS = false
-    @State private var showMicConsent = false
 
     private var market: AppLocale.Market {
         AppLocale.market(countryCode: session.countryCode)
@@ -27,165 +25,79 @@ struct ActiveTripScaffoldView: View {
         }
     }
 
+    private var showPickupPIN: Bool {
+        switch tripSession.phase {
+        case .matched, .driverEnRoute:
+            return true
+        default:
+            return false
+        }
+    }
+
     var body: some View {
         GeometryReader { geo in
             ZStack(alignment: .bottom) {
                 TripMapLayer()
 
-                topChrome
+                    .zIndex(0)
 
-                VuumSheetChrome(title: nil) {
-                    if let trip = tripSession.activeTrip {
-                        ScrollView(.vertical, showsIndicators: false) {
-                            VStack(alignment: .leading, spacing: VuumLayout.rowSpacing) {
-                                if tripSession.sosRequested {
-                                    sosBanner
-                                }
 
-                                if tripSession.isRecordingTripAudio {
-                                    recordingBanner
-                                }
+                floatingChrome
 
-                                if let autoNotice = tripSession.automaticSafetyNotice {
-                                    Text(autoNotice)
-                                        .font(.system(size: 13, weight: .semibold))
-                                        .foregroundStyle(VuumColor.brandInk)
-                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                        .padding(10)
-                                        .background(VuumColor.brand.opacity(0.14), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-                                }
+                if let trip = tripSession.activeTrip {
+                    VuumSheetChrome(title: nil) {
+                        VStack(alignment: .leading, spacing: 14) {
+                            alertStack(trip)
 
-                                if let notice = tripSession.destinationChangeNotice {
-                                    Text(notice)
-                                        .font(.system(size: 13, weight: .semibold))
-                                        .foregroundStyle(VuumColor.brandInk)
-                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                        .padding(10)
-                                        .background(VuumColor.brand.opacity(0.14), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-                                }
+                            if tripSession.phase == .driverArrived {
+                                pickupWaitBanner
+                            }
 
-                                if let deviation = tripSession.routeDeviationNotice {
-                                    routeDeviationBanner(text: deviation, trip: trip)
-                                }
+                            statusHeader(trip)
 
-                                if tripSession.isRecalculatingTripRoute {
-                                    HStack(spacing: 8) {
-                                        ProgressView()
-                                            .tint(VuumColor.brand)
-                                        Text("Updating route & fare�")
-                                            .font(.system(size: 13, weight: .semibold))
-                                            .foregroundStyle(VuumColor.secondaryText)
-                                    }
-                                }
+                            VuumHairline()
 
-                                if tripSession.phase == .driverArrived {
-                                    pickupWaitBanner
-                                }
+                            EnRouteDriverIdentityRow(driver: trip.driver)
 
-                                statusHeader(trip)
+                            if tripSession.phase == .inTrip {
+                                LiveTripProgressBar(fraction: tripSession.tripProgressFraction)
+                            }
 
-                                if tripSession.phase == .inTrip {
-                                    LiveTripProgressBar(fraction: tripSession.tripProgressFraction)
-                                }
-
-                                // Header owns live ETA; card stays identity-only on the map overlay.
-                                LiveDriverCard(
-                                    driver: trip.driver,
-                                    showPIN: (tripSession.phase == .matched || tripSession.phase == .driverEnRoute)
-                                        ? trip.tripPIN
-                                        : nil,
-                                    etaMinutes: nil,
-                                    passengerName: trip.passengerName,
-                                    compact: true
+                            if tripSession.phase == .driverArrived {
+                                BoardingPINPanel(
+                                    tripPIN: trip.tripPIN,
+                                    entry: $tripSession.boardingPINEntry,
+                                    rejected: tripSession.boardingPINRejected,
+                                    requirePIN: requirePIN,
+                                    onConfirm: { tripSession.confirmBoarding() }
                                 )
-
-                                if tripSession.phase == .driverEnRoute || tripSession.phase == .inTrip,
-                                   tripSession.driverSpeedKmh > 0 {
-                                    HStack {
-                                        Label("Driver speed", systemImage: "gauge.with.dots.needle.33percent")
-                                            .font(.system(size: 13, weight: .semibold))
-                                            .foregroundStyle(VuumColor.secondaryText)
-                                        Spacer()
-                                        Text("\(tripSession.driverSpeedKmh) km/h")
-                                            .font(.system(size: 14, weight: .bold, design: .rounded))
-                                            .foregroundStyle(VuumColor.primaryText)
-                                            .monospacedDigit()
+                                .onChange(of: tripSession.boardingPINEntry) { _, _ in
+                                    if tripSession.boardingPINRejected {
+                                        tripSession.boardingPINRejected = false
                                     }
-                                    .padding(.horizontal, 4)
-                                    .accessibilityElement(children: .combine)
-                                }
-
-                                fareRow(trip)
-
-                                if !trip.stops.isEmpty {
-                                    stopsRow(trip)
-                                }
-
-                                if tripSession.phase == .driverArrived {
-                                    BoardingPINPanel(
-                                        tripPIN: trip.tripPIN,
-                                        entry: $tripSession.boardingPINEntry,
-                                        rejected: tripSession.boardingPINRejected,
-                                        requirePIN: requirePIN,
-                                        onConfirm: { tripSession.confirmBoarding() }
-                                    )
-                                    .onChange(of: tripSession.boardingPINEntry) { _, _ in
-                                        if tripSession.boardingPINRejected {
-                                            tripSession.boardingPINRejected = false
-                                        }
-                                    }
-                                }
-
-                                actionRow(trip)
-
-                                if tripSession.canChangeInTripDestination {
-                                    Button {
-                                        showChangeDestination = true
-                                    } label: {
-                                        Label("Change destination", systemImage: "mappin.and.ellipse")
-                                            .font(.system(size: 14, weight: .semibold))
-                                            .foregroundStyle(VuumColor.brand)
-                                            .frame(maxWidth: .infinity, alignment: .leading)
-                                    }
-                                    .buttonStyle(.plain)
-                                }
-
-                                if tripSession.canRecordTripAudio
-                                    || tripSession.isRecordingTripAudio
-                                    || permissions.microphoneDenied
-                                    || tripSession.audioRecorder.permissionDenied {
-                                    audioControls
-                                }
-
-                                if canCancel {
-                                    Button("Cancel trip") {
-                                        showCancel = true
-                                    }
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundStyle(VuumColor.danger)
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.top, 2)
                                 }
                             }
+
+                            callMessageRow
+
+                            if tripSession.canChangeInTripDestination {
+                                Button {
+                                    showChangeDestination = true
+                                } label: {
+                                    Label("Change destination", systemImage: "mappin.and.ellipse")
+                                        .font(.system(size: 14, weight: .semibold))
+                                        .foregroundStyle(VuumColor.brand)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                }
+                                .buttonStyle(.plain)
+                            }
                         }
-                        .frame(maxHeight: min(geo.size.height * 0.52, 440))
                     }
+                    .padding(.horizontal, 12)
+                    .padding(.bottom, 8)
+                    .frame(maxHeight: sheetMaxHeight(for: geo.size.height), alignment: .bottom)
                 }
-                .padding(.horizontal, 12)
-                .padding(.bottom, 8)
             }
-        }
-        .confirmationDialog(
-            "Request emergency help?",
-            isPresented: $confirmSOS,
-            titleVisibility: .visible
-        ) {
-            Button("Request help now", role: .destructive) {
-                tripSession.requestSOS(coordinate: location.latestLocation?.coordinate)
-            }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("Vuum Safety will be notified with your trip details and will try to reach you immediately.")
         }
         .sheet(isPresented: $showSafety) {
             SafetyToolkitView()
@@ -206,14 +118,6 @@ struct ActiveTripScaffoldView: View {
         .sheet(isPresented: $showChangeDestination) {
             ChangeDestinationSheet()
         }
-        .alert("Safety recording", isPresented: $showMicConsent) {
-            Button("Continue") {
-                tripSession.toggleTripAudioRecording(using: permissions)
-            }
-            Button("Not now", role: .cancel) {}
-        } message: {
-            Text("Safety recording is available only during an active trip. Your driver is notified while recording is on.")
-        }
         .task {
             location.startUpdatingIfAllowed()
             await permissions.refreshStatuses()
@@ -221,43 +125,239 @@ struct ActiveTripScaffoldView: View {
         }
     }
 
-    // MARK: - Top chrome
+    private func sheetMaxHeight(for height: CGFloat) -> CGFloat {
+        // Keep map visible: clamp to shared map-sheet tokens (~40—55%).
+        let fraction: CGFloat
+        switch tripSession.phase {
+        case .driverArrived:
+            fraction = VuumLayout.mapSheetMaxFraction
+        case .inTrip:
+            fraction = VuumLayout.mapSheetPreferredFraction
+        default:
+            fraction = VuumLayout.mapSheetMinFraction
+        }
+        return VuumLayout.mapSheetMaxHeight(in: height, fraction: fraction)
+    }
 
-    private var topChrome: some View {
+    // MARK: - Floating chrome
+
+    private var floatingChrome: some View {
         VStack(spacing: 0) {
             HStack(spacing: 10) {
-                if let trip = tripSession.activeTrip {
-                    ShareLink(
-                        item: TripShare.message(for: trip, phase: tripSession.phase, coordinate: location.latestLocation?.coordinate),
-                        subject: Text("My Vuum trip"),
-                        message: Text("Follow my live trip on Vuum")
-                    ) {
-                        Image(systemName: "square.and.arrow.up")
-                            .font(.system(size: 15, weight: .semibold))
+                if canCancel {
+                    Button {
+                        showCancel = true
+                    } label: {
+                        Image(systemName: "arrow.left")
+                            .font(.system(size: 16, weight: .semibold))
                             .foregroundStyle(VuumColor.primaryText)
-                            .frame(width: 44, height: 44)
+                            .frame(width: 48, height: 48)
                             .VuumChromeMaterialBackground(in: Circle())
                     }
-                    .accessibilityLabel("Share trip")
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Back")
+                    .accessibilityHint("Opens cancel trip")
                 }
 
-                Spacer()
+                Spacer(minLength: 0)
 
-                LiveTripSOSButton(helpSent: tripSession.sosRequested) {
-                    if tripSession.sosRequested {
-                        showSafety = true
-                    } else {
-                        confirmSOS = true
-                    }
+                Button {
+                    showSafety = true
+                } label: {
+                    Image(systemName: "shield.lefthalf.filled")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(tripSession.sosRequested ? VuumColor.danger : VuumColor.primaryText)
+                        .frame(width: 48, height: 48)
+                        .VuumChromeMaterialBackground(in: Circle())
                 }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Safety")
+                .accessibilityHint("Opens safety tools, share trip, and SOS")
             }
             .padding(.horizontal, 16)
-            .padding(.top, 10)
+            .safeAreaPadding(.top, 8)
             Spacer(minLength: 0)
         }
     }
 
-    // MARK: - Sections
+    // MARK: - Alerts (only when active)
+
+    @ViewBuilder
+    private func alertStack(_ trip: ActiveTrip) -> some View {
+        if tripSession.sosRequested {
+            sosBanner
+        }
+        if tripSession.isRecordingTripAudio {
+            recordingBanner
+        }
+        if let autoNotice = tripSession.automaticSafetyNotice {
+            noticeBanner(autoNotice)
+        }
+        if let notice = tripSession.destinationChangeNotice {
+            noticeBanner(notice)
+        }
+        if let deviation = tripSession.routeDeviationNotice {
+            routeDeviationBanner(text: deviation, trip: trip)
+        }
+        if tripSession.isRecalculatingTripRoute {
+            HStack(spacing: 8) {
+                ProgressView()
+                    .tint(VuumColor.brand)
+                Text("Updating route & fare…")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(VuumColor.secondaryText)
+            }
+        }
+    }
+
+    // MARK: - Status
+
+    private func statusHeader(_ trip: ActiveTrip) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text(statusTitle(for: trip))
+                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                    .foregroundStyle(VuumColor.primaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                if showPickupPIN {
+                    pickupPINChip(trip.tripPIN)
+                } else if tripSession.phase == .driverArrived {
+                    Label("Share PIN with your driver", systemImage: "lock.shield.fill")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(VuumColor.secondaryText)
+                } else if let detail = trip.statusDetail.nilIfBlank {
+                    Text(detail)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(VuumColor.secondaryText)
+                        .lineLimit(2)
+                }
+            }
+
+            Spacer(minLength: 8)
+
+            if tripSession.phase == .driverArrived {
+                VStack(spacing: 2) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 26, weight: .semibold))
+                        .foregroundStyle(VuumColor.brand)
+                    Text("Here")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(VuumColor.secondaryText)
+                        .textCase(.uppercase)
+                }
+            } else {
+                LiveETABadge(
+                    minutes: trip.etaMinutes,
+                    caption: tripSession.phase == .inTrip ? "left" : "MIN",
+                    emphasize: true,
+                    includeUnitInValue: tripSession.phase == .inTrip
+                )
+            }
+        }
+    }
+
+    private func statusTitle(for trip: ActiveTrip) -> String {
+        let mins = max(trip.etaMinutes, 0)
+        switch tripSession.phase {
+        case .matched:
+            return mins > 0
+                ? "Driver arriving in \(TripGeo.formatDuration(minutes: mins))"
+                : trip.statusHeadline
+        case .driverEnRoute:
+            return mins > 0
+                ? "Driver arriving in \(TripGeo.formatDuration(minutes: mins))"
+                : trip.statusHeadline
+        case .driverArrived:
+            return "Driver has arrived"
+        case .inTrip:
+            return mins > 0
+                ? "Arriving in \(TripGeo.formatDuration(minutes: mins))"
+                : trip.statusHeadline
+        default:
+            return trip.statusHeadline
+        }
+    }
+
+    private func pickupPINChip(_ pin: String) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: "lock.shield.fill")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(VuumColor.secondaryText)
+            Text("Pickup PIN:")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(VuumColor.secondaryText)
+            Text(pin)
+                .font(.system(size: 14, weight: .bold, design: .monospaced))
+                .tracking(1)
+                .foregroundStyle(VuumColor.primaryText)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(VuumColor.chipBackground, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Pickup PIN \(pin)")
+    }
+
+    // MARK: - Actions
+
+    private var callMessageRow: some View {
+        HStack(spacing: 12) {
+            Button {
+                tripSession.callDriver()
+            } label: {
+                Label("Call", systemImage: "phone.fill")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(VuumColor.primaryText)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 52)
+                    .background(
+                        VuumColor.chipBackground,
+                        in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    )
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint("Places a phone call to your driver")
+
+            Button {
+                guard tripSession.isChatAvailable else { return }
+                showChat = true
+            } label: {
+                ZStack(alignment: .topTrailing) {
+                    Label("Message", systemImage: "bubble.left.fill")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(VuumColor.accentOn)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 52)
+                        .background(
+                            tripSession.isChatAvailable
+                                ? VuumColor.emphasizedFill
+                                : VuumColor.emphasizedFill.opacity(0.45),
+                            in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        )
+
+                    if tripSession.isChatAvailable, tripSession.unreadChatCount > 0 {
+                        Text(tripSession.unreadChatCount > 9 ? "9+" : "\(tripSession.unreadChatCount)")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundStyle(VuumColor.accentOn)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 2)
+                            .background(VuumColor.danger, in: Capsule())
+                            .offset(x: -6, y: -4)
+                    }
+                }
+            }
+            .buttonStyle(.plain)
+            .disabled(!tripSession.isChatAvailable)
+            .accessibilityHint(
+                tripSession.isChatAvailable
+                    ? "Opens chat with your driver"
+                    : "Chat available once a driver is assigned"
+            )
+        }
+    }
+
+    // MARK: - Banners
 
     private var sosBanner: some View {
         HStack(alignment: .top, spacing: 10) {
@@ -278,7 +378,7 @@ struct ActiveTripScaffoldView: View {
     }
 
     private var recordingBanner: some View {
-        Text("Recording trip audio - your driver is notified")
+        Text("Recording trip audio — your driver is notified")
             .font(.system(size: 13, weight: .semibold))
             .foregroundStyle(VuumColor.brand)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -286,15 +386,24 @@ struct ActiveTripScaffoldView: View {
             .background(VuumColor.brand.opacity(0.12), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
     }
 
+    private func noticeBanner(_ text: String) -> some View {
+        Text(text)
+            .font(.system(size: 13, weight: .semibold))
+            .foregroundStyle(VuumColor.brand)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(10)
+            .background(VuumColor.brand.opacity(0.14), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+    }
+
     private func routeDeviationBanner(text: String, trip: ActiveTrip) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top, spacing: 10) {
                 Image(systemName: "arrow.triangle.swap")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(VuumColor.brandInk)
+                    .foregroundStyle(VuumColor.brand)
                 Text(text)
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(VuumColor.brandInk)
+                    .foregroundStyle(VuumColor.brand)
                     .fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 0)
                 Button {
@@ -335,12 +444,12 @@ struct ActiveTripScaffoldView: View {
                     .font(.system(size: 14, weight: .bold))
                     .foregroundStyle(VuumColor.primaryText)
                 if tripSession.pickupWaitGraceRemaining > 0 {
-                    Text("Free wait - \(tripSession.pickupWaitGraceRemaining)s left")
+                    Text("Free wait — \(tripSession.pickupWaitGraceRemaining)s left")
                         .font(.system(size: 12, weight: .medium))
                         .foregroundStyle(VuumColor.secondaryText)
                 } else {
                     Text(
-                        "Wait time - \(AppLocale.formatPrimary(local: tripSession.pickupWaitChargeLocal, market: market))"
+                        "Wait time — \(AppLocale.formatPrimary(local: tripSession.pickupWaitChargeLocal, market: market))"
                     )
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(VuumColor.secondaryText)
@@ -351,187 +460,79 @@ struct ActiveTripScaffoldView: View {
         .padding(12)
         .background(VuumColor.chipBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
+}
 
-    private func statusHeader(_ trip: ActiveTrip) -> some View {
-        HStack(alignment: .top, spacing: 12) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(trip.statusHeadline)
-                    .font(.system(size: 20, weight: .bold, design: .rounded))
+// MARK: - Driver identity (en-route sheet)
+
+/// Compact driver + vehicle row matching the en-route sheet layout.
+struct EnRouteDriverIdentityRow: View {
+    let driver: DriverProfile
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 12) {
+            DriverAvatarView(driver: driver, size: 56)
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text(driver.name)
+                    .font(.system(size: 18, weight: .semibold, design: .rounded))
                     .foregroundStyle(VuumColor.primaryText)
-                Text(trip.statusDetail)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(VuumColor.secondaryText)
-                if let passenger = trip.passengerName {
-                    Text("Passenger � \(passenger)")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(VuumColor.secondaryText)
-                }
-            }
-            Spacer(minLength: 8)
-            if tripSession.phase == .driverArrived {
-                VStack(spacing: 2) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 26, weight: .semibold))
+                    .lineLimit(1)
+
+                HStack(spacing: 4) {
+                    Text(String(format: "%.1f", driver.rating))
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        .foregroundStyle(VuumColor.primaryText)
+                    Image(systemName: "star.fill")
+                        .font(.system(size: 11, weight: .semibold))
                         .foregroundStyle(VuumColor.brand)
-                    Text("Here")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(VuumColor.secondaryText)
-                        .textCase(.uppercase)
                 }
-            } else {
-                LiveETABadge(
-                    minutes: trip.etaMinutes,
-                    caption: tripSession.phase == .inTrip ? "left" : "ETA"
-                )
+                .padding(.horizontal, 8)
+                .padding(.vertical, 3)
+                .background(VuumColor.chipBackground, in: Capsule(style: .continuous))
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel(String(format: "Rated %.1f", driver.rating))
             }
-        }
-    }
 
-    private func fareRow(_ trip: ActiveTrip) -> some View {
-        HStack {
-            Label(trip.tier.name, systemImage: trip.tier.systemImage)
-            Spacer()
-            Label(trip.paymentMethod.title, systemImage: trip.paymentMethod.systemImage)
-            Spacer()
-            Text(
-                AppLocale.formatFareTotal(
-                    cdf: trip.fare.totalCDF,
-                    usd: trip.fare.totalUSD,
-                    market: market
-                )
-            )
-            .fontWeight(.semibold)
-        }
-        .font(.system(size: 13, weight: .medium))
-        .foregroundStyle(VuumColor.primaryText)
-    }
+            Spacer(minLength: 8)
 
-    private func stopsRow(_ trip: ActiveTrip) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(trip.stops.count == 1 ? "1 stop" : "\(trip.stops.count) stops")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(VuumColor.secondaryText)
-            Text(trip.stops.map(\.name).joined(separator: " � "))
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(VuumColor.primaryText)
-                .lineLimit(2)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(10)
-        .background(VuumColor.chipBackground, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-    }
+            VStack(alignment: .trailing, spacing: 6) {
+                Text(driver.plate)
+                    .font(.system(size: 18, weight: .bold, design: .monospaced))
+                    .tracking(0.5)
+                    .foregroundStyle(VuumColor.primaryText)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .fill(VuumColor.sheetBackground)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .strokeBorder(VuumColor.divider, lineWidth: 2)
+                    )
+                    .accessibilityLabel("License plate \(driver.plate)")
 
-    private func actionRow(_ trip: ActiveTrip) -> some View {
-        HStack(spacing: 4) {
-            LiveTripActionChip(
-                title: "Safety",
-                systemImage: "shield.lefthalf.filled"
-            ) {
-                showSafety = true
-            }
-            .accessibilityHint("Opens safety tools and SOS status")
-
-            LiveTripActionChip(
-                title: "Chat",
-                systemImage: "bubble.left.and.bubble.right.fill",
-                badge: tripSession.isChatAvailable ? tripSession.unreadChatCount : 0,
-                tint: tripSession.isChatAvailable ? VuumColor.primaryText : VuumColor.secondaryText
-            ) {
-                guard tripSession.isChatAvailable else { return }
-                showChat = true
-            }
-            .disabled(!tripSession.isChatAvailable)
-            .accessibilityHint(
-                tripSession.isChatAvailable
-                    ? "Opens chat with your driver"
-                    : "Chat available once a driver is assigned"
-            )
-
-            LiveTripActionChip(
-                title: "Call",
-                systemImage: "phone.fill"
-            ) {
-                tripSession.callDriver()
-            }
-            .accessibilityHint("Places a phone call to your driver")
-
-            ShareLink(
-                item: TripShare.message(for: trip, phase: tripSession.phase, coordinate: location.latestLocation?.coordinate),
-                subject: Text("My Vuum trip"),
-                message: Text("Follow my live trip on Vuum")
-            ) {
-                VStack(spacing: 6) {
-                    Image(systemName: "square.and.arrow.up")
-                        .font(.system(size: 18, weight: .semibold))
-                        .frame(width: 44, height: 44)
-                        .background(VuumColor.chipBackground, in: Circle())
-                    Text("Share")
-                        .font(.system(size: 11, weight: .semibold))
-                }
-                .foregroundStyle(VuumColor.primaryText)
-                .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Share trip")
-            .accessibilityHint("Shares a live trip link")
-        }
-    }
-
-    private var audioControls: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            if permissions.microphoneDenied || tripSession.audioRecorder.permissionDenied {
-                Label("Safety recording unavailable", systemImage: "mic.slash.fill")
+                Text(vehicleCaption)
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(VuumColor.secondaryText)
-                Text("Enable Microphone for Vuum in Settings to record trip audio during a ride.")
-                    .font(.system(size: 11))
-                    .foregroundStyle(VuumColor.secondaryText)
-                Button("Open Settings") {
-                    _ = permissions.openSystemSettings()
-                }
-                .font(.system(size: 13, weight: .semibold))
-            } else {
-                Button {
-                    if tripSession.isRecordingTripAudio {
-                        tripSession.toggleTripAudioRecording(using: permissions)
-                    } else {
-                        tripSession.audioRecorder.refreshPermissionState()
-                        if tripSession.audioRecorder.permissionState == .undetermined
-                            && !permissions.microphoneAuthorized {
-                            showMicConsent = true
-                        } else {
-                            tripSession.toggleTripAudioRecording(using: permissions)
-                        }
-                    }
-                } label: {
-                    Label(
-                        tripSession.isRecordingTripAudio ? "Stop recording" : "Record audio",
-                        systemImage: tripSession.isRecordingTripAudio ? "stop.circle.fill" : "mic.circle.fill"
-                    )
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(
-                        tripSession.isRecordingTripAudio
-                            ? VuumColor.danger.opacity(0.12)
-                            : VuumColor.chipBackground,
-                        in: RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    )
-                }
-                .buttonStyle(.plain)
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(tripSession.isRecordingTripAudio ? VuumColor.danger : VuumColor.primaryText)
-
-                if let message = tripSession.audioRecorder.lastErrorMessage {
-                    Text(message)
-                        .font(.system(size: 11))
-                        .foregroundStyle(VuumColor.danger)
-                } else {
-                    Text("Audio stays on this device. Your driver is notified while recording is on.")
-                        .font(.system(size: 11))
-                        .foregroundStyle(VuumColor.secondaryText)
-                }
+                    .multilineTextAlignment(.trailing)
+                    .lineLimit(2)
             }
         }
+        .accessibilityElement(children: .contain)
+    }
+
+    private var vehicleCaption: String {
+        if let colour = driver.vehicleColour {
+            return "\(driver.vehicleMakeModel), \(colour)"
+        }
+        return driver.vehicleMakeModel
     }
 }
 
+private extension String {
+    var nilIfBlank: String? {
+        let trimmed = trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
+    }
+}

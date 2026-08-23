@@ -17,6 +17,9 @@ struct RootFlowView: View {
             case .choosingRide:
                 RideOptionsScaffoldView()
                     .transition(phaseTransition)
+            case .confirmingRide:
+                ConfirmRideScaffoldView()
+                    .transition(phaseTransition)
             case .searching:
                 SearchingScaffoldView()
                     .transition(phaseTransition)
@@ -28,6 +31,7 @@ struct RootFlowView: View {
                     .transition(phaseTransition)
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .animation(.easeInOut(duration: 0.28), value: tripSession.phase)
     }
 

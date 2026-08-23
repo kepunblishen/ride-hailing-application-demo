@@ -222,6 +222,7 @@ struct PaymentMethodPickerRow: View {
     @EnvironmentObject private var session: SessionStore
     @EnvironmentObject private var payments: PaymentMethodStore
     @EnvironmentObject private var tripSession: TripSession
+    @Environment(\.colorScheme) private var colorScheme
     @State private var showHub = false
 
     private var market: AppLocale.Market {
@@ -239,7 +240,11 @@ struct PaymentMethodPickerRow: View {
                 }
                 .foregroundStyle(VuumColor.primaryText)
                 .padding(12)
-                .background(VuumColor.chipBackground, in: RoundedRectangle(cornerRadius: 12))
+                .background(VuumColor.chipBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .strokeBorder(VuumColor.hairline(for: colorScheme), lineWidth: 1)
+                }
             } else {
                 Button { showHub = true } label: {
                     HStack {
@@ -253,7 +258,11 @@ struct PaymentMethodPickerRow: View {
                     }
                     .foregroundStyle(VuumColor.primaryText)
                     .padding(12)
-                    .background(VuumColor.chipBackground, in: RoundedRectangle(cornerRadius: 12))
+                    .background(VuumColor.chipBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .strokeBorder(VuumColor.hairline(for: colorScheme), lineWidth: 1)
+                    }
                 }
                 .buttonStyle(.plain)
             }
@@ -282,6 +291,7 @@ struct PaymentMethodPickerRow: View {
                     .environmentObject(tripSession)
             }
             .presentationDetents([.large])
+            .presentationBackground(VuumColor.sheetBackground)
         }
     }
 }
