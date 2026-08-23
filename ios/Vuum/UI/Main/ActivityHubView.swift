@@ -317,7 +317,8 @@ struct ActivityHubView: View {
     }
 
     private func emptyState(title: String, systemImage: String, message: String) -> some View {
-        let showBook = tripSession.tripHistory.isEmpty && segment == .past
+        let showBook = tripSession.tripHistory.isEmpty
+            && (segment == .all || segment == .completed || segment == .cancelled)
         let showServices = tripSession.reservedTrips.isEmpty && segment == .upcoming
         return VuumEmptyStateView(
             systemImage: systemImage,

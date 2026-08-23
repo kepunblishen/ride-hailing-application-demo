@@ -694,6 +694,7 @@ struct HomeHubView: View {
         HomeSuggestion.all.filter { suggestion in
             switch suggestion.action {
             case .bookRide(let tierID):
+                guard let tierID else { return true }
                 return tripSession.isServiceAvailable(tierID)
             case .schedule:
                 return tripSession.isServiceAvailable(ServiceProductID.reserve)
