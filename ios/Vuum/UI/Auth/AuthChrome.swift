@@ -489,3 +489,43 @@ struct AuthCountryPickerSheet: View {
         .buttonStyle(.plain)
     }
 }
+
+// MARK: - Auth language picker
+
+/// Compact language control for Get Started / onboarding footers.
+struct AuthLanguagePicker: View {
+    @ObservedObject var locale: AuthLocale
+
+    var body: some View {
+        Menu {
+            ForEach(AuthLocale.Language.allCases) { lang in
+                Button {
+                    locale.select(lang)
+                } label: {
+                    HStack {
+                        Text("\(lang.flagEmoji)  \(lang.displayName)")
+                        if locale.language == lang {
+                            Image(systemName: "checkmark")
+                        }
+                    }
+                }
+            }
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "globe")
+                    .font(.system(size: 15, weight: .semibold))
+                    .accessibilityHidden(true)
+                Text("\(locale.language.flagEmoji) \(locale.language.displayName)")
+                    .font(AuthType.bodyMedium)
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.system(size: 11, weight: .semibold))
+                    .accessibilityHidden(true)
+            }
+            .foregroundStyle(AuthPalette.accent)
+            .padding(.vertical, 6)
+            .contentShape(Rectangle())
+        }
+        .accessibilityLabel(L10n.Auth.language)
+        .accessibilityValue(locale.language.displayName)
+    }
+}

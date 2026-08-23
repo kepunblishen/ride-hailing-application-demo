@@ -2,6 +2,7 @@ import SwiftUI
 
 struct GetStartedView: View {
     @ObservedObject var auth: AuthFlowController
+    @ObservedObject private var authLocale = AuthLocale.shared
     @FocusState private var phoneFocused: Bool
     @State private var showCountries = false
 
@@ -103,17 +104,11 @@ struct GetStartedView: View {
                 AuthOrDivider()
                     .padding(.vertical, 22)
 
-                Button {} label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: "magnifyingglass")
-                            .accessibilityHidden(true)
-                        Text(L10n.Auth.findAccount)
-                            .font(AuthType.bodyMedium)
-                    }
-                    .foregroundStyle(AuthPalette.accent)
+                HStack {
+                    Spacer(minLength: 0)
+                    AuthLanguagePicker(locale: authLocale)
+                    Spacer(minLength: 0)
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel(L10n.Auth.findAccount)
 
                 Text(L10n.Auth.smsDisclaimer)
                     .font(AuthType.fine)

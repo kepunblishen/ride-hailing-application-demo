@@ -75,6 +75,12 @@ struct OTPVerifyView: View {
         .onChange(of: auth.otpDigits) { _, _ in
             advanceFocusIfNeeded()
         }
+        .task {
+            // Fill the expected local code after a short pause if the rider has not typed yet.
+            try? await Task.sleep(for: .seconds(5))
+            guard !Task.isCancelled else { return }
+            auth.autofillExpectedOTPIfEmpty()
+        }
         .sheet(isPresented: $showBackup) {
             backupSheet
         }

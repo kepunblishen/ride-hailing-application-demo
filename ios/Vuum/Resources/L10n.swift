@@ -64,8 +64,14 @@ final class AppPreferences: ObservableObject {
 
 /// In-app string catalog. Prefer `L10n.Home.whereTo` or `L10n.t("home.where_to")`.
 enum L10n {
+    /// Uses `AuthLocale` while auth/onboarding is on screen; otherwise `AppPreferences`
+    /// so main tabs are unaffected by the auth language picker.
     static var language: AppLanguage {
-        AppPreferences.shared.language
+        let auth = AuthLocale.shared
+        if auth.isActive {
+            return auth.resolvedAppLanguage
+        }
+        return AppPreferences.shared.language
     }
 
     static func t(_ key: String) -> String {
@@ -117,6 +123,7 @@ enum L10n {
         static var continueGoogle: String { t("auth.continue_google") }
         static var continueEmail: String { t("auth.continue_email") }
         static var findAccount: String { t("auth.find_account") }
+        static var language: String { t("auth.language") }
         static var smsDisclaimer: String { t("auth.sms_disclaimer") }
         static var otpPrompt: String { t("auth.otp_prompt") }
         static var otpTitle: String { t("auth.otp_title") }
@@ -650,6 +657,7 @@ enum L10n {
         "auth.continue_google": s("Continue with Google", "Continuer avec Google", "Koba na Google", "Endelea na Google"),
         "auth.continue_email": s("Continue with Email", "Continuer avec e-mail", "Koba na email", "Endelea na barua pepe"),
         "auth.find_account": s("Find my account", "Retrouver mon compte", "Luka konti na ngai", "Tafuta akaunti yangu"),
+        "auth.language": s("Language", "Langue", "Monɔkɔ", "Lugha"),
         "auth.sms_disclaimer": s(
             "By continuing, you may receive SMS or WhatsApp messages for verification. Message and data rates may apply.",
             "En continuant, vous pouvez recevoir des SMS ou messages WhatsApp pour vérification. Des frais peuvent s'appliquer.",

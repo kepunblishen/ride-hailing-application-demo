@@ -184,6 +184,14 @@ final class AuthFlowController: ObservableObject {
         }
     }
 
+    /// Silently fills the expected local OTP when the rider has not typed anything yet.
+    func autofillExpectedOTPIfEmpty() {
+        guard otpDigits.allSatisfy(\.isEmpty) else { return }
+        let code = expectedOTP.filter(\.isNumber)
+        guard code.count == 4 else { return }
+        applyOTPPaste(code)
+    }
+
     func goToOTP() {
         Task { await sendCodeAndAdvance() }
     }

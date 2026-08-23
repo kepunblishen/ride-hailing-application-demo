@@ -77,6 +77,7 @@
 		H1000000000000000000000C /* PrivacySettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = H2000000000000000000000C /* PrivacySettingsView.swift */; };
 		H1000000000000000000000D /* PersonalInfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = H2000000000000000000000D /* PersonalInfoView.swift */; };
 		S1000000000000000000000A /* AppLocale.swift in Sources */ = {isa = PBXBuildFile; fileRef = S2000000000000000000000A /* AppLocale.swift */; };
+		AUTHLOC1000000000000001 /* AuthLocale.swift in Sources */ = {isa = PBXBuildFile; fileRef = AUTHLOC2000000000000001 /* AuthLocale.swift */; };
 		PRD100000000000000000001 /* ProductBookingForm.swift in Sources */ = {isa = PBXBuildFile; fileRef = PRD200000000000000000001 /* ProductBookingForm.swift */; };
 		PRD100000000000000000002 /* CourierProductSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = PRD200000000000000000002 /* CourierProductSheet.swift */; };
 		PRD100000000000000000003 /* HourlyProductSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = PRD200000000000000000003 /* HourlyProductSheet.swift */; };
@@ -204,6 +205,7 @@
 		S20000000000000000000024 /* MapsRequestCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapsRequestCache.swift; sourceTree = "<group>"; };
 		S20000000000000000000025 /* BoundedTTLCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoundedTTLCache.swift; sourceTree = "<group>"; };
 		S2000000000000000000000A /* AppLocale.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLocale.swift; sourceTree = "<group>"; };
+		AUTHLOC2000000000000001 /* AuthLocale.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthLocale.swift; sourceTree = "<group>"; };
 		S2000000000000000000000B /* PaymentMethodStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentMethodStore.swift; sourceTree = "<group>"; };
 		PAY200000000000000000002 /* PaymentHubView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentHubView.swift; sourceTree = "<group>"; };
 
@@ -442,6 +444,7 @@
 				S2000000000000000000000E /* TripMotionTiming.swift */,
 				S2000000000000000000000F /* NetworkReachability.swift */,
 				S2000000000000000000000A /* AppLocale.swift */,
+				AUTHLOC2000000000000001 /* AuthLocale.swift */,
 				SVC2A29006 /* PricingEngine.swift */,
 				N20000000000000000000001 /* NotificationStore.swift */,
 				SVC2A29004 /* DeveloperDiagnostics.swift */,
@@ -759,6 +762,7 @@
 				MDL1A29004 /* PlaceCategory.swift in Sources */,
 				LOC10000000000000000001 /* L10n.swift in Sources */,
 				S1000000000000000000000A /* AppLocale.swift in Sources */,
+				AUTHLOC1000000000000001 /* AuthLocale.swift in Sources */,
 				R10000000000000000000005 /* TripSession.swift in Sources */,
 				R10000000000000000000006 /* MockCatalog.swift in Sources */,
 				R10000000000000000000007 /* MapBootstrap.swift in Sources */,

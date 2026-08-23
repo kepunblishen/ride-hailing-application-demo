@@ -3,6 +3,7 @@ import SwiftUI
 struct AuthFlowView: View {
     @EnvironmentObject private var session: SessionStore
     @StateObject private var auth = AuthFlowController()
+    @ObservedObject private var authLocale = AuthLocale.shared
 
     var body: some View {
         Group {
@@ -27,6 +28,10 @@ struct AuthFlowView: View {
                 }
             }
         }
+        .id(authLocale.language)
+        .environmentObject(authLocale)
         .animation(.easeInOut(duration: 0.25), value: auth.step)
+        .onAppear { authLocale.isActive = true }
+        .onDisappear { authLocale.isActive = false }
     }
 }
