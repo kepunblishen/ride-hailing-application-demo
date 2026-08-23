@@ -101,7 +101,7 @@ struct ConfirmInfoView: View {
         }
         .padding(.horizontal, AuthLayout.pageInset)
         .background(AuthPalette.page.ignoresSafeArea())
-        .onAppear { focused = .first }
+        // No autofocus — keyboard only after the user taps a name/email field.
     }
 
     private func nameField(_ placeholder: String, text: Binding<String>, isFocused: Bool) -> some View {
