@@ -1436,7 +1436,7 @@ enum L10n {
         // Permissions
         "permissions.title": s("Enable access", "Activer l’accès", "Fungola accès", "Wezesha ufikiaji"),
         "permissions.intro": s(
-            "To get you a ride safely and quickly, Vuum needs a few permissions on your phone.",
+            "Vuum needs location for pickup and notifications for trip updates. After you continue, iOS will ask for each one.",
             "Pour vous déplacer en toute sécurité, Vuum a besoin de quelques autorisations.",
             "Mpo na kozwa voyage na malamu, Vuum esengeli ba permission moko na téléphone.",
             "Ili kukupatia safari salama na haraka, Vuum inahitaji ruhusa chache kwenye simu yako."

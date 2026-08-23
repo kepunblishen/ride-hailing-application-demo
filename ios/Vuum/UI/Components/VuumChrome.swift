@@ -14,7 +14,7 @@ struct VuumPrimaryButton: View {
             Group {
                 if isLoading {
                     ProgressView()
-                        .tint(VuumColor.brandInk)
+                        .tint(Color.white)
                 } else {
                     HStack(spacing: 8) {
                         Text(title)
@@ -28,7 +28,7 @@ struct VuumPrimaryButton: View {
             }
             .frame(maxWidth: .infinity)
             .frame(height: VuumLayout.primaryButtonHeight)
-            .foregroundStyle(VuumColor.brandInk.opacity(enabled ? 1 : 0.45))
+            .foregroundStyle(Color.white.opacity(enabled ? 1 : 0.55))
             .background(
                 VuumColor.brand.opacity(enabled ? 1 : 0.45),
                 in: RoundedRectangle(cornerRadius: VuumLayout.radiusCard, style: .continuous)
@@ -75,7 +75,7 @@ struct VuumPrimaryCapsuleButton: View {
             Group {
                 if isLoading {
                     ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle(tint: VuumColor.brandInk))
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
                 } else {
                     HStack(spacing: 8) {
                         Text(title)
@@ -87,7 +87,7 @@ struct VuumPrimaryCapsuleButton: View {
                 }
             }
             .font(.system(size: 14, weight: .semibold))
-            .foregroundStyle(VuumColor.brandInk)
+            .foregroundStyle(Color.white)
             .frame(maxWidth: .infinity)
             .frame(height: 56)
             .background(fillColor, in: Capsule())
@@ -169,26 +169,13 @@ struct VuumIconBadge: View {
 
     var body: some View {
         Image(systemName: systemName)
-            .font(.system(size: size * 0.44, weight: .semibold))
-            .foregroundStyle(VuumColor.brandInk)
+            .font(.system(size: size * 0.48, weight: .medium))
+            .foregroundStyle(emphasized ? VuumColor.brand : VuumColor.primaryText)
             .frame(width: size, height: size)
-            .background {
-                let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                if emphasized {
-                    shape.fill(
-                        LinearGradient(
-                            colors: [VuumColor.brand.opacity(0.32), VuumColor.brand.opacity(0.16)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                } else {
-                    shape.fill(VuumColor.brand.opacity(0.20))
-                }
-            }
             .accessibilityHidden(true)
     }
 }
+
 
 /// Solid grouped card — default hub surface (not frosted glass).
 struct VuumHubCard<Content: View>: View {
@@ -221,7 +208,7 @@ struct VuumFilterChip: View {
         Button(action: action) {
             Text(title)
                 .font(VuumType.captionSemibold)
-                .foregroundStyle(selected ? VuumColor.brandInk : VuumColor.primaryText)
+                .foregroundStyle(selected ? Color.white : VuumColor.primaryText)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
                 .background(
@@ -239,10 +226,10 @@ struct VuumOfferBadge: View {
     var body: some View {
         Text(title)
             .font(VuumType.micro)
-            .foregroundStyle(VuumColor.brandInk)
+            .foregroundStyle(Color.white)
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
-            .background(VuumColor.brand.opacity(0.92), in: Capsule())
+            .background(VuumColor.brand, in: Capsule())
             .accessibilityLabel(title)
     }
 }

@@ -4,8 +4,8 @@ import SwiftUI
 // MARK: - Color
 
 enum VuumColor {
-    /// Signal amber — do not restyle casually; brand lock for presentation.
-    static let brand = Color(red: 245 / 255, green: 165 / 255, blue: 36 / 255)
+    /// Interactive blue-600 — primary actions and emphasis (replaces amber).
+    static let brand = Color(red: 37 / 255, green: 99 / 255, blue: 235 / 255) // blue-600 — primary actions
     static let brandInk = Color(red: 15 / 255, green: 20 / 255, blue: 25 / 255)
 
     /// Tailwind blue-600 — primary accents, links, focus rings.
@@ -88,7 +88,7 @@ enum VuumType {
 // MARK: - Theme bootstrap
 
 enum VuumTheme {
-    static let brandHex = "#F5A524"
+    static let brandHex = "#2563EB"
     static let accentHex = "#2563EB"
     static let accentBrightHex = "#3B82F6"
     static let displayName = "Vuum"

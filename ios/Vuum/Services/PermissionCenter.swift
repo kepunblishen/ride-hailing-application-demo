@@ -105,6 +105,9 @@ final class PermissionCenter: ObservableObject {
     /// Microphone / camera / motion stay deferred until a feature needs them.
     func requestHomePermissions() async {
         await requestLocationWhenInUse()
+        // Let the location system prompt fully dismiss before notifications,
+        // so the two iOS dialogs do not stack on top of each other.
+        try? await Task.sleep(for: .milliseconds(900))
         await requestNotifications()
         await refreshStatuses()
     }

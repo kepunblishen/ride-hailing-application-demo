@@ -120,7 +120,7 @@ struct HomeHubView: View {
                     if let cancellation = tripSession.lastCancellation {
                         HStack(alignment: .top, spacing: 10) {
                             Image(systemName: cancellation.wasFree ? "checkmark.circle.fill" : "info.circle.fill")
-                                .foregroundStyle(cancellation.wasFree ? Color.green : Color.orange)
+                                .foregroundStyle(VuumColor.brand)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(cancellation.summaryLine)
                                     .font(.system(size: 13, weight: .semibold))

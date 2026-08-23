@@ -87,7 +87,7 @@ struct ServicesHubView: View {
                 largeTile(
                     title: L10n.t("services.rides"),
                     symbol: "car.fill",
-                    tint: Color(red: 0.12, green: 0.14, blue: 0.18),
+                    tint: VuumColor.chipBackground,
                     iconTint: VuumColor.brand
                 ) {
                     onRequestRide("vuum")
@@ -97,8 +97,8 @@ struct ServicesHubView: View {
                     largeTile(
                         title: L10n.t("services.two_wheels"),
                         symbol: "bicycle",
-                        tint: Color(red: 0.18, green: 0.42, blue: 0.55),
-                        iconTint: .white
+                        tint: VuumColor.chipBackground,
+                        iconTint: VuumColor.brand
                     ) {
                         showTwoWheels = true
                     }
@@ -109,8 +109,8 @@ struct ServicesHubView: View {
                     largeTile(
                         title: "Airport",
                         symbol: "airplane",
-                        tint: Color(red: 0.12, green: 0.28, blue: 0.42),
-                        iconTint: .white
+                        tint: VuumColor.chipBackground,
+                        iconTint: VuumColor.brand
                     ) {
                         showAirport = true
                     }
@@ -118,8 +118,8 @@ struct ServicesHubView: View {
                     largeTile(
                         title: L10n.t("services.rental"),
                         symbol: "key.fill",
-                        tint: Color(red: 0.35, green: 0.28, blue: 0.55),
-                        iconTint: .white
+                        tint: VuumColor.chipBackground,
+                        iconTint: VuumColor.brand
                     ) {
                         showHourly = true
                     }
@@ -280,7 +280,7 @@ struct ServicesHubView: View {
             .foregroundStyle(VuumColor.primaryText)
     }
 
-    private func largeTile(
+        private func largeTile(
         title: String,
         symbol: String,
         tint: Color,
@@ -289,36 +289,27 @@ struct ServicesHubView: View {
     ) -> some View {
         Button(action: action) {
             VStack(alignment: .leading, spacing: 18) {
-                ZStack {
-                    Circle()
-                        .fill(Color.white.opacity(0.16))
-                        .frame(width: 44, height: 44)
-                    Image(systemName: symbol)
-                        .font(.system(size: 20, weight: .semibold))
-                        .foregroundStyle(iconTint)
-                }
+                Image(systemName: symbol)
+                    .font(.system(size: 22, weight: .regular))
+                    .foregroundStyle(iconTint)
+                    .frame(width: 44, height: 44, alignment: .leading)
 
                 Text(title)
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(VuumColor.primaryText)
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
             }
             .padding(14)
             .frame(maxWidth: .infinity, minHeight: 118, alignment: .topLeading)
             .background(
-                LinearGradient(
-                    colors: [tint, tint.opacity(0.82)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                ),
+                tint,
                 in: RoundedRectangle(cornerRadius: 18, style: .continuous)
             )
             .overlay {
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
+                    .strokeBorder(Color.primary.opacity(0.06), lineWidth: 1)
             }
-            .shadow(color: Color.black.opacity(0.08), radius: 10, y: 4)
         }
         .buttonStyle(VuumPressStyle())
         .accessibilityLabel(title)
@@ -365,14 +356,10 @@ struct ServicesHubView: View {
         Button(action: action) {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(alignment: .top) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .fill(item.tileColor.opacity(0.22))
-                            .frame(width: 48, height: 48)
-                        Image(systemName: item.symbol)
-                            .font(.system(size: 20, weight: .semibold))
-                            .foregroundStyle(item.tileColor)
-                    }
+                    Image(systemName: item.symbol)
+                        .font(.system(size: 22, weight: .regular))
+                        .foregroundStyle(VuumColor.brand)
+                        .frame(width: 48, height: 48, alignment: .leading)
 
                     Spacer(minLength: 0)
 
@@ -382,7 +369,7 @@ struct ServicesHubView: View {
                             .foregroundStyle(.white)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
-                            .background(Color(red: 0.86, green: 0.22, blue: 0.28), in: Capsule())
+                            .background(VuumColor.brand, in: Capsule())
                     }
                 }
 
@@ -404,12 +391,12 @@ struct ServicesHubView: View {
     }
 
     private static let deliveryItems: [DeliveryServiceItem] = [
-        .init(id: "food", title: "Food", symbol: "fork.knife", tileColor: Color(red: 0.95, green: 0.45, blue: 0.2), badge: "Promo"),
-        .init(id: "grocery", title: "Grocery", symbol: "cart.fill", tileColor: Color(red: 0.2, green: 0.62, blue: 0.38), badge: "Promo"),
-        .init(id: "convenience", title: "Convenience", symbol: "bag.fill", tileColor: Color(red: 0.25, green: 0.45, blue: 0.9), badge: nil),
-        .init(id: "alcohol", title: "Alcohol", symbol: "wineglass.fill", tileColor: Color(red: 0.55, green: 0.25, blue: 0.55), badge: nil),
-        .init(id: "health", title: "Health", symbol: "cross.case.fill", tileColor: Color(red: 0.2, green: 0.55, blue: 0.7), badge: "Promo"),
-        .init(id: "packages", title: "Packages", symbol: "shippingbox.fill", tileColor: Color(red: 0.4, green: 0.35, blue: 0.3), badge: nil),
+        .init(id: "food", title: "Food", symbol: "fork.knife", tileColor: VuumColor.brand, badge: "Promo"),
+        .init(id: "grocery", title: "Grocery", symbol: "cart.fill", tileColor: VuumColor.brand, badge: "Promo"),
+        .init(id: "convenience", title: "Convenience", symbol: "bag.fill", tileColor: VuumColor.brand, badge: nil),
+        .init(id: "alcohol", title: "Alcohol", symbol: "wineglass.fill", tileColor: VuumColor.brand, badge: nil),
+        .init(id: "health", title: "Health", symbol: "cross.case.fill", tileColor: VuumColor.brand, badge: "Promo"),
+        .init(id: "packages", title: "Packages", symbol: "shippingbox.fill", tileColor: VuumColor.brand, badge: nil),
     ]
 }
 

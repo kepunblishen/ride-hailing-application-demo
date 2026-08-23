@@ -1,4 +1,4 @@
-﻿import SwiftUI
+import SwiftUI
 
 struct TripMapLayer: View {
     @EnvironmentObject private var tripSession: TripSession
@@ -349,46 +349,55 @@ struct PermissionsExplainerSheet: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    Text(copy("permissions.intro"))
-                        .font(.system(size: 15))
-                        .foregroundStyle(VuumColor.secondaryText)
+            VStack(spacing: 0) {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text(copy("permissions.intro"))
+                            .font(.system(size: 16))
+                            .foregroundStyle(VuumColor.secondaryText)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(.top, 8)
+                            .padding(.bottom, 32)
 
-                    permissionRow(
-                        icon: "location.fill",
-                        title: copy("permissions.location"),
-                        detail: copy("permissions.location_detail")
-                    )
-                    permissionRow(
-                        icon: "bell.fill",
-                        title: copy("permissions.notifications"),
-                        detail: copy("permissions.notifications_detail")
-                    )
-                    permissionRow(
-                        icon: "mic.fill",
-                        title: copy("permissions.microphone"),
-                        detail: copy("permissions.microphone_detail")
-                    )
+                        permissionRow(
+                            icon: "location",
+                            title: copy("permissions.location"),
+                            detail: copy("permissions.location_detail")
+                        )
+                        .padding(.bottom, 32)
 
-                    Text(copy("permissions.change_anytime"))
-                        .font(.system(size: 13))
-                        .foregroundStyle(VuumColor.secondaryText)
+                        permissionRow(
+                            icon: "bell",
+                            title: copy("permissions.notifications"),
+                            detail: copy("permissions.notifications_detail")
+                        )
+                        .padding(.bottom, 32)
+
+                        Text(copy("permissions.change_anytime"))
+                            .font(.system(size: 13))
+                            .foregroundStyle(VuumColor.secondaryText)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(.top, 4)
+                    }
+                    .padding(.horizontal, 28)
+                    .padding(.bottom, 24)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .padding(20)
-            }
-            .navigationTitle(copy("permissions.title"))
-            .navigationBarTitleDisplayMode(.inline)
-            .safeAreaInset(edge: .bottom) {
+
+                Spacer(minLength: 0)
+
                 VuumPrimaryButton(title: L10n.t("common.continue", authLanguage: authLocale.language)) {
                     onContinue()
                 }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 12)
-                .background(.ultraThinMaterial)
+                .padding(.horizontal, 28)
+                .padding(.top, 12)
+                .padding(.bottom, 20)
             }
+            .navigationTitle(copy("permissions.title"))
+            .navigationBarTitleDisplayMode(.inline)
         }
         .presentationDetents([.large])
+        .presentationDragIndicator(.visible)
         .interactiveDismissDisabled()
         .id(authLocale.language)
     }
@@ -398,24 +407,28 @@ struct PermissionsExplainerSheet: View {
     }
 
     private func permissionRow(icon: String, title: String, detail: String) -> some View {
-        HStack(alignment: .top, spacing: 14) {
+        HStack(alignment: .top, spacing: 20) {
             Image(systemName: icon)
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(VuumColor.brandInk)
-                .frame(width: 40, height: 40)
-                .background(VuumColor.brand.opacity(0.25), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-            VStack(alignment: .leading, spacing: 4) {
+                .font(.system(size: 26, weight: .regular))
+                .foregroundStyle(VuumColor.brand)
+                .frame(width: 44, alignment: .center)
+                .padding(.top, 2)
+                .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: 8) {
                 Text(title)
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.system(size: 18, weight: .semibold))
                     .foregroundStyle(VuumColor.primaryText)
                 Text(detail)
-                    .font(.system(size: 14))
+                    .font(.system(size: 15))
                     .foregroundStyle(VuumColor.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .accessibilityElement(children: .combine)
     }
 }
-
 struct DestinationScaffoldView: View {
     @EnvironmentObject private var tripSession: TripSession
     @EnvironmentObject private var savedPlaces: SavedPlacesStore
@@ -1197,7 +1210,7 @@ struct RideOptionsScaffoldView: View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: cancellation.wasFree ? "checkmark.circle.fill" : "info.circle.fill")
                 .font(.system(size: 14, weight: .bold))
-                .foregroundStyle(cancellation.wasFree ? Color.green : Color.orange)
+                .foregroundStyle(VuumColor.brand)
             VStack(alignment: .leading, spacing: 2) {
                 Text(cancellation.summaryLine)
                     .font(.system(size: 13, weight: .semibold))
@@ -1320,7 +1333,7 @@ struct RideOptionsScaffoldView: View {
                     Spacer()
                     Text(formatLocalDiscount(fare.discountCDF))
                         .fontWeight(.medium)
-                        .foregroundStyle(.green)
+                        .foregroundStyle(VuumColor.brand)
                 }
                 .font(.system(size: 13))
             }
@@ -1415,7 +1428,7 @@ struct RideOptionsScaffoldView: View {
             HStack {
                 Text("\(title) ? \(formatLocalDiscount(discount))")
                     .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(.green)
+                    .foregroundStyle(VuumColor.brand)
                 Spacer()
                 Button("Remove") {
                     tripSession.clearPromo()
@@ -1426,15 +1439,15 @@ struct RideOptionsScaffoldView: View {
         case .invalid:
             Text("This promo code isn?t valid")
                 .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(.orange)
+                .foregroundStyle(VuumColor.brand)
         case .expired:
             Text("This promo code has expired")
                 .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(.orange)
+                .foregroundStyle(VuumColor.brand)
         case .notEligible(let reason):
             Text(reason)
                 .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(.orange)
+                .foregroundStyle(VuumColor.brand)
         case .idle:
             EmptyView()
         }
