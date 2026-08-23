@@ -13,11 +13,11 @@ struct GetStartedView: View {
                     Spacer()
                     ZStack {
                         RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .fill(AuthPalette.accent)
+                            .fill(Color.black)
                             .frame(width: 52, height: 52)
                         Text("Vuum")
                             .font(.system(size: 12, weight: .semibold))
-                            .foregroundStyle(AuthPalette.onAccent)
+                            .foregroundStyle(Color.white)
                     }
                     Spacer()
                 }
