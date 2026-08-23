@@ -74,7 +74,6 @@ struct OTPVerifyView: View {
         }
         .padding(.horizontal, AuthLayout.pageInset)
         .background(AuthPalette.page.ignoresSafeArea())
-        .onAppear { focusedIndex = 0 }
         .onChange(of: auth.otpDigits) { _, _ in
             advanceFocus()
         }

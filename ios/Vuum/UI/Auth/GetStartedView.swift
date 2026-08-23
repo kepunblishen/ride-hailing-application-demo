@@ -133,6 +133,5 @@ struct GetStartedView: View {
                 auth.selectCountry(code: country.dialCode, flag: country.flag)
             }
         }
-        .onAppear { phoneFocused = true }
     }
 }
