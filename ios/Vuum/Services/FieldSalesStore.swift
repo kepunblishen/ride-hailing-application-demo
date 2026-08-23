@@ -29,13 +29,17 @@ final class FieldSalesStore: ObservableObject {
         self.defaults = defaults
         salesExecutives = Self.seedExecutives()
 
+        let loadedRecruitments: [RecruitmentAttribution]
+        let shouldPersistRecruitments: Bool
         if let data = defaults.data(forKey: Keys.recruitments),
            let decoded = try? JSONDecoder().decode([RecruitmentAttribution].self, from: data) {
-            recruitments = decoded
+            loadedRecruitments = decoded
+            shouldPersistRecruitments = false
         } else {
-            recruitments = Self.seedRecruitments()
-            persistRecruitments()
+            loadedRecruitments = Self.seedRecruitments()
+            shouldPersistRecruitments = true
         }
+        recruitments = loadedRecruitments
 
         if let data = defaults.data(forKey: Keys.suspicious),
            let decoded = try? JSONDecoder().decode([SuspiciousTripFlag].self, from: data) {
@@ -44,21 +48,34 @@ final class FieldSalesStore: ObservableObject {
             suspiciousFlags = []
         }
 
+        let loadedChecklist: [FieldSalesChecklistItem]
+        let shouldPersistChecklist: Bool
         if let data = defaults.data(forKey: Keys.checklist),
            let decoded = try? JSONDecoder().decode([FieldSalesChecklistItem].self, from: data) {
-            checklist = decoded
+            loadedChecklist = decoded
+            shouldPersistChecklist = false
         } else {
-            checklist = Self.defaultChecklist()
-            persistChecklist()
+            loadedChecklist = Self.defaultChecklist()
+            shouldPersistChecklist = true
         }
+        checklist = loadedChecklist
 
+        let loadedRiderAttribution: RecruitmentAttribution?
+        let shouldPersistRiderAttribution: Bool
         if let data = defaults.data(forKey: Keys.riderAttribution),
            let decoded = try? JSONDecoder().decode(RecruitmentAttribution.self, from: data) {
-            riderAttribution = decoded
+            loadedRiderAttribution = decoded
+            shouldPersistRiderAttribution = false
         } else {
-            riderAttribution = Self.seedRiderAttribution()
-            persistRiderAttribution()
+            loadedRiderAttribution = Self.seedRiderAttribution()
+            shouldPersistRiderAttribution = true
         }
+        riderAttribution = loadedRiderAttribution
+
+        // Persist only after every stored property is initialized (Swift init rules).
+        if shouldPersistRecruitments { persistRecruitments() }
+        if shouldPersistChecklist { persistChecklist() }
+        if shouldPersistRiderAttribution { persistRiderAttribution() }
     }
 
     var pendingCommissionCount: Int {
