@@ -5,20 +5,20 @@ import Foundation
 /// Location-aware presentation market for rider UI (currency, phone defaults, places).
 @MainActor
 final class AppLocale: ObservableObject {
-    enum Market: Equatable {
+    nonisolated enum Market: Equatable, Sendable {
         case kenya
         case drc
         /// No clear market — list both Kenya and DRC mobile-money options.
         case both
     }
 
-    enum Override: String, CaseIterable {
+    nonisolated enum Override: String, CaseIterable, Sendable {
         case auto
         case kenya
         case drc
     }
 
-    struct DialCountry: Identifiable, Equatable, Hashable {
+    nonisolated struct DialCountry: Identifiable, Equatable, Hashable, Sendable {
         var id: String { code }
         let flag: String
         let code: String
@@ -30,15 +30,15 @@ final class AppLocale: ObservableObject {
         var flagLabel: String { "\(flag) \(code)" }
     }
 
-    static let overrideKey = "vuum.marketOverride"
+    nonisolated static let overrideKey = "vuum.marketOverride"
 
     /// FX rates live in `ExchangeRateConfiguration` — keep aliases for older call sites.
-    static var cdfPerUSD: Double { ExchangeRateConfiguration.presentation.cdfPerUSD }
-    static var kesPerUSD: Double { ExchangeRateConfiguration.presentation.kesPerUSD }
+    nonisolated static var cdfPerUSD: Double { ExchangeRateConfiguration.presentation.cdfPerUSD }
+    nonisolated static var kesPerUSD: Double { ExchangeRateConfiguration.presentation.kesPerUSD }
 
-    static var exchangeRates: ExchangeRateConfiguration { .presentation }
+    nonisolated static var exchangeRates: ExchangeRateConfiguration { .presentation }
 
-    static func currencyConfiguration(for market: Market = current) -> CurrencyConfiguration {
+    nonisolated static func currencyConfiguration(for market: Market = current) -> CurrencyConfiguration {
         .forMarket(market, rates: .presentation)
     }
 
@@ -154,7 +154,7 @@ final class AppLocale: ObservableObject {
         }
     }
 
-    private static func resolvedMarket(override: Override, detected: Market) -> Market {
+    nonisolated private static func resolvedMarket(override: Override, detected: Market) -> Market {
         switch override {
         case .auto: return detected == .kenya ? .kenya : .drc
         case .kenya: return .kenya
@@ -163,9 +163,11 @@ final class AppLocale: ObservableObject {
     }
 
     // MARK: - Static API (auth, payments, bootstrapping)
+    // Pure market / FX / phone helpers are `nonisolated` so MockCatalog, ProductCatalogTiers,
+    // and other non-UI call sites stay usable off the main actor under Swift 6.
 
     /// Supported dialing destinations for Get Started country picker.
-    static let dialCountries: [DialCountry] = [
+    nonisolated static let dialCountries: [DialCountry] = [
         DialCountry(flag: "🇨🇩", code: "+243", name: "DR Congo", localDigitCount: 9, phonePlaceholder: "970 000 000"),
         DialCountry(flag: "🇰🇪", code: "+254", name: "Kenya", localDigitCount: 9, phonePlaceholder: "712 345 678"),
         DialCountry(flag: "🇺🇬", code: "+256", name: "Uganda", localDigitCount: 9, phonePlaceholder: "712 345 678"),
@@ -176,30 +178,30 @@ final class AppLocale: ObservableObject {
     ]
 
     /// Presentation market from override or device (no live location). Defaults to DRC.
-    static var presentationMarket: Market {
+    nonisolated static var presentationMarket: Market {
         resolvePresentationMarket()
     }
 
     /// Snapshot used by MockFares / TripSession when no `EnvironmentObject` is in scope.
     /// Always `.kenya` or `.drc` (never `.both`).
-    static var current: Market {
+    nonisolated static var current: Market {
         let m = presentationMarket
         return m == .kenya ? .kenya : .drc
     }
 
-    static var minimumFareLocal: Int {
+    nonisolated static var minimumFareLocal: Int {
         minimumFareLocal(for: current)
     }
 
-    static var samplePromoDiscountLocal: Int {
+    nonisolated static var samplePromoDiscountLocal: Int {
         samplePromoDiscountLocal(for: current)
     }
 
-    static func usdFromLocal(_ amount: Int) -> Double {
+    nonisolated static func usdFromLocal(_ amount: Int) -> Double {
         usdFromLocal(amount, market: current)
     }
 
-    static func resolvePresentationMarket(
+    nonisolated static func resolvePresentationMarket(
         locale: Locale = .current,
         defaults: UserDefaults = .standard
     ) -> Market {
@@ -212,19 +214,19 @@ final class AppLocale: ObservableObject {
         }
     }
 
-    static var defaultCountryCode: String {
+    nonisolated static var defaultCountryCode: String {
         presentationMarket == .kenya ? "+254" : "+243"
     }
 
-    static var defaultCountryFlag: String {
+    nonisolated static var defaultCountryFlag: String {
         flag(for: defaultCountryCode)
     }
 
-    static var defaultPhonePlaceholder: String {
+    nonisolated static var defaultPhonePlaceholder: String {
         phonePlaceholder(for: defaultCountryCode)
     }
 
-    static var dialCountriesOrderedForPresentation: [DialCountry] {
+    nonisolated static var dialCountriesOrderedForPresentation: [DialCountry] {
         let preferred = defaultCountryCode
         var list = dialCountries
         if let idx = list.firstIndex(where: { $0.code == preferred }), idx != 0 {
@@ -234,11 +236,11 @@ final class AppLocale: ObservableObject {
         return list
     }
 
-    static func dialCountry(for code: String) -> DialCountry? {
+    nonisolated static func dialCountry(for code: String) -> DialCountry? {
         dialCountries.first { $0.code == code }
     }
 
-    static func flag(for countryCode: String) -> String {
+    nonisolated static func flag(for countryCode: String) -> String {
         switch countryCode {
         case "+254": return "🇰🇪"
         case "+243": return "🇨🇩"
@@ -262,11 +264,11 @@ final class AppLocale: ObservableObject {
         }
     }
 
-    static func flagLabel(for countryCode: String) -> String {
+    nonisolated static func flagLabel(for countryCode: String) -> String {
         "\(flag(for: countryCode)) \(countryCode)"
     }
 
-    static func phonePlaceholder(for countryCode: String) -> String {
+    nonisolated static func phonePlaceholder(for countryCode: String) -> String {
         if let known = dialCountry(for: countryCode) {
             return known.phonePlaceholder
         }
@@ -287,7 +289,7 @@ final class AppLocale: ObservableObject {
         }
     }
 
-    static func requiredLocalDigitCount(for countryCode: String) -> Int {
+    nonisolated static func requiredLocalDigitCount(for countryCode: String) -> Int {
         if let known = dialCountry(for: countryCode) {
             return known.localDigitCount
         }
@@ -300,7 +302,7 @@ final class AppLocale: ObservableObject {
     }
 
     /// Strip a single leading trunk `0` so `0712…` validates as 9 national digits.
-    static func normalizedLocalDigits(_ raw: String) -> String {
+    nonisolated static func normalizedLocalDigits(_ raw: String) -> String {
         var digits = raw.filter(\.isNumber)
         if digits.hasPrefix("0") {
             digits = String(digits.dropFirst())
@@ -308,12 +310,12 @@ final class AppLocale: ObservableObject {
         return digits
     }
 
-    static func isValidLocalNumber(_ raw: String, countryCode: String) -> Bool {
+    nonisolated static func isValidLocalNumber(_ raw: String, countryCode: String) -> Bool {
         normalizedLocalDigits(raw).count == requiredLocalDigitCount(for: countryCode)
     }
 
     /// Light grouping for national numbers (KE/CD-style 3-3-3, US 3-3-4, etc.).
-    static func formatLocalNumber(_ raw: String, countryCode: String) -> String {
+    nonisolated static func formatLocalNumber(_ raw: String, countryCode: String) -> String {
         let digits = normalizedLocalDigits(raw)
         guard !digits.isEmpty else { return "" }
         let groups: [Int]
@@ -342,7 +344,7 @@ final class AppLocale: ObservableObject {
     }
 
     /// Resolve market from dialing code (`+254` Kenya, `+243` DRC). Unknown → `.both`.
-    static func market(countryCode: String?) -> Market {
+    nonisolated static func market(countryCode: String?) -> Market {
         switch countryCode {
         case "+254": return .kenya
         case "+243": return .drc
@@ -350,7 +352,7 @@ final class AppLocale: ObservableObject {
         }
     }
 
-    static func mobileMoneyMethods(for market: Market) -> [PaymentMethod] {
+    nonisolated static func mobileMoneyMethods(for market: Market) -> [PaymentMethod] {
         switch market {
         case .kenya:
             return [.mpesa, .airtelMoney]
@@ -361,11 +363,11 @@ final class AppLocale: ObservableObject {
         }
     }
 
-    static func ridePaymentMethods(for market: Market) -> [PaymentMethod] {
+    nonisolated static func ridePaymentMethods(for market: Market) -> [PaymentMethod] {
         [.cash, .wallet] + mobileMoneyMethods(for: market) + [.card]
     }
 
-    static func currencySubtitle(for market: Market) -> String {
+    nonisolated static func currencySubtitle(for market: Market) -> String {
         switch market {
         case .kenya: return "KSh"
         case .drc: return "CDF & USD"
@@ -373,15 +375,15 @@ final class AppLocale: ObservableObject {
         }
     }
 
-    static func currencyPrimaryLabel(for market: Market) -> String {
+    nonisolated static func currencyPrimaryLabel(for market: Market) -> String {
         market == .kenya ? "KSh" : "CDF"
     }
 
-    static func formatMoney(cdfOrKes: Int, market: Market) -> String {
+    nonisolated static func formatMoney(cdfOrKes: Int, market: Market) -> String {
         Money.local(cdfOrKes, market: market == .kenya ? .kenya : .drc).formatted
     }
 
-    static func formatTierPrice(cdf: Int, usd: Double, market: Market) -> String {
+    nonisolated static func formatTierPrice(cdf: Int, usd: Double, market: Market) -> String {
         let fareMarket: Market = market == .kenya ? .kenya : .drc
         if fareMarket == .kenya {
             // Prefer explicit local units when already KES; else derive from USD via FX config.
@@ -391,45 +393,45 @@ final class AppLocale: ObservableObject {
         return MoneyPair.fare(local: cdf, usd: usd, market: .drc).formatted
     }
 
-    static func formatFareTotal(cdf: Int, usd: Double, market: Market) -> String {
+    nonisolated static func formatFareTotal(cdf: Int, usd: Double, market: Market) -> String {
         formatTierPrice(cdf: cdf, usd: usd, market: market)
     }
 
-    static func formatMoneyPair(_ pair: MoneyPair) -> String {
+    nonisolated static func formatMoneyPair(_ pair: MoneyPair) -> String {
         pair.formatted
     }
 
-    static func formatPrimary(local: Int, market: Market = current) -> String {
+    nonisolated static func formatPrimary(local: Int, market: Market = current) -> String {
         Money.local(local, market: market == .kenya ? .kenya : .drc).formatted
     }
 
-    static func formatDiscount(_ amount: Int, market: Market = current) -> String {
+    nonisolated static func formatDiscount(_ amount: Int, market: Market = current) -> String {
         "−\(formatPrimary(local: amount, market: market))"
     }
 
-    static func formatUSDLabeled(_ usd: Double) -> String {
+    nonisolated static func formatUSDLabeled(_ usd: Double) -> String {
         CurrencyFormatter.labeledUSD(usd)
     }
 
-    static func formatSecondaryUSD(local: Int, usd: Double? = nil, market: Market = current) -> String? {
+    nonisolated static func formatSecondaryUSD(local: Int, usd: Double? = nil, market: Market = current) -> String? {
         guard market != .kenya else { return nil }
         let value = usd ?? usdFromLocal(local, market: .drc)
         return Money.usd(value).formatted
     }
 
-    static func usdFromLocal(_ amount: Int, market: Market) -> Double {
+    nonisolated static func usdFromLocal(_ amount: Int, market: Market) -> Double {
         exchangeRates.usdFromLocal(amount, market: market)
     }
 
-    static func minimumFareLocal(for market: Market) -> Int {
+    nonisolated static func minimumFareLocal(for market: Market) -> Int {
         market == .kenya ? 150 : 1_000
     }
 
-    static func samplePromoDiscountLocal(for market: Market) -> Int {
+    nonisolated static func samplePromoDiscountLocal(for market: Market) -> Int {
         market == .kenya ? 50 : 1_500
     }
 
-    static func detectFromDevice(locale: Locale = .current) -> Market {
+    nonisolated static func detectFromDevice(locale: Locale = .current) -> Market {
         if let region = locale.region?.identifier.uppercased() {
             if region == "KE" { return .kenya }
             if region == "CD" { return .drc }
@@ -442,7 +444,7 @@ final class AppLocale: ObservableObject {
         return .drc
     }
 
-    static func market(for coordinate: CLLocationCoordinate2D) -> Market? {
+    nonisolated static func market(for coordinate: CLLocationCoordinate2D) -> Market? {
         let lat = coordinate.latitude
         let lon = coordinate.longitude
         if lat >= -4.9, lat <= 5.6, lon >= 33.7, lon <= 42.0 {
