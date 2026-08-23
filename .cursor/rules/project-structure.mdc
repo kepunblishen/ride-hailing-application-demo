@@ -12,12 +12,14 @@ Search before adding a new file.
 
 - `App/` — entry + splash gate + `RootFlowView` phase router
 - `Models/` — trip / place / driver / tier types
-- `Services/` — `TripSession` (demo state machine only)
+- `Services/` — `TripSession`, `SessionStore`, `AuthFlowController`
 - `Mock/` — sample places, drivers, fares
 - `Maps/` — Google Maps bootstrap + `VuumMapView`
 - `UI/Theme/` — `VuumColor`, `VuumTheme` (ComponentsKit accent bootstrap)
 - `UI/Components/` — glass surfaces, chrome, UIKit bridges
-- `UI/Flow/` — rider-flow screens (scaffold → polish)
+- `UI/Auth/` — get started, OTP, terms, confirm info, welcome
+- `UI/Main/` — signed-in tab shell + Account (sign out)
+- `UI/Flow/` — rider trip screens
 - `reference/` — docs for ComponentsKit + Explore SwiftUI (not product screens)
 
 ## Do NOT
@@ -26,11 +28,13 @@ Search before adding a new file.
 - Put trip logic in SwiftUI views — keep it in `TripSession`
 - Commit real Google Maps API keys
 - Reintroduce Firebase / BLE unless product scope changes
+- Use the word “demo” in user-visible UI copy (see `no-demo-language.mdc`)
 
 ## Packages (SPM)
 
 - ComponentsKit — `https://github.com/componentskit/ComponentsKit`
 - GoogleMaps — `https://github.com/googlemaps/ios-maps-sdk`
+- KeychainSwift — `https://github.com/evgenyneu/keychain-swift` (rider session; prefer over KeychainAccess which ships SPM `unsafeFlags`)
 
 SwiftUI + UIKit are system frameworks (always available).
 

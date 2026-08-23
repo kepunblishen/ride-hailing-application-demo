@@ -1,0 +1,9 @@
+// Shared build settings for the Vuum target.
+// Maps key injection: Info.plist uses $(VUUM_GOOGLE_MAPS_API_KEY) for both
+// VUUM_GOOGLE_MAPS_API_KEY and GMSApiKey. Default is a non-functional placeholder.
+// Never put a real key in this file (it is committed).
+VUUM_GOOGLE_MAPS_API_KEY = YOUR_GOOGLE_MAPS_API_KEY
+
+// Optional override (gitignored): copy Secrets.example.xcconfig → Secrets.xcconfig
+// Codemagic also writes Secrets.xcconfig from secure env when the key is set.
+#include? "../../Secrets.xcconfig"

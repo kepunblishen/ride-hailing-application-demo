@@ -1,0 +1,18 @@
+---
+description: Never label the product experience as a demo in UI or user-facing copy
+alwaysApply: true
+---
+
+# No “demo” language in the product
+
+This is a client-facing ride-hailing app (**Vuum**). Treat every screen as a real product.
+
+## Never
+
+- Put “demo”, “Demo”, “(demo)”, “for demo”, or “placeholder” in **user-visible** UI strings (buttons, titles, empty states, alerts).
+- Explain mock/simulated behavior to the end user in the app.
+
+## OK
+
+- Internal code comments, docs, and Codemagic notes may mention mock/local data.
+- Non-functional controls (e.g. Continue with Google) simply do nothing — no toast that says “demo only”.

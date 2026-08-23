@@ -22,8 +22,25 @@
 	<string>1</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>googlechromes</string>
+		<string>comgooglemaps</string>
+	</array>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Vuum uses your location to show pickup points and trip progress on the map.</string>
+	<string>Vuum uses your location to find your pickup point and show nearby drivers.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Vuum can keep using your location during a trip so trusted contacts can follow your ride when you share trip status.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Safety recording is available only during an active trip. Audio stays on this device unless you keep it for an incident report, and your driver is notified while recording is on.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Vuum uses the camera for profile photos and optional safety features.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>Vuum uses motion data to improve pickup accuracy and understand how you are traveling.</string>
+	<key>VUUM_GOOGLE_MAPS_API_KEY</key>
+	<string>$(VUUM_GOOGLE_MAPS_API_KEY)</string>
+	<key>GMSApiKey</key>
+	<string>$(VUUM_GOOGLE_MAPS_API_KEY)</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

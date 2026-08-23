@@ -39,7 +39,7 @@ Maps/          MapBootstrap, VuumMapView (UIKit bridge)
 UI/Theme/      VuumColor, VuumTheme (+ ComponentsKit accent)
 UI/Components/ Glass, chrome buttons, UIKit share bridge
 UI/Flow/       Splash + flow scaffolds (to be polished)
-Assets         AppIcon + AccentColor
+Assets         AppIcon + AccentColor + SplashBackground (+ dark) + AuthIcon* imagesets (Google PNG; Apple/Email SF Symbol fallbacks)
 ```
 
 ### UI frameworks (from Wells scaffold + Vuum maps)

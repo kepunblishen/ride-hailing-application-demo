@@ -18,11 +18,34 @@ SwiftUI and UIKit ship with the iOS SDK. You do **not** install them separately.
 
 | File | Role |
 |------|------|
-| `UI/Theme/VuumTheme.swift` | Colors, page helpers, ComponentsKit accent bootstrap |
-| `UI/Components/VuumGlass.swift` | Liquid Glass / material surfaces (`VuumGlassSurface`) |
-| `UI/Components/VuumChrome.swift` | Primary buttons + bottom sheet chrome |
+| `UI/Theme/VuumTheme.swift` | `VuumColor`, `VuumLayout`, `VuumType`, page helpers, ComponentsKit accent bootstrap |
+| `UI/Components/VuumGlass.swift` | Restrained material surfaces (`VuumGlassSurface` panel / quiet) |
+| `UI/Components/VuumChrome.swift` | Primary/secondary buttons, sheet chrome, hub primitives |
 | `UI/Components/VuumUIKitBridge.swift` | Share sheet bridge |
 | `Maps/VuumMapView.swift` | Google Maps `UIViewRepresentable` |
+
+### Shared hub primitives
+
+Use these across Home / Services / Activity / Account / Payments so screens share one visual language:
+
+| Component | Use |
+|-----------|-----|
+| `VuumSectionHeader` | Section titles on hubs |
+| `VuumIconBadge` | Brand-tinted icon tiles in lists/grids |
+| `VuumHubCard` | Solid grouped cards (prefer over frosted glass on hubs) |
+| `VuumFilterChip` | Segmented time/product filters |
+| `VuumOfferBadge` | Restrained promo pills (brand amber, not red stickers) |
+| `VuumHubRowLabel` | Icon + title + subtitle rows |
+| `VuumSheetHandle` / `VuumSheetChrome` | Map-overlaid trip sheets |
+| `VuumPressStyle` | Shared press feedback |
+| `VuumPrimaryButton` | Brand CTA (rounded rect — not giant capsules everywhere) |
+
+### Design intent (directive §60–61 / Phase 10)
+
+- Keep brand amber `#F5A524` — do not invent a new palette
+- Map-first hierarchy; restrained sheets; solid cards on hubs
+- Avoid excessive frosted glass, huge gradients, and oversized display type
+- No “demo” badges in user-visible UI
 
 ---
 

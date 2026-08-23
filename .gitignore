@@ -22,3 +22,7 @@ reference/ComponentsKit/
 
 # Temporary source apps (remove after scaffolding)
 Wells-Gas-Level-Monitor-main/
+
+# Temp RFQ extract
+.tmp-rfq/
+

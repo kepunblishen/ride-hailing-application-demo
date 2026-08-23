@@ -1,27 +1,40 @@
 import SwiftUI
 
-/// Top-level navigator for the rider demo flow.
-/// Screens are filled in next; this only routes by `TripPhase`.
+/// Top-level navigator for the signed-in Home tab.
+/// Routes exclusively by `TripSession.phase` (single source of truth).
 struct RootFlowView: View {
     @EnvironmentObject private var tripSession: TripSession
 
     var body: some View {
-        Group {
+        ZStack {
             switch tripSession.phase {
             case .idle:
-                HomeMapScaffoldView()
+                HomeHubView()
+                    .transition(phaseTransition)
             case .selectingDestination:
                 DestinationScaffoldView()
+                    .transition(phaseTransition)
             case .choosingRide:
                 RideOptionsScaffoldView()
+                    .transition(phaseTransition)
             case .searching:
                 SearchingScaffoldView()
-            case .assigned, .inTrip:
+                    .transition(phaseTransition)
+            case .matched, .driverEnRoute, .driverArrived, .inTrip:
                 ActiveTripScaffoldView()
+                    .transition(phaseTransition)
             case .completed:
                 TripCompleteScaffoldView()
+                    .transition(phaseTransition)
             }
         }
-        .animation(.easeInOut(duration: 0.25), value: tripSession.phase)
+        .animation(.easeInOut(duration: 0.28), value: tripSession.phase)
+    }
+
+    private var phaseTransition: AnyTransition {
+        .asymmetric(
+            insertion: .opacity.combined(with: .move(edge: .trailing)).combined(with: .offset(y: 8)),
+            removal: .opacity.combined(with: .move(edge: .leading))
+        )
     }
 }

@@ -2,12 +2,35 @@
 
 SwiftUI target under `ios/Vuum/`.
 
-## Open on a Mac / Codemagic
+## Open on a Mac
 
 1. Open `ios/Vuum.xcodeproj`
-2. Resolve SPM packages (ComponentsKit + Google Maps SDK)
-3. Set `VUUM_GOOGLE_MAPS_API_KEY` in the Vuum scheme (optional for placeholder map)
+2. Resolve SPM packages (ComponentsKit, Google Maps SDK, KeychainSwift)
+3. Set Maps key (never commit a real key):
+   - Copy `Secrets.example.xcconfig` → `Secrets.xcconfig` (gitignored), **or**
+   - Xcode scheme **Vuum** → Run → Environment Variables → `VUUM_GOOGLE_MAPS_API_KEY`
 4. Run on simulator or device
+
+Details: [docs/GOOGLE_MAPS_SETUP.md](../docs/GOOGLE_MAPS_SETUP.md)
+
+## Codemagic / Sideloadly (no local Mac)
+
+CI workflow **`ios-release`** in repo-root [`codemagic.yaml`](../codemagic.yaml) builds an unsigned `build/Vuum.ipa`.
+
+1. Set Codemagic secure env `VUUM_GOOGLE_MAPS_API_KEY` (credential-only)
+2. Run the workflow → download IPA → install with Sideloadly
+
+Setup: [docs/CODEMAGIC_SETUP.md](../docs/CODEMAGIC_SETUP.md)
+
+Without the env var, CI still produces a valid IPA; the map surface stays unavailable until a key is injected.
+
+## Secrets.example.xcconfig
+
+| File | Tracked? | Role |
+|------|----------|------|
+| `ios/Secrets.example.xcconfig` | Yes | Template only (`YOUR_GOOGLE_MAPS_API_KEY`) |
+| `ios/Secrets.xcconfig` | No (gitignored) | Local or CI-generated real key |
+| `ios/Vuum/Config/Vuum.xcconfig` | Yes | `#include?` optional Secrets |
 
 ## Module map
 
@@ -16,7 +39,7 @@ SwiftUI target under `ios/Vuum/`.
 | App/ | Entry + root navigation |
 | Models/ | Trip domain types |
 | Services/ | `TripSession` state machine |
-| Mock/ | Demo places, drivers, fares |
+| Mock/ | Sample places, drivers, fares |
 | Maps/ | Google Maps bootstrap + UIKit map view |
 | UI/ | Theme, glass, chrome, UIKit bridges, flow scaffolds |
 

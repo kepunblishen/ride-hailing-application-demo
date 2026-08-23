@@ -1,4 +1,4 @@
-// !$*UTF8*$!
+﻿// !$*UTF8*$!
 {
 	archiveVersion = 1;
 	classes = {
@@ -20,11 +20,123 @@
 		R1000000000000000000000B /* SplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = R2000000000000000000000B /* SplashView.swift */; };
 		R1000000000000000000000C /* FlowScaffolds.swift in Sources */ = {isa = PBXBuildFile; fileRef = R2000000000000000000000C /* FlowScaffolds.swift */; };
 		R1000000000000000000000D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = R2000000000000000000000D /* Assets.xcassets */; };
+		LOC10000000000000000001 /* L10n.swift in Sources */ = {isa = PBXBuildFile; fileRef = LOC20000000000000000001 /* L10n.swift */; };
 		R1000000000000000000000E /* GoogleMaps in Frameworks */ = {isa = PBXBuildFile; productRef = R30000000000000000000001 /* GoogleMaps */; };
 		R1000000000000000000000F /* ComponentsKit in Frameworks */ = {isa = PBXBuildFile; productRef = R30000000000000000000002 /* ComponentsKit */; };
+		R10000000000000000000012 /* KeychainSwift in Frameworks */ = {isa = PBXBuildFile; productRef = R30000000000000000000003 /* KeychainSwift */; };
 		R10000000000000000000010 /* VuumGlass.swift in Sources */ = {isa = PBXBuildFile; fileRef = R20000000000000000000010 /* VuumGlass.swift */; };
 		R10000000000000000000011 /* VuumUIKitBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = R20000000000000000000011 /* VuumUIKitBridge.swift */; };
+		A10000000000000000000003 /* GetStartedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000003 /* GetStartedView.swift */; };
+		A10000000000000000000001 /* AuthChrome.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000001 /* AuthChrome.swift */; };
+		A10000000000000000000002 /* AuthFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000002 /* AuthFlowView.swift */; };
+		S10000000000000000000001 /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = S20000000000000000000001 /* SessionStore.swift */; };
+		M10000000000000000000001 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = M20000000000000000000001 /* MainTabView.swift */; };
+		F10000000000000000000001 /* ReferFriendsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000001 /* ReferFriendsView.swift */; };
+		M10000000000000000000002 /* HomeHubView.swift in Sources */ = {isa = PBXBuildFile; fileRef = M20000000000000000000002 /* HomeHubView.swift */; };
+		M10000000000000000000003 /* ServicesHubView.swift in Sources */ = {isa = PBXBuildFile; fileRef = M20000000000000000000003 /* ServicesHubView.swift */; };
+		M10000000000000000000004 /* SupportCenterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = M20000000000000000000004 /* SupportCenterView.swift */; };
+		M100000000000000000000A5 /* ActivityHubView.swift in Sources */ = {isa = PBXBuildFile; fileRef = M200000000000000000000A5 /* ActivityHubView.swift */; };
+		S10000000000000000000002 /* AuthFlowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = S20000000000000000000002 /* AuthFlowController.swift */; };
+		S10000000000000000000003 /* TripGeo.swift in Sources */ = {isa = PBXBuildFile; fileRef = S20000000000000000000003 /* TripGeo.swift */; };
+		S10000000000000000000004 /* RiderLocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = S20000000000000000000004 /* RiderLocationManager.swift */; };
+		S10000000000000000000005 /* PermissionCenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = S20000000000000000000005 /* PermissionCenter.swift */; };
+		S10000000000000000000006 /* TripAudioRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = S20000000000000000000006 /* TripAudioRecorder.swift */; };
+		S10000000000000000000007 /* TrustedContactsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = S20000000000000000000007 /* TrustedContactsStore.swift */; };
+		S10000000000000000000008 /* PlacesSearchService.swift in Sources */ = {isa = PBXBuildFile; fileRef = S20000000000000000000008 /* PlacesSearchService.swift */; };
+		S10000000000000000000009 /* SavedPlacesStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = S20000000000000000000009 /* SavedPlacesStore.swift */; };
+		S1000000000000000000000C /* RoutesAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = S2000000000000000000000C /* RoutesAPIService.swift */; };
+		S1000000000000000000000B /* PaymentMethodStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = S2000000000000000000000B /* PaymentMethodStore.swift */; };
+		PAY100000000000000000002 /* PaymentHubView.swift in Sources */ = {isa = PBXBuildFile; fileRef = PAY200000000000000000002 /* PaymentHubView.swift */; };
+		A10000000000000000000005 /* TermsAgreeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000005 /* TermsAgreeView.swift */; };
+		A10000000000000000000004 /* OTPVerifyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000004 /* OTPVerifyView.swift */; };
+		A10000000000000000000006 /* ConfirmInfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000006 /* ConfirmInfoView.swift */; };
+		A10000000000000000000007 /* WelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000007 /* WelcomeView.swift */; };
+		I10000000000000000000001 /* IncidentReportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = I20000000000000000000001 /* IncidentReportView.swift */; };
+		CHT100000000000000000001 /* DriverChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CHT200000000000000000001 /* DriverChatView.swift */; };
+		B10000000000000000000001 /* BusinessProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000001 /* BusinessProfileView.swift */; };
+		N10000000000000000000001 /* NotificationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = N20000000000000000000001 /* NotificationStore.swift */; };
+		N10000000000000000000002 /* NotificationInboxView.swift in Sources */ = {isa = PBXBuildFile; fileRef = N20000000000000000000002 /* NotificationInboxView.swift */; };
+		H10000000000000000000001 /* AccountHubView.swift in Sources */ = {isa = PBXBuildFile; fileRef = H20000000000000000000001 /* AccountHubView.swift */; };
+		H10000000000000000000002 /* SettingsListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = H20000000000000000000002 /* SettingsListView.swift */; };
+		H10000000000000000000003 /* CommunicationSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = H20000000000000000000003 /* CommunicationSettingsView.swift */; };
+		H10000000000000000000004 /* WalletSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = H20000000000000000000004 /* WalletSettingsView.swift */; };
+		H10000000000000000000005 /* PaymentMethodsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = H20000000000000000000005 /* PaymentMethodsView.swift */; };
+		H10000000000000000000006 /* SafetySettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = H20000000000000000000006 /* SafetySettingsView.swift */; };
+		H10000000000000000000007 /* TrustedContactsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = H20000000000000000000007 /* TrustedContactsView.swift */; };
+		H10000000000000000000008 /* SupportHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = H20000000000000000000008 /* SupportHomeView.swift */; };
+		H10000000000000000000009 /* AboutLegalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = H20000000000000000000009 /* AboutLegalView.swift */; };
+		H1000000000000000000000A /* AppPreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = H2000000000000000000000A /* AppPreferencesView.swift */; };
+		H1000000000000000000000B /* SavedPlacesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = H2000000000000000000000B /* SavedPlacesView.swift */; };
+		H1000000000000000000000C /* PrivacySettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = H2000000000000000000000C /* PrivacySettingsView.swift */; };
+		H1000000000000000000000D /* PersonalInfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = H2000000000000000000000D /* PersonalInfoView.swift */; };
+		S1000000000000000000000A /* AppLocale.swift in Sources */ = {isa = PBXBuildFile; fileRef = S2000000000000000000000A /* AppLocale.swift */; };
+		PRD100000000000000000001 /* ProductBookingForm.swift in Sources */ = {isa = PBXBuildFile; fileRef = PRD200000000000000000001 /* ProductBookingForm.swift */; };
+		PRD100000000000000000002 /* CourierProductSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = PRD200000000000000000002 /* CourierProductSheet.swift */; };
+		PRD100000000000000000003 /* HourlyProductSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = PRD200000000000000000003 /* HourlyProductSheet.swift */; };
+		PRD100000000000000000004 /* GroupRideProductSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = PRD200000000000000000004 /* GroupRideProductSheet.swift */; };
+		PRD100000000000000000005 /* TwoWheelsProductSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = PRD200000000000000000005 /* TwoWheelsProductSheet.swift */; };
+		PRD100000000000000000006 /* AirportProductSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = PRD200000000000000000006 /* AirportProductSheet.swift */; };
+		PRD100000000000000000007 /* ExecutiveProductSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = PRD200000000000000000007 /* ExecutiveProductSheet.swift */; };
+		PRD100000000000000000008 /* GroceryProductSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = PRD200000000000000000008 /* GroceryProductSheet.swift */; };
+		PRD100000000000000000009 /* HotelTransferProductSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = PRD200000000000000000009 /* HotelTransferProductSheet.swift */; };
+		PRD10000000000000000000A /* FoodProductSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = PRD20000000000000000000A /* FoodProductSheet.swift */; };
+		PRD10000000000000000000B /* ConvenienceProductSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = PRD20000000000000000000B /* ConvenienceProductSheet.swift */; };
+		PRD10000000000000000000C /* AlcoholProductSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = PRD20000000000000000000C /* AlcoholProductSheet.swift */; };
+		PRD10000000000000000000D /* HealthProductSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = PRD20000000000000000000D /* HealthProductSheet.swift */; };
+		USS100000000000000000001 /* USSDBookingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = USS200000000000000000001 /* USSDBookingView.swift */; };
+		B10000000000000000000002 /* CorporateOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000002 /* CorporateOnboardingView.swift */; };
+		B10000000000000000000003 /* BankReferenceTopUpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000003 /* BankReferenceTopUpView.swift */; };
+		SVC1A2900B /* TripEmissions.swift in Sources */ = {isa = PBXBuildFile; fileRef = SVC2A2900B /* TripEmissions.swift */; };
+		SVC1A2900C /* SafetyAutoActivation.swift in Sources */ = {isa = PBXBuildFile; fileRef = SVC2A2900C /* SafetyAutoActivation.swift */; };
+		MAP100000000000000000001 /* DirectionsRouteService.swift in Sources */ = {isa = PBXBuildFile; fileRef = MAP200000000000000000001 /* DirectionsRouteService.swift */; };
+		MAP100000000000000000002 /* RouteEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = MAP200000000000000000002 /* RouteEngine.swift */; };
+		S1000000000000000000000D /* PromoCodesStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = S2000000000000000000000D /* PromoCodesStore.swift */; };
+		S1000000000000000000000E /* TripMotionTiming.swift in Sources */ = {isa = PBXBuildFile; fileRef = S2000000000000000000000E /* TripMotionTiming.swift */; };
+		S1000000000000000000000F /* NetworkReachability.swift in Sources */ = {isa = PBXBuildFile; fileRef = S2000000000000000000000F /* NetworkReachability.swift */; };
+		CMP100000000000000000001 /* VuumStatusViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = CMP200000000000000000001 /* VuumStatusViews.swift */; };
+		S10000000000000000000010 /* PaymentProviders.swift in Sources */ = {isa = PBXBuildFile; fileRef = S20000000000000000000010 /* PaymentProviders.swift */; };
+		S10000000000000000000011 /* ReverseGeocodingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = S20000000000000000000011 /* ReverseGeocodingService.swift */; };
+		CMP100000000000000000002 /* DriverCardViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = CMP200000000000000000002 /* DriverCardViews.swift */; };
+		FLO100000000000000000001 /* LiveTripComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = FLO200000000000000000001 /* LiveTripComponents.swift */; };
+		MDL1A29001 /* FieldSalesModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = MDL2A29001 /* FieldSalesModels.swift */; };
+		MDL1A29002 /* Money.swift in Sources */ = {isa = PBXBuildFile; fileRef = MDL2A29002 /* Money.swift */; };
+		SVC1A29006 /* PricingEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = SVC2A29006 /* PricingEngine.swift */; };
+		MDL1A29003 /* ServiceZone.swift in Sources */ = {isa = PBXBuildFile; fileRef = MDL2A29003 /* ServiceZone.swift */; };
+		SVC1A29004 /* DeveloperDiagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = SVC2A29004 /* DeveloperDiagnostics.swift */; };
+		SVC1A29005 /* FieldSalesStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = SVC2A29005 /* FieldSalesStore.swift */; };
+		SVC1A29007 /* ReservedTripStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = SVC2A29007 /* ReservedTripStore.swift */; };
+		SVC1A29009 /* ServiceZoneCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = SVC2A29009 /* ServiceZoneCatalog.swift */; };
+		SVC1A2900A /* RouteDeviationMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = SVC2A2900A /* RouteDeviationMonitor.swift */; };
+		FLW1A29010 /* ActiveTripFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FLW2A29010 /* ActiveTripFlowView.swift */; };
+		FLW1A29011 /* CancelTripSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = FLW2A29011 /* CancelTripSheet.swift */; };
+		FLW1A29012 /* PostTripCompleteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FLW2A29012 /* PostTripCompleteView.swift */; };
+		FLW1A29013 /* SearchingFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FLW2A29013 /* SearchingFlowView.swift */; };
+		FLW1A29014 /* TripCompleteFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FLW2A29014 /* TripCompleteFlowView.swift */; };
+		FLW1A29015 /* ChangeDestinationSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = FLW2A29015 /* ChangeDestinationSheet.swift */; };
+		FLW1A29016 /* SafetyToolkitView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FLW2A29016 /* SafetyToolkitView.swift */; };
+		FLW1A29017 /* SOSConfirmationSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = FLW2A29017 /* SOSConfirmationSheet.swift */; };
+		ACC1A29015 /* DiagnosticsToolsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC2A29015 /* DiagnosticsToolsView.swift */; };
+		ACC1A29016 /* SecuritySettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC2A29016 /* SecuritySettingsView.swift */; };
+		T10000000000000000000001 /* TripSessionPhaseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = T20000000000000000000001 /* TripSessionPhaseTests.swift */; };
+		T10000000000000000000002 /* VehiclePickupETATests.swift in Sources */ = {isa = PBXBuildFile; fileRef = T20000000000000000000002 /* VehiclePickupETATests.swift */; };
+		T10000000000000000000003 /* FarePromoMathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = T20000000000000000000003 /* FarePromoMathTests.swift */; };
+		T10000000000000000000004 /* AuthOTPValidationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = T20000000000000000000004 /* AuthOTPValidationTests.swift */; };
+		T10000000000000000000005 /* CurrencyMoneyFormattingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = T20000000000000000000005 /* CurrencyMoneyFormattingTests.swift */; };
+		T10000000000000000000006 /* PaymentReferralEligibilityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = T20000000000000000000006 /* PaymentReferralEligibilityTests.swift */; };
+		T10000000000000000000007 /* TripSessionLifecyclePhaseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = T20000000000000000000007 /* TripSessionLifecyclePhaseTests.swift */; };
+		T10000000000000000000008 /* RouteDeviationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = T20000000000000000000008 /* RouteDeviationTests.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		T50000000000000000000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = R00000000000000000000006 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = R00000000000000000000005;
+			remoteInfo = Vuum;
+		};
+/* End PBXContainerItemProxy section */
+
 
 /* Begin PBXFileReference section */
 		R00000000000000000000010 /* Vuum.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Vuum.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -41,9 +153,112 @@
 		R2000000000000000000000B /* SplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashView.swift; sourceTree = "<group>"; };
 		R2000000000000000000000C /* FlowScaffolds.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowScaffolds.swift; sourceTree = "<group>"; };
 		R2000000000000000000000D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		LOC20000000000000000001 /* L10n.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = L10n.swift; sourceTree = "<group>"; };
 		R2000000000000000000000E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		R20000000000000000000010 /* VuumGlass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VuumGlass.swift; sourceTree = "<group>"; };
 		R20000000000000000000011 /* VuumUIKitBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VuumUIKitBridge.swift; sourceTree = "<group>"; };
+		A20000000000000000000003 /* GetStartedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GetStartedView.swift; sourceTree = "<group>"; };
+		A20000000000000000000001 /* AuthChrome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthChrome.swift; sourceTree = "<group>"; };
+		A20000000000000000000002 /* AuthFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthFlowView.swift; sourceTree = "<group>"; };
+		S20000000000000000000001 /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
+		M20000000000000000000001 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
+		F20000000000000000000001 /* ReferFriendsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReferFriendsView.swift; sourceTree = "<group>"; };
+		M20000000000000000000002 /* HomeHubView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeHubView.swift; sourceTree = "<group>"; };
+		M20000000000000000000003 /* ServicesHubView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServicesHubView.swift; sourceTree = "<group>"; };
+		M20000000000000000000004 /* SupportCenterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportCenterView.swift; sourceTree = "<group>"; };
+		M200000000000000000000A5 /* ActivityHubView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityHubView.swift; sourceTree = "<group>"; };
+		S20000000000000000000002 /* AuthFlowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthFlowController.swift; sourceTree = "<group>"; };
+		S20000000000000000000003 /* TripGeo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripGeo.swift; sourceTree = "<group>"; };
+		S20000000000000000000004 /* RiderLocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RiderLocationManager.swift; sourceTree = "<group>"; };
+		S20000000000000000000005 /* PermissionCenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionCenter.swift; sourceTree = "<group>"; };
+		S20000000000000000000006 /* TripAudioRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripAudioRecorder.swift; sourceTree = "<group>"; };
+		S20000000000000000000007 /* TrustedContactsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrustedContactsStore.swift; sourceTree = "<group>"; };
+		S20000000000000000000008 /* PlacesSearchService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlacesSearchService.swift; sourceTree = "<group>"; };
+		S20000000000000000000009 /* SavedPlacesStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedPlacesStore.swift; sourceTree = "<group>"; };
+		S2000000000000000000000C /* RoutesAPIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutesAPIService.swift; sourceTree = "<group>"; };
+		S2000000000000000000000A /* AppLocale.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLocale.swift; sourceTree = "<group>"; };
+		S2000000000000000000000B /* PaymentMethodStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentMethodStore.swift; sourceTree = "<group>"; };
+		PAY200000000000000000002 /* PaymentHubView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentHubView.swift; sourceTree = "<group>"; };
+
+		C20000000000000000000001 /* Vuum.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Vuum.xcconfig; sourceTree = "<group>"; };
+		A20000000000000000000005 /* TermsAgreeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TermsAgreeView.swift; sourceTree = "<group>"; };
+		A20000000000000000000004 /* OTPVerifyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OTPVerifyView.swift; sourceTree = "<group>"; };
+		A20000000000000000000006 /* ConfirmInfoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfirmInfoView.swift; sourceTree = "<group>"; };
+		A20000000000000000000007 /* WelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeView.swift; sourceTree = "<group>"; };
+		B20000000000000000000001 /* BusinessProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BusinessProfileView.swift; sourceTree = "<group>"; };
+		N20000000000000000000001 /* NotificationStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationStore.swift; sourceTree = "<group>"; };
+		N20000000000000000000002 /* NotificationInboxView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationInboxView.swift; sourceTree = "<group>"; };
+		H20000000000000000000001 /* AccountHubView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountHubView.swift; sourceTree = "<group>"; };
+		H20000000000000000000002 /* SettingsListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsListView.swift; sourceTree = "<group>"; };
+		H20000000000000000000003 /* CommunicationSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommunicationSettingsView.swift; sourceTree = "<group>"; };
+		H20000000000000000000004 /* WalletSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletSettingsView.swift; sourceTree = "<group>"; };
+		H20000000000000000000005 /* PaymentMethodsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentMethodsView.swift; sourceTree = "<group>"; };
+		H20000000000000000000006 /* SafetySettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SafetySettingsView.swift; sourceTree = "<group>"; };
+		H20000000000000000000007 /* TrustedContactsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrustedContactsView.swift; sourceTree = "<group>"; };
+		H20000000000000000000008 /* SupportHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportHomeView.swift; sourceTree = "<group>"; };
+		H20000000000000000000009 /* AboutLegalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutLegalView.swift; sourceTree = "<group>"; };
+		H2000000000000000000000A /* AppPreferencesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPreferencesView.swift; sourceTree = "<group>"; };
+		H2000000000000000000000B /* SavedPlacesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedPlacesView.swift; sourceTree = "<group>"; };
+		H2000000000000000000000C /* PrivacySettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivacySettingsView.swift; sourceTree = "<group>"; };
+		H2000000000000000000000D /* PersonalInfoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonalInfoView.swift; sourceTree = "<group>"; };
+		I20000000000000000000001 /* IncidentReportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IncidentReportView.swift; sourceTree = "<group>"; };
+		CHT200000000000000000001 /* DriverChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DriverChatView.swift; sourceTree = "<group>"; };
+		PRD200000000000000000001 /* ProductBookingForm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductBookingForm.swift; sourceTree = "<group>"; };
+		PRD200000000000000000002 /* CourierProductSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourierProductSheet.swift; sourceTree = "<group>"; };
+		PRD200000000000000000003 /* HourlyProductSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HourlyProductSheet.swift; sourceTree = "<group>"; };
+		PRD200000000000000000004 /* GroupRideProductSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupRideProductSheet.swift; sourceTree = "<group>"; };
+		PRD200000000000000000005 /* TwoWheelsProductSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TwoWheelsProductSheet.swift; sourceTree = "<group>"; };
+		PRD200000000000000000006 /* AirportProductSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AirportProductSheet.swift; sourceTree = "<group>"; };
+		PRD200000000000000000007 /* ExecutiveProductSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExecutiveProductSheet.swift; sourceTree = "<group>"; };
+		PRD200000000000000000008 /* GroceryProductSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroceryProductSheet.swift; sourceTree = "<group>"; };
+		PRD200000000000000000009 /* HotelTransferProductSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotelTransferProductSheet.swift; sourceTree = "<group>"; };
+		PRD20000000000000000000A /* FoodProductSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodProductSheet.swift; sourceTree = "<group>"; };
+		PRD20000000000000000000B /* ConvenienceProductSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConvenienceProductSheet.swift; sourceTree = "<group>"; };
+		PRD20000000000000000000C /* AlcoholProductSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlcoholProductSheet.swift; sourceTree = "<group>"; };
+		PRD20000000000000000000D /* HealthProductSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthProductSheet.swift; sourceTree = "<group>"; };
+		USS200000000000000000001 /* USSDBookingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = USSDBookingView.swift; sourceTree = "<group>"; };
+		B20000000000000000000002 /* CorporateOnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CorporateOnboardingView.swift; sourceTree = "<group>"; };
+		B20000000000000000000003 /* BankReferenceTopUpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BankReferenceTopUpView.swift; sourceTree = "<group>"; };
+		SVC2A2900B /* TripEmissions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripEmissions.swift; sourceTree = "<group>"; };
+		SVC2A2900C /* SafetyAutoActivation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SafetyAutoActivation.swift; sourceTree = "<group>"; };
+		MAP200000000000000000001 /* DirectionsRouteService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DirectionsRouteService.swift; sourceTree = "<group>"; };
+		MAP200000000000000000002 /* RouteEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteEngine.swift; sourceTree = "<group>"; };
+		S2000000000000000000000D /* PromoCodesStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromoCodesStore.swift; sourceTree = "<group>"; };
+		S2000000000000000000000E /* TripMotionTiming.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripMotionTiming.swift; sourceTree = "<group>"; };
+		S2000000000000000000000F /* NetworkReachability.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkReachability.swift; sourceTree = "<group>"; };
+		CMP200000000000000000001 /* VuumStatusViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VuumStatusViews.swift; sourceTree = "<group>"; };
+		S20000000000000000000010 /* PaymentProviders.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentProviders.swift; sourceTree = "<group>"; };
+		S20000000000000000000011 /* ReverseGeocodingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReverseGeocodingService.swift; sourceTree = "<group>"; };
+		CMP200000000000000000002 /* DriverCardViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DriverCardViews.swift; sourceTree = "<group>"; };
+		FLO200000000000000000001 /* LiveTripComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveTripComponents.swift; sourceTree = "<group>"; };
+		MDL2A29001 /* FieldSalesModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FieldSalesModels.swift; sourceTree = "<group>"; };
+		MDL2A29002 /* Money.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Money.swift; sourceTree = "<group>"; };
+		SVC2A29006 /* PricingEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PricingEngine.swift; sourceTree = "<group>"; };
+		MDL2A29003 /* ServiceZone.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceZone.swift; sourceTree = "<group>"; };
+		SVC2A29004 /* DeveloperDiagnostics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeveloperDiagnostics.swift; sourceTree = "<group>"; };
+		SVC2A29005 /* FieldSalesStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FieldSalesStore.swift; sourceTree = "<group>"; };
+		SVC2A29007 /* ReservedTripStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReservedTripStore.swift; sourceTree = "<group>"; };
+		SVC2A29009 /* ServiceZoneCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceZoneCatalog.swift; sourceTree = "<group>"; };
+		SVC2A2900A /* RouteDeviationMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteDeviationMonitor.swift; sourceTree = "<group>"; };
+		FLW2A29010 /* ActiveTripFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActiveTripFlowView.swift; sourceTree = "<group>"; };
+		FLW2A29011 /* CancelTripSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CancelTripSheet.swift; sourceTree = "<group>"; };
+		FLW2A29012 /* PostTripCompleteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostTripCompleteView.swift; sourceTree = "<group>"; };
+		FLW2A29013 /* SearchingFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchingFlowView.swift; sourceTree = "<group>"; };
+		FLW2A29014 /* TripCompleteFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripCompleteFlowView.swift; sourceTree = "<group>"; };
+		FLW2A29015 /* ChangeDestinationSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangeDestinationSheet.swift; sourceTree = "<group>"; };
+		FLW2A29016 /* SafetyToolkitView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SafetyToolkitView.swift; sourceTree = "<group>"; };
+		FLW2A29017 /* SOSConfirmationSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SOSConfirmationSheet.swift; sourceTree = "<group>"; };
+		ACC2A29015 /* DiagnosticsToolsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticsToolsView.swift; sourceTree = "<group>"; };
+		ACC2A29016 /* SecuritySettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecuritySettingsView.swift; sourceTree = "<group>"; };
+		T00000000000000000000010 /* VuumTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VuumTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		T20000000000000000000001 /* TripSessionPhaseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripSessionPhaseTests.swift; sourceTree = "<group>"; };
+		T20000000000000000000002 /* VehiclePickupETATests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VehiclePickupETATests.swift; sourceTree = "<group>"; };
+		T20000000000000000000003 /* FarePromoMathTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FarePromoMathTests.swift; sourceTree = "<group>"; };
+		T20000000000000000000004 /* AuthOTPValidationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthOTPValidationTests.swift; sourceTree = "<group>"; };
+		T20000000000000000000005 /* CurrencyMoneyFormattingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurrencyMoneyFormattingTests.swift; sourceTree = "<group>"; };
+		T20000000000000000000006 /* PaymentReferralEligibilityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentReferralEligibilityTests.swift; sourceTree = "<group>"; };
+		T20000000000000000000007 /* TripSessionLifecyclePhaseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripSessionLifecyclePhaseTests.swift; sourceTree = "<group>"; };
+		T20000000000000000000008 /* RouteDeviationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteDeviationTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -53,6 +268,14 @@
 			files = (
 				R1000000000000000000000E /* GoogleMaps in Frameworks */,
 				R1000000000000000000000F /* ComponentsKit in Frameworks */,
+				R10000000000000000000012 /* KeychainSwift in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		T00000000000000000000008 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -63,6 +286,7 @@
 			isa = PBXGroup;
 			children = (
 				R00000000000000000000011 /* Vuum */,
+				T00000000000000000000011 /* VuumTests */,
 				R00000000000000000000004 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -71,8 +295,24 @@
 			isa = PBXGroup;
 			children = (
 				R00000000000000000000010 /* Vuum.app */,
+				T00000000000000000000010 /* VuumTests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		T00000000000000000000011 /* VuumTests */ = {
+			isa = PBXGroup;
+			children = (
+				T20000000000000000000001 /* TripSessionPhaseTests.swift */,
+				T20000000000000000000002 /* VehiclePickupETATests.swift */,
+				T20000000000000000000003 /* FarePromoMathTests.swift */,
+				T20000000000000000000004 /* AuthOTPValidationTests.swift */,
+				T20000000000000000000005 /* CurrencyMoneyFormattingTests.swift */,
+				T20000000000000000000006 /* PaymentReferralEligibilityTests.swift */,
+				T20000000000000000000007 /* TripSessionLifecyclePhaseTests.swift */,
+				T20000000000000000000008 /* RouteDeviationTests.swift */,
+			);
+			path = VuumTests;
 			sourceTree = "<group>";
 		};
 		R00000000000000000000011 /* Vuum */ = {
@@ -84,10 +324,28 @@
 				R00000000000000000000018 /* Mock */,
 				R00000000000000000000019 /* Maps */,
 				R0000000000000000000001A /* UI */,
+				L00000000000000000000001 /* Resources */,
+				C00000000000000000000001 /* Config */,
 				R2000000000000000000000D /* Assets.xcassets */,
 				R2000000000000000000000E /* Info.plist */,
 			);
 			path = Vuum;
+			sourceTree = "<group>";
+		};
+		L00000000000000000000001 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				LOC20000000000000000001 /* L10n.swift */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		C00000000000000000000001 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				C20000000000000000000001 /* Vuum.xcconfig */,
+			);
+			path = Config;
 			sourceTree = "<group>";
 		};
 		R00000000000000000000015 /* App */ = {
@@ -104,6 +362,9 @@
 			isa = PBXGroup;
 			children = (
 				R20000000000000000000004 /* TripModels.swift */,
+				MDL2A29001 /* FieldSalesModels.swift */,
+				MDL2A29002 /* Money.swift */,
+				MDL2A29003 /* ServiceZone.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -111,7 +372,33 @@
 		R00000000000000000000017 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				S20000000000000000000001 /* SessionStore.swift */,
+				S20000000000000000000002 /* AuthFlowController.swift */,
+				S2000000000000000000000B /* PaymentMethodStore.swift */,
+				S20000000000000000000010 /* PaymentProviders.swift */,
 				R20000000000000000000005 /* TripSession.swift */,
+				S20000000000000000000003 /* TripGeo.swift */,
+				S20000000000000000000004 /* RiderLocationManager.swift */,
+				S20000000000000000000005 /* PermissionCenter.swift */,
+				S20000000000000000000006 /* TripAudioRecorder.swift */,
+				S20000000000000000000007 /* TrustedContactsStore.swift */,
+				S20000000000000000000008 /* PlacesSearchService.swift */,
+				S20000000000000000000011 /* ReverseGeocodingService.swift */,
+				S20000000000000000000009 /* SavedPlacesStore.swift */,
+				S2000000000000000000000C /* RoutesAPIService.swift */,
+				S2000000000000000000000D /* PromoCodesStore.swift */,
+				S2000000000000000000000E /* TripMotionTiming.swift */,
+				S2000000000000000000000F /* NetworkReachability.swift */,
+				S2000000000000000000000A /* AppLocale.swift */,
+				SVC2A29006 /* PricingEngine.swift */,
+				N20000000000000000000001 /* NotificationStore.swift */,
+				SVC2A29004 /* DeveloperDiagnostics.swift */,
+				SVC2A29005 /* FieldSalesStore.swift */,
+				SVC2A29007 /* ReservedTripStore.swift */,
+				SVC2A29009 /* ServiceZoneCatalog.swift */,
+				SVC2A2900A /* RouteDeviationMonitor.swift */,
+				SVC2A2900B /* TripEmissions.swift */,
+				SVC2A2900C /* SafetyAutoActivation.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -129,6 +416,8 @@
 			children = (
 				R20000000000000000000007 /* MapBootstrap.swift */,
 				R20000000000000000000008 /* VuumMapView.swift */,
+				MAP200000000000000000001 /* DirectionsRouteService.swift */,
+				MAP200000000000000000002 /* RouteEngine.swift */,
 			);
 			path = Maps;
 			sourceTree = "<group>";
@@ -136,6 +425,8 @@
 		R0000000000000000000001A /* UI */ = {
 			isa = PBXGroup;
 			children = (
+				R0000000000000000000001E /* Auth */,
+				R0000000000000000000001F /* Main */,
 				R0000000000000000000001B /* Theme */,
 				R0000000000000000000001C /* Components */,
 				R0000000000000000000001D /* Flow */,
@@ -157,6 +448,8 @@
 				R2000000000000000000000A /* VuumChrome.swift */,
 				R20000000000000000000010 /* VuumGlass.swift */,
 				R20000000000000000000011 /* VuumUIKitBridge.swift */,
+				CMP200000000000000000001 /* VuumStatusViews.swift */,
+				CMP200000000000000000002 /* DriverCardViews.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -166,8 +459,128 @@
 			children = (
 				R2000000000000000000000B /* SplashView.swift */,
 				R2000000000000000000000C /* FlowScaffolds.swift */,
+				FLO200000000000000000001 /* LiveTripComponents.swift */,
+				CHT200000000000000000001 /* DriverChatView.swift */,
+				I20000000000000000000001 /* IncidentReportView.swift */,
+				FLW2A29010 /* ActiveTripFlowView.swift */,
+				FLW2A29011 /* CancelTripSheet.swift */,
+				FLW2A29012 /* PostTripCompleteView.swift */,
+				FLW2A29013 /* SearchingFlowView.swift */,
+				FLW2A29014 /* TripCompleteFlowView.swift */,
+				FLW2A29015 /* ChangeDestinationSheet.swift */,
+				FLW2A29016 /* SafetyToolkitView.swift */,
+				FLW2A29017 /* SOSConfirmationSheet.swift */,
 			);
 			path = Flow;
+			sourceTree = "<group>";
+		};
+		R0000000000000000000001E /* Auth */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000001 /* AuthChrome.swift */,
+				A20000000000000000000002 /* AuthFlowView.swift */,
+				A20000000000000000000003 /* GetStartedView.swift */,
+				A20000000000000000000004 /* OTPVerifyView.swift */,
+				A20000000000000000000005 /* TermsAgreeView.swift */,
+				A20000000000000000000006 /* ConfirmInfoView.swift */,
+				A20000000000000000000007 /* WelcomeView.swift */,
+			);
+			path = Auth;
+			sourceTree = "<group>";
+		};
+		PAY000000000000000000001 /* Payments */ = {
+			isa = PBXGroup;
+			children = (
+				PAY200000000000000000002 /* PaymentHubView.swift */,
+			);
+			path = Payments;
+			sourceTree = "<group>";
+		};
+		R0000000000000000000001F /* Main */ = {
+			isa = PBXGroup;
+			children = (
+				M20000000000000000000001 /* MainTabView.swift */,
+				M200000000000000000000A5 /* ActivityHubView.swift */,
+				N20000000000000000000002 /* NotificationInboxView.swift */,
+				M20000000000000000000002 /* HomeHubView.swift */,
+				M20000000000000000000003 /* ServicesHubView.swift */,
+				USS200000000000000000001 /* USSDBookingView.swift */,
+				P00000000000000000000001 /* Products */,
+				PAY000000000000000000001 /* Payments */,
+				H00000000000000000000001 /* Account */,
+				M00000000000000000000020 /* Support */,
+				B00000000000000000000001 /* Corporate */,
+				F00000000000000000000001 /* Referrals */,
+			);
+			path = Main;
+			sourceTree = "<group>";
+		};
+		P00000000000000000000001 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				PRD200000000000000000001 /* ProductBookingForm.swift */,
+				PRD200000000000000000002 /* CourierProductSheet.swift */,
+				PRD200000000000000000003 /* HourlyProductSheet.swift */,
+				PRD200000000000000000004 /* GroupRideProductSheet.swift */,
+				PRD200000000000000000005 /* TwoWheelsProductSheet.swift */,
+				PRD200000000000000000006 /* AirportProductSheet.swift */,
+				PRD200000000000000000007 /* ExecutiveProductSheet.swift */,
+				PRD200000000000000000008 /* GroceryProductSheet.swift */,
+				PRD200000000000000000009 /* HotelTransferProductSheet.swift */,
+				PRD20000000000000000000A /* FoodProductSheet.swift */,
+				PRD20000000000000000000B /* ConvenienceProductSheet.swift */,
+				PRD20000000000000000000C /* AlcoholProductSheet.swift */,
+				PRD20000000000000000000D /* HealthProductSheet.swift */,
+			);
+			path = Products;
+			sourceTree = "<group>";
+		};
+		H00000000000000000000001 /* Account */ = {
+			isa = PBXGroup;
+			children = (
+				H20000000000000000000001 /* AccountHubView.swift */,
+				H20000000000000000000002 /* SettingsListView.swift */,
+				H20000000000000000000003 /* CommunicationSettingsView.swift */,
+				H20000000000000000000004 /* WalletSettingsView.swift */,
+				H20000000000000000000005 /* PaymentMethodsView.swift */,
+				H20000000000000000000006 /* SafetySettingsView.swift */,
+				H20000000000000000000007 /* TrustedContactsView.swift */,
+				H20000000000000000000008 /* SupportHomeView.swift */,
+				H20000000000000000000009 /* AboutLegalView.swift */,
+				H2000000000000000000000A /* AppPreferencesView.swift */,
+				H2000000000000000000000B /* SavedPlacesView.swift */,
+				H2000000000000000000000C /* PrivacySettingsView.swift */,
+				H2000000000000000000000D /* PersonalInfoView.swift */,
+				ACC2A29015 /* DiagnosticsToolsView.swift */,
+				ACC2A29016 /* SecuritySettingsView.swift */,
+			);
+			path = Account;
+			sourceTree = "<group>";
+		};
+		F00000000000000000000001 /* Referrals */ = {
+			isa = PBXGroup;
+			children = (
+				F20000000000000000000001 /* ReferFriendsView.swift */,
+			);
+			path = Referrals;
+			sourceTree = "<group>";
+		};
+		B00000000000000000000001 /* Corporate */ = {
+			isa = PBXGroup;
+			children = (
+				B20000000000000000000001 /* BusinessProfileView.swift */,
+				B20000000000000000000002 /* CorporateOnboardingView.swift */,
+				B20000000000000000000003 /* BankReferenceTopUpView.swift */,
+			);
+			path = Corporate;
+			sourceTree = "<group>";
+		};
+		M00000000000000000000020 /* Support */ = {
+			isa = PBXGroup;
+			children = (
+				M20000000000000000000004 /* SupportCenterView.swift */,
+			);
+			path = Support;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -189,10 +602,29 @@
 			packageProductDependencies = (
 				R30000000000000000000001 /* GoogleMaps */,
 				R30000000000000000000002 /* ComponentsKit */,
+				R30000000000000000000003 /* KeychainSwift */,
 			);
 			productName = Vuum;
 			productReference = R00000000000000000000010 /* Vuum.app */;
 			productType = "com.apple.product-type.application";
+		};
+		T00000000000000000000005 /* VuumTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = T0000000000000000000000F /* Build configuration list for PBXNativeTarget "VuumTests" */;
+			buildPhases = (
+				T00000000000000000000007 /* Sources */,
+				T00000000000000000000008 /* Frameworks */,
+				T00000000000000000000009 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				T60000000000000000000001 /* PBXTargetDependency */,
+			);
+			name = VuumTests;
+			productName = VuumTests;
+			productReference = T00000000000000000000010 /* VuumTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
 
@@ -206,6 +638,10 @@
 				TargetAttributes = {
 					R00000000000000000000005 = {
 						CreatedOnToolsVersion = 16.0;
+					};
+					T00000000000000000000005 = {
+						CreatedOnToolsVersion = 16.0;
+						TestTargetID = R00000000000000000000005;
 					};
 				};
 			};
@@ -221,12 +657,14 @@
 			packageReferences = (
 				R40000000000000000000001 /* XCRemoteSwiftPackageReference "ios-maps-sdk" */,
 				R40000000000000000000002 /* XCRemoteSwiftPackageReference "ComponentsKit" */,
+				R40000000000000000000003 /* XCRemoteSwiftPackageReference "keychain-swift" */,
 			);
 			productRefGroup = R00000000000000000000004 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
 				R00000000000000000000005 /* Vuum */,
+				T00000000000000000000005 /* VuumTests */,
 			);
 		};
 /* End PBXProject section */
@@ -237,6 +675,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				R1000000000000000000000D /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		T00000000000000000000009 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -251,20 +696,138 @@
 				R10000000000000000000002 /* ContentView.swift in Sources */,
 				R10000000000000000000003 /* RootFlowView.swift in Sources */,
 				R10000000000000000000004 /* TripModels.swift in Sources */,
+				LOC10000000000000000001 /* L10n.swift in Sources */,
+				S1000000000000000000000A /* AppLocale.swift in Sources */,
 				R10000000000000000000005 /* TripSession.swift in Sources */,
 				R10000000000000000000006 /* MockCatalog.swift in Sources */,
 				R10000000000000000000007 /* MapBootstrap.swift in Sources */,
 				R10000000000000000000008 /* VuumMapView.swift in Sources */,
+				MAP100000000000000000001 /* DirectionsRouteService.swift in Sources */,
+				MAP100000000000000000002 /* RouteEngine.swift in Sources */,
 				R10000000000000000000009 /* VuumTheme.swift in Sources */,
 				R1000000000000000000000A /* VuumChrome.swift in Sources */,
 				R10000000000000000000010 /* VuumGlass.swift in Sources */,
 				R10000000000000000000011 /* VuumUIKitBridge.swift in Sources */,
+				CMP100000000000000000001 /* VuumStatusViews.swift in Sources */,
+				CMP100000000000000000002 /* DriverCardViews.swift in Sources */,
 				R1000000000000000000000B /* SplashView.swift in Sources */,
 				R1000000000000000000000C /* FlowScaffolds.swift in Sources */,
+				FLO100000000000000000001 /* LiveTripComponents.swift in Sources */,
+				CHT100000000000000000001 /* DriverChatView.swift in Sources */,
+				I10000000000000000000001 /* IncidentReportView.swift in Sources */,
+				A10000000000000000000003 /* GetStartedView.swift in Sources */,
+				A10000000000000000000001 /* AuthChrome.swift in Sources */,
+				A10000000000000000000002 /* AuthFlowView.swift in Sources */,
+				S10000000000000000000001 /* SessionStore.swift in Sources */,
+				M10000000000000000000001 /* MainTabView.swift in Sources */,
+				M100000000000000000000A5 /* ActivityHubView.swift in Sources */,
+				F10000000000000000000001 /* ReferFriendsView.swift in Sources */,
+				M10000000000000000000002 /* HomeHubView.swift in Sources */,
+				M10000000000000000000003 /* ServicesHubView.swift in Sources */,
+				M10000000000000000000004 /* SupportCenterView.swift in Sources */,
+				B10000000000000000000001 /* BusinessProfileView.swift in Sources */,
+				S10000000000000000000002 /* AuthFlowController.swift in Sources */,
+				S1000000000000000000000B /* PaymentMethodStore.swift in Sources */,
+				PAY100000000000000000002 /* PaymentHubView.swift in Sources */,
+				S10000000000000000000003 /* TripGeo.swift in Sources */,
+				S10000000000000000000004 /* RiderLocationManager.swift in Sources */,
+				S10000000000000000000005 /* PermissionCenter.swift in Sources */,
+				S10000000000000000000006 /* TripAudioRecorder.swift in Sources */,
+				S10000000000000000000007 /* TrustedContactsStore.swift in Sources */,
+				S10000000000000000000008 /* PlacesSearchService.swift in Sources */,
+				S10000000000000000000011 /* ReverseGeocodingService.swift in Sources */,
+				S10000000000000000000009 /* SavedPlacesStore.swift in Sources */,
+				S1000000000000000000000C /* RoutesAPIService.swift in Sources */,
+				S1000000000000000000000D /* PromoCodesStore.swift in Sources */,
+				S1000000000000000000000E /* TripMotionTiming.swift in Sources */,
+				S1000000000000000000000F /* NetworkReachability.swift in Sources */,
+				S10000000000000000000010 /* PaymentProviders.swift in Sources */,
+				N10000000000000000000001 /* NotificationStore.swift in Sources */,
+				N10000000000000000000002 /* NotificationInboxView.swift in Sources */,
+				H10000000000000000000001 /* AccountHubView.swift in Sources */,
+				H10000000000000000000002 /* SettingsListView.swift in Sources */,
+				H10000000000000000000003 /* CommunicationSettingsView.swift in Sources */,
+				H10000000000000000000004 /* WalletSettingsView.swift in Sources */,
+				H10000000000000000000005 /* PaymentMethodsView.swift in Sources */,
+				H10000000000000000000006 /* SafetySettingsView.swift in Sources */,
+				H10000000000000000000007 /* TrustedContactsView.swift in Sources */,
+				H10000000000000000000008 /* SupportHomeView.swift in Sources */,
+				H10000000000000000000009 /* AboutLegalView.swift in Sources */,
+				H1000000000000000000000A /* AppPreferencesView.swift in Sources */,
+				H1000000000000000000000B /* SavedPlacesView.swift in Sources */,
+				H1000000000000000000000C /* PrivacySettingsView.swift in Sources */,
+				H1000000000000000000000D /* PersonalInfoView.swift in Sources */,
+				PRD100000000000000000001 /* ProductBookingForm.swift in Sources */,
+				PRD100000000000000000002 /* CourierProductSheet.swift in Sources */,
+				PRD100000000000000000003 /* HourlyProductSheet.swift in Sources */,
+				PRD100000000000000000004 /* GroupRideProductSheet.swift in Sources */,
+				PRD100000000000000000005 /* TwoWheelsProductSheet.swift in Sources */,
+				PRD100000000000000000006 /* AirportProductSheet.swift in Sources */,
+				PRD100000000000000000007 /* ExecutiveProductSheet.swift in Sources */,
+				PRD100000000000000000008 /* GroceryProductSheet.swift in Sources */,
+				PRD100000000000000000009 /* HotelTransferProductSheet.swift in Sources */,
+				PRD10000000000000000000A /* FoodProductSheet.swift in Sources */,
+				PRD10000000000000000000B /* ConvenienceProductSheet.swift in Sources */,
+				PRD10000000000000000000C /* AlcoholProductSheet.swift in Sources */,
+				PRD10000000000000000000D /* HealthProductSheet.swift in Sources */,
+				USS100000000000000000001 /* USSDBookingView.swift in Sources */,
+				B10000000000000000000002 /* CorporateOnboardingView.swift in Sources */,
+				B10000000000000000000003 /* BankReferenceTopUpView.swift in Sources */,
+				A10000000000000000000005 /* TermsAgreeView.swift in Sources */,
+				A10000000000000000000004 /* OTPVerifyView.swift in Sources */,
+				A10000000000000000000006 /* ConfirmInfoView.swift in Sources */,
+				A10000000000000000000007 /* WelcomeView.swift in Sources */,
+				MDL1A29001 /* FieldSalesModels.swift in Sources */,
+				MDL1A29002 /* Money.swift in Sources */,
+				SVC1A29006 /* PricingEngine.swift in Sources */,
+				MDL1A29003 /* ServiceZone.swift in Sources */,
+				SVC1A29004 /* DeveloperDiagnostics.swift in Sources */,
+				SVC1A29005 /* FieldSalesStore.swift in Sources */,
+				SVC1A29007 /* ReservedTripStore.swift in Sources */,
+				SVC1A29009 /* ServiceZoneCatalog.swift in Sources */,
+				SVC1A2900A /* RouteDeviationMonitor.swift in Sources */,
+				SVC1A2900B /* TripEmissions.swift in Sources */,
+				SVC1A2900C /* SafetyAutoActivation.swift in Sources */,
+				FLW1A29010 /* ActiveTripFlowView.swift in Sources */,
+				FLW1A29011 /* CancelTripSheet.swift in Sources */,
+				FLW1A29012 /* PostTripCompleteView.swift in Sources */,
+				FLW1A29013 /* SearchingFlowView.swift in Sources */,
+				FLW1A29014 /* TripCompleteFlowView.swift in Sources */,
+				FLW1A29015 /* ChangeDestinationSheet.swift in Sources */,
+				FLW1A29016 /* SafetyToolkitView.swift in Sources */,
+				FLW1A29017 /* SOSConfirmationSheet.swift in Sources */,
+				ACC1A29015 /* DiagnosticsToolsView.swift in Sources */,
+				ACC1A29016 /* SecuritySettingsView.swift in Sources */,
+
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+
+		T00000000000000000000007 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				T10000000000000000000001 /* TripSessionPhaseTests.swift in Sources */,
+				T10000000000000000000002 /* VehiclePickupETATests.swift in Sources */,
+				T10000000000000000000003 /* FarePromoMathTests.swift in Sources */,
+				T10000000000000000000004 /* AuthOTPValidationTests.swift in Sources */,
+				T10000000000000000000005 /* CurrencyMoneyFormattingTests.swift in Sources */,
+				T10000000000000000000006 /* PaymentReferralEligibilityTests.swift in Sources */,
+				T10000000000000000000007 /* TripSessionLifecyclePhaseTests.swift in Sources */,
+				T10000000000000000000008 /* RouteDeviationTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		T60000000000000000000001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = R00000000000000000000005 /* Vuum */;
+			targetProxy = T50000000000000000000001 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 
 /* Begin XCBuildConfiguration section */
 		R0000000000000000000000A /* Debug */ = {
@@ -303,6 +866,7 @@
 		};
 		R0000000000000000000000C /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = C20000000000000000000001 /* Vuum.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
@@ -317,7 +881,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.vuum.demo;
+				PRODUCT_BUNDLE_IDENTIFIER = com.vuum.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.9;
@@ -327,6 +891,7 @@
 		};
 		R0000000000000000000000D /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = C20000000000000000000001 /* Vuum.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
@@ -341,11 +906,59 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.vuum.demo;
+				PRODUCT_BUNDLE_IDENTIFIER = com.vuum.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.9;
 				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		T0000000000000000000000C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.vuum.app.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Vuum.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Vuum";
+			};
+			name = Debug;
+		};
+		T0000000000000000000000D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.vuum.app.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Vuum.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Vuum";
 			};
 			name = Release;
 		};
@@ -370,6 +983,15 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		T0000000000000000000000F /* Build configuration list for PBXNativeTarget "VuumTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				T0000000000000000000000C /* Debug */,
+				T0000000000000000000000D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
@@ -389,6 +1011,14 @@
 				minimumVersion = 1.7.0;
 			};
 		};
+		R40000000000000000000003 /* XCRemoteSwiftPackageReference "keychain-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/evgenyneu/keychain-swift.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 9.0.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -401,6 +1031,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = R40000000000000000000002 /* XCRemoteSwiftPackageReference "ComponentsKit" */;
 			productName = ComponentsKit;
+		};
+		R30000000000000000000003 /* KeychainSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = R40000000000000000000003 /* XCRemoteSwiftPackageReference "keychain-swift" */;
+			productName = KeychainSwift;
 		};
 /* End XCSwiftPackageProductDependency section */
 

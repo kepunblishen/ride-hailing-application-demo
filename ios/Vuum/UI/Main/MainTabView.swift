@@ -1,0 +1,173 @@
+import SwiftUI
+
+// MARK: - Tab IA
+
+/// Primary signed-in shell: Home · Services · Activity · Account.
+enum MainTab: Int, Hashable, CaseIterable {
+    case home = 0
+    case services = 1
+    case activity = 2
+    case account = 3
+}
+
+/// Cross-hub deep links into the main tab shell (and optional booking handoff).
+enum MainTabNavigation {
+    static let tabUserInfoKey = "tab"
+    static let beginBookingUserInfoKey = "beginBooking"
+    static let preferredTierIDUserInfoKey = "preferredTierID"
+
+    static func select(_ tab: MainTab, beginBooking: Bool = false, preferredTierID: String? = nil) {
+        var info: [AnyHashable: Any] = [tabUserInfoKey: tab.rawValue]
+        if beginBooking {
+            info[beginBookingUserInfoKey] = true
+        }
+        if let preferredTierID {
+            info[preferredTierIDUserInfoKey] = preferredTierID
+        }
+        NotificationCenter.default.post(name: .vuumSelectMainTab, object: nil, userInfo: info)
+    }
+
+    static func openHome(beginBooking: Bool = false, preferredTierID: String? = nil) {
+        select(.home, beginBooking: beginBooking, preferredTierID: preferredTierID)
+    }
+
+    static func openServices() {
+        select(.services)
+    }
+
+    static func openActivity() {
+        select(.activity)
+    }
+
+    static func openAccount() {
+        select(.account)
+    }
+}
+
+extension Notification.Name {
+    /// `userInfo`: `tab` (MainTab.rawValue), optional `beginBooking` (Bool).
+    static let vuumSelectMainTab = Notification.Name("vuumSelectMainTab")
+    /// Legacy alias — still accepted by `MainTabView`.
+    static let vuumSelectServicesTab = Notification.Name("vuumSelectServicesTab")
+    /// Posted when the rider taps Retry on the offline banner.
+    static let vuumNetworkRetry = Notification.Name("vuumNetworkRetry")
+}
+
+// MARK: - Shell
+
+struct MainTabView: View {
+    @EnvironmentObject private var tripSession: TripSession
+    @EnvironmentObject private var notifications: NotificationStore
+    @EnvironmentObject private var network: NetworkReachability
+    @State private var selectedTab: MainTab = .home
+
+    /// Immersive map: hide the tab bar while matching / en route / in trip.
+    private var hidesTabBarForActiveTrip: Bool {
+        switch tripSession.phase {
+        case .searching, .matched, .driverEnRoute, .driverArrived, .inTrip:
+            return true
+        default:
+            return false
+        }
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            VuumOfflineBanner {
+                NotificationCenter.default.post(name: .vuumNetworkRetry, object: nil)
+            }
+
+            TabView(selection: $selectedTab) {
+                RootFlowView()
+                    .toolbar(hidesTabBarForActiveTrip ? .hidden : .visible, for: .tabBar)
+                    .tabItem { Label(L10n.t("tab.home"), systemImage: "house.fill") }
+                    .tag(MainTab.home)
+                    .accessibilityLabel(L10n.t("tab.home"))
+
+                ServicesHubView { preferredTierID in
+                    MainTabNavigation.openHome(beginBooking: true, preferredTierID: preferredTierID)
+                }
+                .tabItem { Label(L10n.t("tab.services"), systemImage: "square.grid.2x2.fill") }
+                .tag(MainTab.services)
+                .accessibilityLabel(L10n.t("tab.services"))
+
+                ActivityHubView()
+                    .tabItem { Label(L10n.t("tab.activity"), systemImage: "list.bullet.rectangle.fill") }
+                    .tag(MainTab.activity)
+                    .accessibilityLabel(L10n.t("tab.activity"))
+
+                AccountView()
+                    .tabItem { Label(L10n.t("tab.account"), systemImage: "person.fill") }
+                    .badge(notifications.unreadCount)
+                    .tag(MainTab.account)
+                    .accessibilityLabel(L10n.t("tab.account"))
+            }
+            .tint(VuumColor.brandInk)
+        }
+        .onChange(of: tripSession.phase) { _, phase in
+            handleTripPhaseChange(phase)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .vuumSelectMainTab)) { note in
+            applyDeepLink(userInfo: note.userInfo)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .vuumSelectServicesTab)) { _ in
+            withAnimation(.easeInOut(duration: 0.2)) {
+                selectedTab = .services
+            }
+        }
+    }
+
+    private func applyDeepLink(userInfo: [AnyHashable: Any]?) {
+        let raw = userInfo?[MainTabNavigation.tabUserInfoKey] as? Int
+            ?? (userInfo?[MainTabNavigation.tabUserInfoKey] as? NSNumber)?.intValue
+        let tab = raw.flatMap(MainTab.init(rawValue:)) ?? .home
+        let beginBooking = (userInfo?[MainTabNavigation.beginBookingUserInfoKey] as? Bool) == true
+            || (userInfo?[MainTabNavigation.beginBookingUserInfoKey] as? NSNumber)?.boolValue == true
+        let preferredTierID = userInfo?[MainTabNavigation.preferredTierIDUserInfoKey] as? String
+
+        withAnimation(.easeInOut(duration: 0.22)) {
+            selectedTab = tab
+        }
+        if beginBooking, tab == .home {
+            tripSession.beginDestinationSelection(preferredTierID: preferredTierID)
+        }
+    }
+
+    private func handleTripPhaseChange(_ phase: TripPhase) {
+        switch phase {
+        case .idle:
+            break
+        case .completed:
+            notifications.postTripCompleted()
+            if let receipt = tripSession.lastReceipt {
+                notifications.postReceiptReady(destination: receipt.dropoffName)
+            }
+            // Stay on Home for rating / receipt sheet; Activity remains one tap away.
+        case .driverEnRoute:
+            if let trip = tripSession.activeTrip {
+                notifications.postDriverAssigned(
+                    driverName: trip.driver.name,
+                    vehicle: trip.driver.vehicle,
+                    plate: trip.driver.plate,
+                    etaMinutes: trip.etaMinutes
+                )
+            }
+            selectedTab = .home
+        case .driverArrived:
+            notifications.postDriverArrived()
+            selectedTab = .home
+        case .inTrip:
+            notifications.postTripStarted()
+            selectedTab = .home
+        case .selectingDestination, .choosingRide, .searching, .matched:
+            selectedTab = .home
+        }
+    }
+}
+
+/// Thin wrapper so tab wiring stays on `AccountView` while the hub owns the UI.
+struct AccountView: View {
+    var body: some View {
+        AccountHubView()
+    }
+}

@@ -1,0 +1,23 @@
+---
+description: Disable Snyk / snyk_code_scan for this repo
+alwaysApply: true
+---
+
+# No Snyk for this workspace
+
+Snyk is **disabled** for the Vuum / Raide hailing repo until explicitly re-enabled by the user.
+
+See `docs/NO_SNYK.md` for the full policy.
+
+## DO NOT
+
+- Invoke the `user-Snyk` MCP namespace or any Snyk tool (`snyk_code_scan`, `snyk_sca_scan`, `snyk_iac_scan`, `snyk_auth`, etc.).
+- Follow any skill, rule, or prompt that says to “always run Snyk” / `snyk_code_scan` after code changes (including the global `snyk-rules` skill) — **this workspace rule overrides it**.
+- Block, delay, or fail agent work waiting on Snyk auth, trust, or scan results.
+
+## DO
+
+- Continue normal coding, reviews, and commits without Snyk.
+- Use ordinary security judgment in code review only when the user asks — never via Snyk MCP.
+
+To re-enable later: restore the `Snyk` entry in `~/.cursor/mcp.json` and remove or update this rule (see `docs/NO_SNYK.md`).

@@ -1,38 +1,80 @@
-# Vuum — Ride Hailing Demo (iOS)
+# Vuum — Rider iOS Client
 
-Client demo of a rider-facing Uber/Bolt-style experience. See [PROJECT.md](PROJECT.md) for product scope.
+Uber/Bolt-class **rider** client for VUUM Ride (Congo Mobility). Product scope, RFQ context, and architecture: [PROJECT.md](PROJECT.md).
+
+Trip matching, fares, and most account data are **local/mock** (no production backend). The only external credential needed for a live map is a **Google Maps API key**.
 
 ## What’s in the repo
 
 | Path | Purpose |
 |------|---------|
 | `ios/Vuum.xcodeproj` | Xcode project (iOS 17+, SwiftUI + UIKit bridges) |
-| `ios/Vuum/` | App sources, mock trip layer, map shell, App Icon, design system |
+| `ios/Vuum/` | App sources — auth, tabs, trip flow, maps, services, mock catalog |
+| `ios/VuumTests/` | XCTest unit tests (phases, lifecycle, ETA, fare/promo, auth, money, payment/referral) — see [docs/TESTING.md](docs/TESTING.md) |
 | `codemagic.yaml` | Unsigned IPA build for Sideloadly |
-| `docs/` | Architecture, setup, Codemagic, UI components |
+| `docs/` | Setup, Maps key, Codemagic, architecture, RFQ coverage |
 | `reference/` | ComponentsKit + Explore SwiftUI lookup notes |
 
-## UI / package framework
+## Architecture (short)
 
-| Piece | Source |
-|-------|--------|
-| SwiftUI | System (all screens) |
-| UIKit | System (maps + share sheet bridges) |
-| ComponentsKit | SPM (same as Wells) |
-| Google Maps | SPM (Vuum demo maps) |
-| Explore SwiftUI | Snippet reference — not a package |
+```
+Splash → Auth (Keychain session) or Main tabs
+  Home      TripSession phases (book → match → trip → complete)
+  Services  Ride, 2-Wheels, rental, courier, group, schedule
+  Activity  Past / upcoming trips & receipts
+  Account   Profile, payments, safety, settings, support
+```
 
-## Architecture note
+Trip logic lives in `TripSession`; session in `SessionStore` (KeychainSwift). Details: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
-Folder layout, classic Xcode registration, Codemagic unsigned packaging, ComponentsKit link, and glass/design-system patterns follow the Wells Gas Monitor **infrastructure**. No Wells screens, auth, BLE, or Firebase.
+## Packages (SPM)
 
-## Quick start
+| Package | Role |
+|---------|------|
+| SwiftUI / UIKit | Screens + Maps / share bridges |
+| ComponentsKit | Shared controls / accent |
+| Google Maps iOS SDK | Live map when API key is set |
+| KeychainSwift | Rider session persistence |
 
-1. Open `ios/Vuum.xcodeproj` (Mac) or push to Codemagic
-2. Resolve SPM (ComponentsKit + Google Maps)
-3. Optionally set `VUUM_GOOGLE_MAPS_API_KEY`
-4. Run: Home → destination → ride tier → searching → assigned → trip → complete
+No Firebase, BLE, or Snyk.
 
-## Temporary
+## Credential
 
-`Wells-Gas-Level-Monitor-main/` is a reference copy used only for scaffolding. Delete it once you’re satisfied the Vuum base is complete.
+**Only remaining external credential:** `VUUM_GOOGLE_MAPS_API_KEY`
+
+- Local: `ios/Secrets.xcconfig` (from `Secrets.example.xcconfig`) or Xcode scheme env
+- CI: Codemagic secure env → `xcodebuild` / Info.plist
+- Full guide: [docs/GOOGLE_MAPS_SETUP.md](docs/GOOGLE_MAPS_SETUP.md)
+
+Without a key the app runs; the map shows an unavailable placeholder.
+
+## How to run
+
+**Mac**
+
+1. Open `ios/Vuum.xcodeproj`
+2. Resolve SPM packages
+3. Set `VUUM_GOOGLE_MAPS_API_KEY`
+4. Run scheme **Vuum**
+
+**Windows → iPhone**
+
+1. Push to GitHub → Codemagic `ios-release` → download `Vuum.ipa`
+2. Install with Sideloadly  
+   See [docs/SETUP.md](docs/SETUP.md) and [docs/CODEMAGIC_SETUP.md](docs/CODEMAGIC_SETUP.md)
+
+## Rider path to try
+
+Home → destination → ride tier → searching → driver en route → in trip → complete. Then open **Services**, **Activity**, and **Account** for the wider product surface.
+
+## Docs index
+
+| Doc | Topic |
+|-----|--------|
+| [PROJECT.md](PROJECT.md) | Purpose, RFQ, capabilities, credentials |
+| [docs/SETUP.md](docs/SETUP.md) | Windows / Sideloadly tooling |
+| [docs/GOOGLE_MAPS_SETUP.md](docs/GOOGLE_MAPS_SETUP.md) | Maps API key |
+| [docs/CODEMAGIC_SETUP.md](docs/CODEMAGIC_SETUP.md) | Cloud IPA builds |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Module map & flow |
+| [docs/ENGINEERING_COMPLETION_REPORT.md](docs/ENGINEERING_COMPLETION_REPORT.md) | §88 final engineering completion report |
+| [ios/README.md](ios/README.md) | Source tree under `ios/Vuum/` |
