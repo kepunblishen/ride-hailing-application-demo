@@ -46,14 +46,14 @@ struct ContentView: View {
         }
     }
 
-    /// Bootstrap/load first, then hold splash for an additional 4 seconds.
+    /// Bootstrap/load first, then hold splash for an additional 3 seconds.
     private func runSplashGate() async {
         async let permissionRefresh: Void = permissions.refreshStatuses()
 
         // SessionStore already hydrated synchronously; Maps bootstrap runs in `VuumApp.init`.
         _ = await permissionRefresh
 
-        try? await Task.sleep(for: .seconds(4))
+        try? await Task.sleep(for: .seconds(3))
 
         withAnimation(.easeInOut(duration: 0.4)) {
             showSplash = false

@@ -39,11 +39,17 @@ struct SplashView: View {
 
     @ViewBuilder
     private var splashBackdrop: some View {
-        // Light-mode asset only — dark mode uses adaptive system background.
-        if hasSplashBackground, colorScheme == .light {
-            Image("SplashBackground")
-                .resizable()
-                .scaledToFill()
+        // Asset catalog supplies light + dark variants; always show the image
+        // when present (both schemes). Dark mode gets a light scrim for the mark.
+        if hasSplashBackground {
+            ZStack {
+                Image("SplashBackground")
+                    .resizable()
+                    .scaledToFill()
+                if colorScheme == .dark {
+                    Color.black.opacity(0.22)
+                }
+            }
         } else {
             ZStack {
                 VuumColor.pageBackground
