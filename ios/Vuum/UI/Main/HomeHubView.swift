@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Map-first home: Where to?, pickup, saved/recent places, product shortcuts → trip flow.
+/// Content-first home for starting a trip, revisiting places, and discovering Vuum services.
 struct HomeHubView: View {
     @EnvironmentObject private var tripSession: TripSession
     @EnvironmentObject private var location: RiderLocationManager
@@ -15,7 +15,6 @@ struct HomeHubView: View {
     @State private var showSafety = false
     @State private var showInbox = false
     @State private var showPermissionsExplainer = false
-    @State private var showAdjustPickup = false
     @State private var assignSlot: SavedPlaceKind?
     @State private var serviceDetail: HomeSuggestion?
     @State private var showTwoWheels = false
@@ -25,7 +24,6 @@ struct HomeHubView: View {
         permissions.isLocationDenied || !location.locationServicesEnabled
     }
 
-    /// Authorized but iOS Precise Location is off — pickup still works, blue-dot is coarse.
     private var showApproximateLocationBanner: Bool {
         !showLocationDeniedBanner
             && location.isAuthorized
@@ -36,15 +34,17 @@ struct HomeHubView: View {
     private var recentPlaces: [Place] {
         var seen = Set<String>()
         var places: [Place] = []
+
         func append(_ place: Place?) {
-            guard let place, place.id != tripSession.pickup.id, seen.insert(place.id).inserted else { return }
+            guard let place,
+                  place.id != tripSession.pickup.id,
+                  seen.insert(place.id).inserted else { return }
             places.append(place)
         }
+
         savedPlaces.recent.forEach { append($0) }
         for receipt in tripSession.tripHistory {
-            if let match = appLocale.destinations.first(where: { $0.name == receipt.dropoffName }) {
-                append(match)
-            }
+            append(appLocale.destinations.first(where: { $0.name == receipt.dropoffName }))
         }
         for place in appLocale.destinations {
             append(place)
@@ -53,121 +53,65 @@ struct HomeHubView: View {
         return Array(places.prefix(5))
     }
 
-    private var savedChips: [Place] {
-        var chips: [Place] = []
-        var seen = Set<String>()
-        func append(_ place: Place?) {
-            guard let place, place.id != tripSession.pickup.id, seen.insert(place.id).inserted else { return }
-            chips.append(place)
-        }
-        append(savedPlaces.home)
-        append(savedPlaces.work)
-        savedPlaces.favorites.prefix(3).forEach { append($0) }
-        savedPlaces.recent.prefix(4).forEach { append($0) }
-        return Array(chips.prefix(6))
+    private var additionalRecentPlaces: [Place] {
+        Array(recentPlaces.dropFirst().prefix(3))
+    }
+
+    private var favoriteChips: [Place] {
+        let excluded = Set([savedPlaces.home?.id, savedPlaces.work?.id].compactMap { $0 })
+        return Array(savedPlaces.favorites.filter { !excluded.contains($0.id) }.prefix(3))
     }
 
     var body: some View {
-        GeometryReader { geo in
-            ZStack(alignment: .bottom) {
-                TripMapLayer()
+        VStack(spacing: 0) {
+            stickyHeader
 
-                VStack(spacing: 0) {
-                    hubChrome
-                        .padding(.horizontal, 16)
-                        .padding(.top, 8)
-                        .padding(.bottom, 10)
-                        .background(VuumColor.pageBackground.opacity(0.94))
+            ScrollView(.vertical, showsIndicators: false) {
+                LazyVStack(alignment: .leading, spacing: 0) {
+                    statusBanners
+                        .padding(.top, 4)
 
-                    if showLocationDeniedBanner {
-                        PermissionDeniedBanner(
-                            icon: "location.slash.fill",
-                            title: "Location is off",
-                            message: location.locationServicesEnabled
-                                ? "Turn on location so Vuum can set your pickup and show nearby drivers."
-                                : "Location Services are turned off for this device. Enable them to set your pickup."
-                        ) {
-                            if let url = permissions.systemSettingsURL {
-                                openURL(url)
-                            }
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.top, 8)
-                    } else if let message = location.lastErrorMessage, location.latestLocation == nil {
-                        PermissionDeniedBanner(
-                            icon: "location.magnifyingglass",
-                            title: "Finding your location",
-                            message: message,
-                            actionTitle: "Try again"
-                        ) {
-                            location.refreshCurrentLocation()
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.top, 8)
-                    } else if showApproximateLocationBanner {
-                        PermissionDeniedBanner(
-                            icon: "location.circle",
-                            title: "Approximate location",
-                            message: "Precise location improves pickup accuracy and the map blue-dot. You can allow it for this session.",
-                            actionTitle: "Improve accuracy"
-                        ) {
-                            location.requestPreciseLocationUpgrade()
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.top, 8)
+                    if let firstRecent = recentPlaces.first {
+                        featuredRecentCard(firstRecent)
+                            .padding(.top, 14)
                     }
 
-                    if let cancellation = tripSession.lastCancellation {
-                        HStack(alignment: .top, spacing: 10) {
-                            Image(systemName: cancellation.wasFree ? "checkmark.circle.fill" : "info.circle.fill")
-                                .foregroundStyle(VuumColor.brand)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(cancellation.summaryLine)
-                                    .font(.system(size: 13, weight: .semibold))
-                                if !cancellation.wasFree, cancellation.feeLocal > 0 {
-                                    Text(
-                                        "Fee \(AppLocale.formatPrimary(local: cancellation.feeLocal, market: appLocale.fareMarket))"
-                                    )
-                                    .font(.system(size: 12, weight: .medium))
-                                    .foregroundStyle(VuumColor.secondaryText)
-                                }
-                            }
-                            Spacer(minLength: 8)
-                            Button {
-                                tripSession.dismissCancellationBanner()
-                            } label: {
-                                Image(systemName: "xmark")
-                                    .font(.system(size: 12, weight: .bold))
-                                    .foregroundStyle(VuumColor.secondaryText)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                        .padding(12)
-                        .background(VuumColor.pageBackground.opacity(0.94), in: RoundedRectangle(cornerRadius: 12))
-                        .padding(.horizontal, 16)
-                        .padding(.top, 8)
+                    servicesSection
+                        .padding(.top, 26)
+
+                    savedPlacesSection
+                        .padding(.top, 26)
+
+                    if !additionalRecentPlaces.isEmpty {
+                        recentRows
+                            .padding(.top, 22)
                     }
 
-                    Spacer(minLength: 0)
-
-                    HStack {
-                        Spacer()
-                        recenterButton
-                            .padding(.trailing, 16)
-                            .padding(.bottom, 10)
+                    if !tripSession.reservedTrips.isEmpty {
+                        upcomingSection
+                            .padding(.top, 26)
                     }
 
-                    homeSheet(maxContentHeight: max(300, geo.size.height * 0.58))
+                    if hubTab == .courier {
+                        courierHero
+                            .padding(.top, 26)
+                    } else {
+                        ridePromo
+                            .padding(.top, 26)
+                    }
                 }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 36)
             }
         }
+        .background(VuumColor.pageBackground.ignoresSafeArea())
         .onAppear {
+            // Content-first home: no map recenter — map only after destination selection.
             if permissions.shouldShowExplainer {
                 showPermissionsExplainer = true
             } else {
                 location.requestWhenInUse()
             }
-            tripSession.requestMapRecenter()
         }
         .onChange(of: location.latestLocation) { _, newValue in
             tripSession.updatePickup(from: newValue)
@@ -197,9 +141,6 @@ struct HomeHubView: View {
                     }
             }
         }
-        .sheet(isPresented: $showAdjustPickup) {
-            AdjustPickupSheet()
-        }
         .sheet(item: $assignSlot) { kind in
             AssignSavedPlaceSheet(kind: kind)
         }
@@ -217,34 +158,48 @@ struct HomeHubView: View {
         }
     }
 
-    // MARK: - Top chrome
+    /// Brand, category tabs, and Where to? stay fixed; content scrolls beneath.
+    private var stickyHeader: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            topBar
+            categoryTabs
+                .padding(.top, 14)
+            searchBar
+                .padding(.top, 16)
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 10)
+        .padding(.bottom, 12)
+        .background(VuumColor.pageBackground)
+    }
 
-    private var hubChrome: some View {
-        HStack(alignment: .center, spacing: 12) {
-            HStack(spacing: 0) {
-                hubTabButton(.rides, title: L10n.t("home.rides"))
-                hubTabButton(.eats, title: L10n.t("home.eats"))
-            }
+    // MARK: - Header
 
-            Spacer(minLength: 8)
+    private var topBar: some View {
+        HStack(spacing: 12) {
+            Text("Vuum")
+                .font(.system(size: 32, weight: .bold))
+                .foregroundStyle(VuumColor.primaryText)
+
+            Spacer()
 
             Button {
                 showInbox = true
             } label: {
                 ZStack(alignment: .topTrailing) {
-                    Image(systemName: "bell.fill")
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(VuumColor.brandInk)
-                        .frame(width: 40, height: 40)
-                        .background(Color(white: 0.94), in: Circle())
+                    Image(systemName: "bell")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(VuumColor.primaryText)
+                        .frame(width: 42, height: 42)
+                        .background(VuumColor.chipBackground, in: Circle())
 
                     if notifications.unreadCount > 0 {
                         Text(notifications.unreadCount > 9 ? "9+" : "\(notifications.unreadCount)")
-                            .font(.system(size: 10, weight: .bold))
+                            .font(.system(size: 9, weight: .bold))
                             .foregroundStyle(.white)
                             .padding(.horizontal, 5)
                             .padding(.vertical, 2)
-                            .background(Color(red: 0.85, green: 0.2, blue: 0.25), in: Capsule())
+                            .background(VuumColor.brand, in: Capsule())
                             .offset(x: 4, y: -2)
                     }
                 }
@@ -255,301 +210,240 @@ struct HomeHubView: View {
             Button {
                 showSafety = true
             } label: {
-                Image(systemName: "shield.lefthalf.filled")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(VuumColor.brandInk)
-                    .frame(width: 40, height: 40)
-                    .background(Color(white: 0.94), in: Circle())
+                Image(systemName: "shield")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(VuumColor.primaryText)
+                    .frame(width: 42, height: 42)
+                    .background(VuumColor.chipBackground, in: Circle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel(L10n.t("home.safety"))
+            .accessibilityLabel(L10n.Home.safety)
         }
     }
 
-    private func hubTabButton(_ tab: HubTopTab, title: String) -> some View {
-        Button {
-            withAnimation(.easeInOut(duration: 0.2)) { hubTab = tab }
-        } label: {
-            VStack(spacing: 6) {
-                Text(title)
-                    .font(.system(size: 22, weight: hubTab == tab ? .bold : .semibold))
-                    .foregroundStyle(hubTab == tab ? VuumColor.brandInk : Color(white: 0.55))
-                Capsule()
-                    .fill(hubTab == tab ? VuumColor.brand : Color.clear)
-                    .frame(width: 28, height: 3)
-            }
-            .padding(.trailing, 18)
-        }
-        .buttonStyle(.plain)
-    }
-
-    private var recenterButton: some View {
-        Button {
-            location.requestWhenInUse()
-            tripSession.updatePickup(from: location.latestLocation)
-            tripSession.requestMapRecenter()
-        } label: {
-            Image(systemName: "location.fill")
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(VuumColor.brandInk)
-                .frame(width: 44, height: 44)
-                .background(.ultraThinMaterial, in: Circle())
-                .shadow(color: .black.opacity(0.12), radius: 8, y: 2)
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(L10n.t("home.recenter"))
-    }
-
-    // MARK: - Sheet
-
-    private func homeSheet(maxContentHeight: CGFloat) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            VuumSheetHandle()
-                .padding(.top, 10)
-                .padding(.bottom, 14)
-
-            Group {
-                switch hubTab {
-                case .rides:
-                    ScrollView(.vertical, showsIndicators: false) {
-                        ridesContent
-                    }
-                case .eats:
-                    ScrollView(.vertical, showsIndicators: false) {
-                        eatsContent
-                    }
-                }
-            }
-            .frame(maxHeight: maxContentHeight)
-            .padding(.horizontal, VuumLayout.pageInset)
-            .padding(.bottom, 12)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            VuumColor.pageBackground
-                .clipShape(RoundedRectangle(cornerRadius: VuumLayout.radiusSheet, style: .continuous))
-                .shadow(color: .black.opacity(0.10), radius: 14, y: -3)
-                .ignoresSafeArea(edges: .bottom)
-        )
-    }
-
-    private var ridesContent: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            pickupRow
-            whereToRow
-            savedPlacesStrip
-
-            if !tripSession.reservedTrips.isEmpty {
-                upcomingStrip
-            }
-
-            if let zoneNote = tripSession.zoneContext.surchargeMessage {
-                zoneAvailabilityBanner(zoneNote)
-            }
-
-            if !recentPlaces.isEmpty {
-                recentList
-            }
-
-            suggestionsSection
-            promoBanner
-        }
-    }
-
-    private func zoneAvailabilityBanner(_ message: String) -> some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: tripSession.zoneContext.isAirportArea ? "airplane.departure" : "bolt.fill")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(VuumColor.brandInk)
-                .padding(.top, 2)
-            VStack(alignment: .leading, spacing: 2) {
-                if let zone = tripSession.zoneContext.primaryZone {
-                    Text(zone.name)
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(VuumColor.brandInk)
-                }
-                Text(message)
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(Color(white: 0.4))
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            Spacer(minLength: 0)
-        }
-        .padding(12)
-        .background(Color(white: 0.96), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .accessibilityElement(children: .combine)
-    }
-
-    private var eatsContent: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack(spacing: 12) {
-                Image(systemName: "magnifyingglass")
-                    .foregroundStyle(Color(white: 0.45))
-                Text(L10n.t("home.eats_search"))
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(Color(white: 0.35))
-                Spacer()
-            }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 14)
-            .background(Color(white: 0.93), in: RoundedRectangle(cornerRadius: 28, style: .continuous))
-
-            Text(L10n.t("home.eats_nearby"))
-                .font(.system(size: 18, weight: .bold))
-                .foregroundStyle(VuumColor.brandInk)
-
-            VStack(alignment: .leading, spacing: 10) {
-                eatsRow(name: "Le Gourmet", meta: "25–40 min · Congolese", badge: L10n.t("home.promo_badge"))
-                eatsRow(name: "Pizza House", meta: "20–35 min · Italian", badge: nil)
-                eatsRow(name: "Sushi Bar Kin", meta: "30–45 min · Japanese", badge: nil)
-            }
-
-            Text(L10n.t("home.eats_expanding"))
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(Color(white: 0.45))
-                .padding(.top, 4)
-        }
-    }
-
-    private func eatsRow(name: String, meta: String, badge: String?) -> some View {
-        HStack(spacing: 12) {
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(VuumColor.brand.opacity(0.18))
-                .frame(width: 56, height: 56)
-                .overlay(
-                    Image(systemName: "fork.knife")
-                        .foregroundStyle(VuumColor.brandInk)
-                )
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 8) {
-                    Text(name)
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(VuumColor.brandInk)
-                    if let badge {
-                        Text(badge)
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(VuumColor.brand, in: Capsule())
-                    }
-                }
-                Text(meta)
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(Color(white: 0.45))
-            }
+    private var categoryTabs: some View {
+        HStack(spacing: 24) {
+            categoryTab(.rides, title: "Vuum")
+            categoryTab(.courier, title: L10n.Services.courier)
             Spacer()
         }
-        .padding(.vertical, 4)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(name), \(meta)")
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(VuumColor.secondaryText.opacity(0.18))
+                .frame(height: 1)
+                .offset(y: 1)
+        }
     }
 
-    // MARK: - Pickup
-
-    private var pickupRow: some View {
+    private func categoryTab(_ tab: HubTopTab, title: String) -> some View {
         Button {
-            showAdjustPickup = true
-        } label: {
-            HStack(spacing: 10) {
-                Image(systemName: "mappin.and.ellipse")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(VuumColor.brand)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(L10n.t("home.pickup"))
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(Color(white: 0.45))
-                    Text(tripSession.pickup.name)
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(VuumColor.brandInk)
-                        .lineLimit(1)
-                }
-                Spacer(minLength: 0)
-                Text(L10n.t("home.adjust"))
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(VuumColor.brand)
+            withAnimation(.easeInOut(duration: 0.2)) {
+                hubTab = tab
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
-            .background(Color(white: 0.96), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        } label: {
+            VStack(spacing: 10) {
+                Text(title)
+                    .font(.system(size: 15, weight: hubTab == tab ? .bold : .semibold))
+                    .foregroundStyle(hubTab == tab ? VuumColor.primaryText : VuumColor.secondaryText)
+
+                Capsule()
+                    .fill(hubTab == tab ? VuumColor.primaryText : Color.clear)
+                    .frame(height: 3)
+            }
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("\(L10n.t("home.pickup")), \(tripSession.pickup.name)")
-        .accessibilityHint(L10n.t("home.adjust"))
     }
 
-    // MARK: - Where to?
+    // MARK: - Status
 
-    private var whereToRow: some View {
-        HStack(spacing: 10) {
+    @ViewBuilder
+    private var statusBanners: some View {
+        VStack(spacing: 10) {
+            if showLocationDeniedBanner {
+                PermissionDeniedBanner(
+                    icon: "location.slash",
+                    title: "Location is off",
+                    message: location.locationServicesEnabled
+                        ? "Turn on location so Vuum can set your pickup."
+                        : "Location Services are turned off for this device. Enable them to set your pickup."
+                ) {
+                    if let url = permissions.systemSettingsURL {
+                        openURL(url)
+                    }
+                }
+            } else if let message = location.lastErrorMessage, location.latestLocation == nil {
+                PermissionDeniedBanner(
+                    icon: "location.magnifyingglass",
+                    title: "Finding your location",
+                    message: message,
+                    actionTitle: "Try again"
+                ) {
+                    location.refreshCurrentLocation()
+                }
+            } else if showApproximateLocationBanner {
+                PermissionDeniedBanner(
+                    icon: "location.circle",
+                    title: "Approximate location",
+                    message: "Precise location improves pickup accuracy.",
+                    actionTitle: "Improve accuracy"
+                ) {
+                    location.requestPreciseLocationUpgrade()
+                }
+            }
+
+            if let cancellation = tripSession.lastCancellation {
+                HStack(alignment: .top, spacing: 10) {
+                    Image(systemName: cancellation.wasFree ? "checkmark.circle" : "info.circle")
+                        .foregroundStyle(VuumColor.brand)
+                        .padding(.top, 1)
+
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(cancellation.summaryLine)
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(VuumColor.primaryText)
+                        if !cancellation.wasFree, cancellation.feeLocal > 0 {
+                            Text(
+                                "Fee \(AppLocale.formatPrimary(local: cancellation.feeLocal, market: appLocale.fareMarket))"
+                            )
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(VuumColor.secondaryText)
+                        }
+                    }
+
+                    Spacer(minLength: 8)
+
+                    Button {
+                        tripSession.dismissCancellationBanner()
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundStyle(VuumColor.secondaryText)
+                            .frame(width: 28, height: 28)
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(14)
+                .background(VuumColor.chipBackground, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            }
+        }
+    }
+
+    // MARK: - Search and places
+
+    private var searchBar: some View {
+        HStack(spacing: 0) {
             Button {
                 tripSession.beginDestinationSelection()
             } label: {
                 HStack(spacing: 12) {
                     Image(systemName: "magnifyingglass")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(Color(white: 0.35))
-                    Text(L10n.t("home.where_to"))
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(VuumColor.brandInk)
-                    Spacer(minLength: 0)
+                        .font(.system(size: 17, weight: .semibold))
+                    Text(L10n.Home.whereTo)
+                        .font(.system(size: 17, weight: .semibold))
+                    Spacer(minLength: 8)
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 14)
-                .background(Color(white: 0.93), in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+                .foregroundStyle(VuumColor.primaryText)
+                .padding(.leading, 18)
+                .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel(L10n.t("home.where_to"))
-            .accessibilityHint(L10n.t("home.where_to_hint"))
+            .accessibilityHint(L10n.Home.whereToHint)
+
+            Rectangle()
+                .fill(VuumColor.secondaryText.opacity(0.22))
+                .frame(width: 1, height: 26)
 
             Button {
                 showSchedule = true
             } label: {
-                HStack(spacing: 5) {
-                    Image(systemName: "clock")
-                        .font(.system(size: 13, weight: .semibold))
-                    Text(tripSession.scheduleForLater == nil ? L10n.t("home.now") : L10n.t("home.later"))
+                HStack(spacing: 6) {
+                    Image(systemName: "calendar")
                         .font(.system(size: 14, weight: .semibold))
-                    Image(systemName: "chevron.down")
-                        .font(.system(size: 10, weight: .bold))
+                    Text(L10n.Home.later)
+                        .font(.system(size: 14, weight: .semibold))
                 }
-                .foregroundStyle(VuumColor.brandInk)
+                .foregroundStyle(VuumColor.primaryText)
                 .padding(.horizontal, 14)
-                .padding(.vertical, 14)
-                .background(Color(white: 0.93), in: Capsule())
+                .frame(height: 52)
+                .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel(L10n.t("home.schedule_pickup"))
+            .accessibilityLabel(L10n.Home.schedulePickup)
         }
+        .frame(height: 54)
+        .background(VuumColor.chipBackground, in: Capsule())
     }
 
-    // MARK: - Saved chips
+    private func featuredRecentCard(_ place: Place) -> some View {
+        Button {
+            choose(place)
+        } label: {
+            HStack(spacing: 14) {
+                Image(systemName: "mappin")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(VuumColor.primaryText)
+                    .frame(width: 42, height: 42)
+                    .background(VuumColor.chipBackground, in: Circle())
 
-    private var savedPlacesStrip: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 10) {
-                savedSlotChip(kind: .home, place: savedPlaces.home, emptyTitle: L10n.t("home.add_home"))
-                savedSlotChip(kind: .work, place: savedPlaces.work, emptyTitle: L10n.t("home.add_work"))
-                ForEach(savedChips.filter {
-                    $0.id != savedPlaces.home?.id && $0.id != savedPlaces.work?.id
-                }) { place in
-                    Button {
-                        savedPlaces.recordRecent(place)
-                        tripSession.selectDestination(place)
-                    } label: {
-                        HStack(spacing: 8) {
-                            Image(systemName: savedPlaces.systemImage(for: place))
-                                .foregroundStyle(VuumColor.brand)
-                            Text(savedPlaces.displayTitle(for: place))
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundStyle(VuumColor.brandInk)
-                                .lineLimit(1)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(savedPlaces.displayTitle(for: place))
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(VuumColor.primaryText)
+                        .lineLimit(1)
+                    Text(place.subtitle)
+                        .font(.system(size: 13))
+                        .foregroundStyle(VuumColor.secondaryText)
+                        .lineLimit(1)
+                }
+
+                Spacer(minLength: 8)
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(VuumColor.secondaryText)
+            }
+            .padding(14)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(VuumColor.pageBackground)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .stroke(VuumColor.secondaryText.opacity(0.22), lineWidth: 1)
+                    )
+            )
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(savedPlaces.displayTitle(for: place)), \(place.subtitle)")
+    }
+
+    private var savedPlacesSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Saved places")
+                .font(.system(size: 18, weight: .bold))
+                .foregroundStyle(VuumColor.primaryText)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 10) {
+                    savedSlotChip(kind: .home, place: savedPlaces.home, emptyTitle: L10n.Home.addHome)
+                    savedSlotChip(kind: .work, place: savedPlaces.work, emptyTitle: L10n.Home.addWork)
+
+                    ForEach(favoriteChips) { place in
+                        Button {
+                            choose(place)
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: savedPlaces.systemImage(for: place))
+                                Text(savedPlaces.displayTitle(for: place))
+                                    .lineLimit(1)
+                            }
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(VuumColor.primaryText)
+                            .padding(.horizontal, 13)
+                            .frame(height: 40)
+                            .background(VuumColor.chipBackground, in: Capsule())
                         }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 10)
-                        .background(Color(white: 0.94), in: Capsule())
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
                 }
             }
         }
@@ -559,19 +453,17 @@ struct HomeHubView: View {
     private func savedSlotChip(kind: SavedPlaceKind, place: Place?, emptyTitle: String) -> some View {
         if let place {
             Button {
-                savedPlaces.recordRecent(place)
-                tripSession.selectDestination(place)
+                choose(place)
             } label: {
                 HStack(spacing: 8) {
                     Image(systemName: kind.systemImage)
-                        .foregroundStyle(VuumColor.brand)
                     Text(kind.title)
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(VuumColor.brandInk)
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 10)
-                .background(Color(white: 0.94), in: Capsule())
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(VuumColor.primaryText)
+                .padding(.horizontal, 13)
+                .frame(height: 40)
+                .background(VuumColor.chipBackground, in: Capsule())
             }
             .buttonStyle(.plain)
             .accessibilityLabel("\(kind.title), \(place.name)")
@@ -581,104 +473,98 @@ struct HomeHubView: View {
             } label: {
                 HStack(spacing: 8) {
                     Image(systemName: kind == .home ? "house" : "briefcase")
-                        .foregroundStyle(Color(white: 0.45))
                     Text(emptyTitle)
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(Color(white: 0.45))
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 10)
-                .background(Color(white: 0.94), in: Capsule())
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(VuumColor.secondaryText)
+                .padding(.horizontal, 13)
+                .frame(height: 40)
+                .background(VuumColor.chipBackground, in: Capsule())
             }
             .buttonStyle(.plain)
         }
     }
 
-    private var upcomingStrip: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(L10n.t("home.upcoming"))
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(Color(white: 0.45))
-            ForEach(tripSession.reservedTrips.prefix(2)) { trip in
-                HStack(spacing: 10) {
-                    Image(systemName: "calendar")
-                        .foregroundStyle(VuumColor.brand)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("\(trip.pickupName) → \(trip.dropoffName)")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(VuumColor.brandInk)
-                        Text(trip.when.formatted(date: .abbreviated, time: .shortened))
-                            .font(.system(size: 12))
-                            .foregroundStyle(Color(white: 0.45))
-                    }
-                    Spacer()
-                }
-                .padding(10)
-                .background(Color(white: 0.96), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-            }
-        }
-    }
-
-    // MARK: - Recents
-
-    private var recentList: some View {
+    private var recentRows: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text(L10n.t("home.recent"))
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(Color(white: 0.45))
-                .padding(.bottom, 6)
+            Text(L10n.Home.recent)
+                .font(.system(size: 18, weight: .bold))
+                .foregroundStyle(VuumColor.primaryText)
+                .padding(.bottom, 8)
 
-            ForEach(recentPlaces) { place in
+            ForEach(Array(additionalRecentPlaces.enumerated()), id: \.element.id) { index, place in
                 Button {
-                    savedPlaces.recordRecent(place)
-                    tripSession.selectDestination(place)
+                    choose(place)
                 } label: {
                     HStack(spacing: 14) {
-                        Image(systemName: savedPlaces.systemImage(for: place))
+                        Image(systemName: "clock.arrow.circlepath")
                             .font(.system(size: 15, weight: .medium))
-                            .foregroundStyle(Color(white: 0.35))
-                            .frame(width: 36, height: 36)
-                            .background(Color(white: 0.93), in: Circle())
+                            .foregroundStyle(VuumColor.secondaryText)
+                            .frame(width: 38, height: 38)
+                            .background(VuumColor.chipBackground, in: Circle())
 
-                        VStack(alignment: .leading, spacing: 2) {
+                        VStack(alignment: .leading, spacing: 3) {
                             Text(savedPlaces.displayTitle(for: place))
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundStyle(VuumColor.brandInk)
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundStyle(VuumColor.primaryText)
                                 .lineLimit(1)
                             Text(place.subtitle)
-                                .font(.system(size: 13, weight: .regular))
-                                .foregroundStyle(Color(white: 0.45))
+                                .font(.system(size: 13))
+                                .foregroundStyle(VuumColor.secondaryText)
                                 .lineLimit(1)
                         }
-                        Spacer(minLength: 0)
+
+                        Spacer(minLength: 8)
+
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(VuumColor.secondaryText)
                     }
                     .padding(.vertical, 10)
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
 
-                if place.id != recentPlaces.last?.id {
+                if index < additionalRecentPlaces.count - 1 {
                     Divider()
-                        .padding(.leading, 50)
+                        .padding(.leading, 52)
                 }
             }
         }
     }
 
-    // MARK: - Suggestions
+    private func choose(_ place: Place) {
+        savedPlaces.recordRecent(place)
+        tripSession.selectDestination(place)
+    }
 
-    private var suggestionsSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(L10n.t("home.suggestions"))
-                .font(.system(size: 18, weight: .bold))
-                .foregroundStyle(VuumColor.brandInk)
+    // MARK: - Services
+
+    private var servicesSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Button {
+                MainTabNavigation.openServices()
+            } label: {
+                HStack {
+                    Text("For you")
+                        .font(.system(size: 22, weight: .bold))
+                        .foregroundStyle(VuumColor.primaryText)
+                    Spacer()
+                    Image(systemName: "arrow.right")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(VuumColor.primaryText)
+                }
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Open all services")
 
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
+                HStack(alignment: .top, spacing: 18) {
                     ForEach(visibleSuggestions) { item in
                         Button {
                             handleSuggestion(item)
                         } label: {
-                            suggestionCard(item)
+                            serviceIcon(item)
                         }
                         .buttonStyle(.plain)
                         .accessibilityLabel(item.title)
@@ -698,10 +584,10 @@ struct HomeHubView: View {
             case .schedule:
                 return tripSession.isServiceAvailable(ServiceProductID.reserve)
             case .openServices:
-                if suggestion.id == "two-wheels" {
+                if suggestion.id == ServiceProductID.twoWheels {
                     return tripSession.isServiceAvailable(ServiceProductID.twoWheels)
                 }
-                if suggestion.id == "courier" {
+                if suggestion.id == ServiceProductID.courier {
                     return tripSession.isServiceAvailable(ServiceProductID.courier)
                 }
                 return true
@@ -709,18 +595,28 @@ struct HomeHubView: View {
                 return true
             }
         }
+        .filter { suggestion in
+            switch hubTab {
+            case .rides:
+                return true
+            case .courier:
+                return suggestion.id == ServiceProductID.courier
+                    || suggestion.id == ServiceProductID.reserve
+                    || suggestion.id == ServiceProductID.twoWheels
+            }
+        }
     }
 
-    private func suggestionCard(_ item: HomeSuggestion) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
+    private func serviceIcon(_ item: HomeSuggestion) -> some View {
+        VStack(spacing: 8) {
             ZStack(alignment: .topTrailing) {
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(item.tileColor)
-                    .frame(width: 88, height: 72)
+                Circle()
+                    .fill(VuumColor.chipBackground)
+                    .frame(width: 64, height: 64)
                     .overlay(
                         Image(systemName: item.systemImage)
-                            .font(.system(size: 28, weight: .medium))
-                            .foregroundStyle(VuumColor.brandInk)
+                            .font(.system(size: 24, weight: .medium))
+                            .foregroundStyle(VuumColor.primaryText)
                     )
 
                 if let badge = item.promoBadge {
@@ -730,15 +626,15 @@ struct HomeHubView: View {
                         .padding(.horizontal, 6)
                         .padding(.vertical, 3)
                         .background(VuumColor.brand, in: Capsule())
-                        .offset(x: 6, y: -6)
+                        .offset(x: 8, y: -3)
                 }
             }
 
             Text(item.title)
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(VuumColor.brandInk)
-                .frame(width: 88, alignment: .leading)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(VuumColor.primaryText)
                 .lineLimit(1)
+                .frame(width: 72)
         }
     }
 
@@ -749,9 +645,9 @@ struct HomeHubView: View {
         case .schedule:
             showSchedule = true
         case .openServices:
-            if item.id == "two-wheels" {
+            if item.id == ServiceProductID.twoWheels {
                 showTwoWheels = true
-            } else if item.id == "courier" {
+            } else if item.id == ServiceProductID.courier {
                 showCourier = true
             } else {
                 MainTabNavigation.openServices()
@@ -768,9 +664,9 @@ struct HomeHubView: View {
         case .schedule:
             showSchedule = true
         case .openServices:
-            if suggestion.id == "two-wheels" {
+            if suggestion.id == ServiceProductID.twoWheels {
                 showTwoWheels = true
-            } else if suggestion.id == "courier" {
+            } else if suggestion.id == ServiceProductID.courier {
                 showCourier = true
             } else {
                 MainTabNavigation.openServices()
@@ -780,41 +676,131 @@ struct HomeHubView: View {
         }
     }
 
-    // MARK: - Promo
+    // MARK: - Upcoming and promotions
 
-    private var promoBanner: some View {
-        Button {
-            tripSession.beginDestinationSelection()
-        } label: {
-            HStack(alignment: .center, spacing: 14) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(L10n.t("home.promo_title"))
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundStyle(VuumColor.brandInk)
-                    Text(appLocale.homeTagline)
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(Color(white: 0.35))
-                        .fixedSize(horizontal: false, vertical: true)
+    private var upcomingSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text(L10n.Home.upcoming)
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundStyle(VuumColor.primaryText)
+                Spacer()
+                Button("Manage") {
+                    MainTabNavigation.openActivity()
                 }
-                Spacer(minLength: 8)
-                Image(systemName: "car.side.fill")
-                    .font(.system(size: 36, weight: .medium))
-                    .foregroundStyle(VuumColor.brandInk)
-                    .padding(10)
-                    .background(VuumColor.brand.opacity(0.35), in: Circle())
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(VuumColor.brand)
             }
-            .padding(16)
+
+            ForEach(tripSession.reservedTrips.prefix(2)) { trip in
+                Button {
+                    MainTabNavigation.openActivity()
+                } label: {
+                    HStack(spacing: 13) {
+                        Image(systemName: "calendar")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(VuumColor.brand)
+                            .frame(width: 42, height: 42)
+                            .background(VuumColor.chipBackground, in: Circle())
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("\(trip.pickupName) → \(trip.dropoffName)")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundStyle(VuumColor.primaryText)
+                                .lineLimit(1)
+                            Text(trip.when.formatted(date: .abbreviated, time: .shortened))
+                                .font(.system(size: 12))
+                                .foregroundStyle(VuumColor.secondaryText)
+                        }
+
+                        Spacer(minLength: 8)
+
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(VuumColor.secondaryText)
+                    }
+                    .padding(14)
+                    .background(VuumColor.chipBackground, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private var courierHero: some View {
+        Button {
+            showCourier = true
+        } label: {
+            HStack(spacing: 18) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Send it with Vuum")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundStyle(VuumColor.primaryText)
+                    Text("On-demand pickup and delivery for packages across town.")
+                        .font(.system(size: 14))
+                        .foregroundStyle(VuumColor.secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text("Start a delivery")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 14)
+                        .frame(height: 38)
+                        .background(VuumColor.brand, in: Capsule())
+                        .padding(.top, 4)
+                }
+
+                Spacer(minLength: 4)
+
+                Image(systemName: "shippingbox")
+                    .font(.system(size: 34, weight: .medium))
+                    .foregroundStyle(VuumColor.primaryText)
+                    .frame(width: 78, height: 78)
+                    .background(VuumColor.chipBackground, in: Circle())
+            }
+            .padding(18)
             .background(
-                LinearGradient(
-                    colors: [VuumColor.brand.opacity(0.35), Color(white: 0.96)],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                ),
-                in: RoundedRectangle(cornerRadius: 16, style: .continuous)
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(VuumColor.pageBackground)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .stroke(VuumColor.secondaryText.opacity(0.2), lineWidth: 1)
+                    )
             )
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(L10n.t("home.promo_title"))
+    }
+
+    private var ridePromo: some View {
+        Button {
+            tripSession.beginDestinationSelection()
+        } label: {
+            HStack(spacing: 16) {
+                Image(systemName: "car")
+                    .font(.system(size: 28, weight: .medium))
+                    .foregroundStyle(VuumColor.brand)
+                    .frame(width: 64, height: 64)
+                    .background(VuumColor.chipBackground, in: Circle())
+
+                VStack(alignment: .leading, spacing: 5) {
+                    Text("Ride your way")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundStyle(VuumColor.primaryText)
+                    Text(appLocale.homeTagline)
+                        .font(.system(size: 13))
+                        .foregroundStyle(VuumColor.secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer(minLength: 4)
+
+                Image(systemName: "arrow.right")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(VuumColor.brand)
+            }
+            .padding(18)
+            .background(VuumColor.chipBackground, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        }
+        .buttonStyle(.plain)
     }
 }
 
@@ -822,7 +808,7 @@ struct HomeHubView: View {
 
 private enum HubTopTab {
     case rides
-    case eats
+    case courier
 }
 
 enum HomeSuggestionAction: Equatable {
@@ -845,65 +831,65 @@ struct HomeSuggestion: Identifiable, Equatable {
         HomeSuggestion(
             id: "ride",
             title: "Ride",
-            systemImage: "car.fill",
-            tileColor: Color(white: 0.93),
+            systemImage: "car",
+            tileColor: Color(white: 0.94),
             promoBadge: nil,
             blurb: "Go anywhere in the city with a standard ride.",
-            action: .bookRide(preferredTierID: "vuum")
+            action: .bookRide(preferredTierID: ServiceProductID.vuum)
         ),
         HomeSuggestion(
-            id: "two-wheels",
+            id: ServiceProductID.twoWheels,
             title: "2-Wheels",
             systemImage: "bicycle",
-            tileColor: Color(red: 0.93, green: 0.96, blue: 0.90),
-            promoBadge: "Promo",
-            blurb: "Quick trips on two wheels when traffic is heavy.",
+            tileColor: Color(white: 0.94),
+            promoBadge: nil,
+            blurb: "Quick boda-style trips on two wheels when traffic is heavy.",
             action: .openServices
         ),
         HomeSuggestion(
-            id: "reserve",
+            id: ServiceProductID.courier,
+            title: "Send",
+            systemImage: "shippingbox",
+            tileColor: Color(white: 0.94),
+            promoBadge: nil,
+            blurb: "Send packages across town with on-demand pickup.",
+            action: .openServices
+        ),
+        HomeSuggestion(
+            id: ServiceProductID.reserve,
             title: "Reserve",
             systemImage: "calendar",
-            tileColor: Color(red: 0.92, green: 0.94, blue: 0.98),
-            promoBadge: nil,
+            tileColor: Color(white: 0.94),
+            promoBadge: "Plan",
             blurb: "Schedule a pickup for later today or another day.",
             action: .schedule
         ),
         HomeSuggestion(
             id: "comfort",
             title: "Comfort",
-            systemImage: "car.side.fill",
-            tileColor: Color(white: 0.93),
+            systemImage: "car.side",
+            tileColor: Color(white: 0.94),
             promoBadge: nil,
             blurb: "Newer cars with extra space and top-rated drivers.",
-            action: .bookRide(preferredTierID: "comfort")
+            action: .bookRide(preferredTierID: ServiceProductID.comfort)
         ),
         HomeSuggestion(
             id: "xl",
-            title: "Vuum XL",
-            systemImage: "car.2.fill",
-            tileColor: Color(red: 0.95, green: 0.93, blue: 0.90),
+            title: "XL",
+            systemImage: "car.2",
+            tileColor: Color(white: 0.94),
             promoBadge: nil,
             blurb: "Room for groups of up to six passengers.",
-            action: .bookRide(preferredTierID: "xl")
+            action: .bookRide(preferredTierID: ServiceProductID.xl)
         ),
         HomeSuggestion(
             id: "executive",
             title: "Executive",
-            systemImage: "sparkles",
-            tileColor: Color(red: 0.94, green: 0.94, blue: 0.96),
+            systemImage: "car.side",
+            tileColor: Color(white: 0.94),
             promoBadge: nil,
             blurb: "Premium cars with highly rated professional drivers.",
-            action: .bookRide(preferredTierID: "executive")
-        ),
-        HomeSuggestion(
-            id: "courier",
-            title: "Courier",
-            systemImage: "shippingbox.fill",
-            tileColor: Color(red: 0.98, green: 0.94, blue: 0.90),
-            promoBadge: nil,
-            blurb: "Send packages across town with on-demand pickup.",
-            action: .openServices
+            action: .bookRide(preferredTierID: ServiceProductID.executive)
         ),
     ]
 }
@@ -917,17 +903,19 @@ private struct HomeSuggestionSheet: View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 20) {
                 HStack(spacing: 14) {
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(suggestion.tileColor)
+                    Circle()
+                        .fill(VuumColor.chipBackground)
                         .frame(width: 72, height: 72)
                         .overlay(
                             Image(systemName: suggestion.systemImage)
                                 .font(.system(size: 28, weight: .medium))
-                                .foregroundStyle(VuumColor.brandInk)
+                                .foregroundStyle(VuumColor.primaryText)
                         )
+
                     VStack(alignment: .leading, spacing: 6) {
                         Text(suggestion.title)
                             .font(.system(size: 22, weight: .bold))
+                            .foregroundStyle(VuumColor.primaryText)
                         if let badge = suggestion.promoBadge {
                             Text(badge)
                                 .font(.system(size: 11, weight: .bold))
@@ -950,6 +938,7 @@ private struct HomeSuggestionSheet: View {
                 }
             }
             .padding(20)
+            .background(VuumColor.pageBackground)
             .navigationTitle(suggestion.title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -963,11 +952,10 @@ private struct HomeSuggestionSheet: View {
 
     private var primaryTitle: String {
         switch suggestion.action {
-        case .bookRide: return L10n.t("home.where_to")
-        case .schedule: return L10n.t("home.schedule_pickup")
-        case .openServices: return L10n.t("home.browse_services")
-        case .infoOnly: return L10n.t("common.got_it")
+        case .bookRide: return L10n.Home.whereTo
+        case .schedule: return L10n.Home.schedulePickup
+        case .openServices: return L10n.Home.browseServices
+        case .infoOnly: return L10n.Common.gotIt
         }
     }
 }
-
