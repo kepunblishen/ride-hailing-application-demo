@@ -522,7 +522,6 @@ struct AssignSavedPlaceSheet: View {
             title: kind == .home ? "Set Home" : "Set Work",
             allowClear: (kind == .home && savedPlaces.home != nil)
                 || (kind == .work && savedPlaces.work != nil),
-            detents: [.large],
             onClear: {
                 switch kind {
                 case .home: savedPlaces.setHome(nil)
@@ -530,6 +529,7 @@ struct AssignSavedPlaceSheet: View {
                 default: break
                 }
             },
+            detents: [.large],
             onSelect: { place in
                 switch kind {
                 case .home: savedPlaces.setHome(place)
