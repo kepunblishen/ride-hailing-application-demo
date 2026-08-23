@@ -10,7 +10,7 @@ struct TermsAgreeView: View {
             Image(systemName: "doc.text.fill")
                 .font(.system(size: 40, weight: .medium))
                 .foregroundStyle(AuthPalette.link)
-                .padding(.top, 16)
+                .padding(.top, AuthLayout.titleTop)
                 .accessibilityHidden(true)
 
             Text(L10n.Auth.termsTitle)

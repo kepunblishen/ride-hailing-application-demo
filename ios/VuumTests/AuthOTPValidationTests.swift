@@ -79,9 +79,18 @@ final class AuthOTPValidationTests: XCTestCase {
         XCTAssertFalse(auth.isValidEmailIfPresent)
         XCTAssertFalse(auth.canSubmitProfile)
 
+        auth.applyEmail("a@b.c")
+        XCTAssertFalse(auth.isValidEmailIfPresent)
+
         auth.applyEmail("rider@vuum.app")
         XCTAssertTrue(auth.isValidEmailIfPresent)
         XCTAssertTrue(auth.canSubmitProfile)
+
+        XCTAssertTrue(AuthFlowController.isValidOptionalEmail(""))
+        XCTAssertTrue(AuthFlowController.isValidOptionalEmail("  "))
+        XCTAssertFalse(AuthFlowController.isValidOptionalEmail("nope@"))
+        XCTAssertFalse(AuthFlowController.isValidOptionalEmail("@vuum.app"))
+        XCTAssertFalse(AuthFlowController.isValidOptionalEmail("name with space@vuum.app"))
     }
 
     func testMaskedPhoneShowsCountryAndLastTwoDigits() {

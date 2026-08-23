@@ -45,7 +45,8 @@ enum AuthLayout {
     static let topBarHeight: CGFloat = 56
     static let controlSpacing: CGFloat = 12
     static let sectionGap: CGFloat = 28
-    static let titleTop: CGFloat = 8
+    /// Breathing room under the status bar for terms / confirm-info headlines.
+    static let titleTop: CGFloat = 36
 }
 
 // MARK: - Country catalog

@@ -82,6 +82,8 @@ struct ConfirmInfoView: View {
 
             if let profileError = auth.profileError {
                 AuthInlineError(message: profileError)
+            } else if showsEmailFormatError {
+                AuthInlineError(message: L10n.Auth.emailInvalid)
             }
 
             Spacer(minLength: 16)
@@ -103,6 +105,12 @@ struct ConfirmInfoView: View {
         .background(AuthPalette.page.ignoresSafeArea())
         .dismissKeyboardOnOutsideTap()
         // No autofocus — keyboard only after the user taps a name/email field.
+    }
+
+    /// Inline hint once the rider has entered something that isn't a valid address (blank stays OK).
+    private var showsEmailFormatError: Bool {
+        let trimmed = auth.email.trimmingCharacters(in: .whitespacesAndNewlines)
+        return !trimmed.isEmpty && !auth.isValidEmailIfPresent
     }
 
     private func nameField(_ placeholder: String, text: Binding<String>, isFocused: Bool) -> some View {

@@ -108,13 +108,17 @@ final class AuthFlowController: ObservableObject {
     }
 
     var isValidEmailIfPresent: Bool {
-        let trimmed = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        Self.isValidOptionalEmail(email)
+    }
+
+    /// Empty is allowed (optional). Otherwise require a simple `local@domain.tld` shape.
+    static func isValidOptionalEmail(_ raw: String) -> Bool {
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return true }
-        return trimmed.contains("@")
-            && trimmed.contains(".")
-            && trimmed.count >= 5
-            && !trimmed.hasPrefix("@")
-            && !trimmed.hasSuffix("@")
+        guard trimmed.count <= 80, !trimmed.contains(" ") else { return false }
+        // Reasonable format: one @, non-empty local/domain, domain has a 2+ char TLD.
+        let pattern = #"^[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}$"#
+        return trimmed.range(of: pattern, options: [.regularExpression, .caseInsensitive]) != nil
     }
 
     var maskedPhoneForOTP: String {
