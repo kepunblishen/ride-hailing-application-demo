@@ -1,0 +1,409 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		R10000000000000000000001 /* RaideApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = R20000000000000000000001 /* RaideApp.swift */; };
+		R10000000000000000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = R20000000000000000000002 /* ContentView.swift */; };
+		R10000000000000000000003 /* RootFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = R20000000000000000000003 /* RootFlowView.swift */; };
+		R10000000000000000000004 /* TripModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = R20000000000000000000004 /* TripModels.swift */; };
+		R10000000000000000000005 /* TripSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = R20000000000000000000005 /* TripSession.swift */; };
+		R10000000000000000000006 /* MockCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = R20000000000000000000006 /* MockCatalog.swift */; };
+		R10000000000000000000007 /* MapBootstrap.swift in Sources */ = {isa = PBXBuildFile; fileRef = R20000000000000000000007 /* MapBootstrap.swift */; };
+		R10000000000000000000008 /* RaideMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = R20000000000000000000008 /* RaideMapView.swift */; };
+		R10000000000000000000009 /* RaideTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = R20000000000000000000009 /* RaideTheme.swift */; };
+		R1000000000000000000000A /* RaideChrome.swift in Sources */ = {isa = PBXBuildFile; fileRef = R2000000000000000000000A /* RaideChrome.swift */; };
+		R1000000000000000000000B /* SplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = R2000000000000000000000B /* SplashView.swift */; };
+		R1000000000000000000000C /* FlowScaffolds.swift in Sources */ = {isa = PBXBuildFile; fileRef = R2000000000000000000000C /* FlowScaffolds.swift */; };
+		R1000000000000000000000D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = R2000000000000000000000D /* Assets.xcassets */; };
+		R1000000000000000000000E /* GoogleMaps in Frameworks */ = {isa = PBXBuildFile; productRef = R30000000000000000000001 /* GoogleMaps */; };
+		R1000000000000000000000F /* ComponentsKit in Frameworks */ = {isa = PBXBuildFile; productRef = R30000000000000000000002 /* ComponentsKit */; };
+		R10000000000000000000010 /* RaideGlass.swift in Sources */ = {isa = PBXBuildFile; fileRef = R20000000000000000000010 /* RaideGlass.swift */; };
+		R10000000000000000000011 /* RaideUIKitBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = R20000000000000000000011 /* RaideUIKitBridge.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		R00000000000000000000010 /* Raide.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Raide.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		R20000000000000000000001 /* RaideApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RaideApp.swift; sourceTree = "<group>"; };
+		R20000000000000000000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		R20000000000000000000003 /* RootFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootFlowView.swift; sourceTree = "<group>"; };
+		R20000000000000000000004 /* TripModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripModels.swift; sourceTree = "<group>"; };
+		R20000000000000000000005 /* TripSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripSession.swift; sourceTree = "<group>"; };
+		R20000000000000000000006 /* MockCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockCatalog.swift; sourceTree = "<group>"; };
+		R20000000000000000000007 /* MapBootstrap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapBootstrap.swift; sourceTree = "<group>"; };
+		R20000000000000000000008 /* RaideMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RaideMapView.swift; sourceTree = "<group>"; };
+		R20000000000000000000009 /* RaideTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RaideTheme.swift; sourceTree = "<group>"; };
+		R2000000000000000000000A /* RaideChrome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RaideChrome.swift; sourceTree = "<group>"; };
+		R2000000000000000000000B /* SplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashView.swift; sourceTree = "<group>"; };
+		R2000000000000000000000C /* FlowScaffolds.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowScaffolds.swift; sourceTree = "<group>"; };
+		R2000000000000000000000D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		R2000000000000000000000E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		R20000000000000000000010 /* RaideGlass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RaideGlass.swift; sourceTree = "<group>"; };
+		R20000000000000000000011 /* RaideUIKitBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RaideUIKitBridge.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		R00000000000000000000008 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				R1000000000000000000000E /* GoogleMaps in Frameworks */,
+				R1000000000000000000000F /* ComponentsKit in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		R00000000000000000000003 = {
+			isa = PBXGroup;
+			children = (
+				R00000000000000000000011 /* Raide */,
+				R00000000000000000000004 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		R00000000000000000000004 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				R00000000000000000000010 /* Raide.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		R00000000000000000000011 /* Raide */ = {
+			isa = PBXGroup;
+			children = (
+				R00000000000000000000015 /* App */,
+				R00000000000000000000016 /* Models */,
+				R00000000000000000000017 /* Services */,
+				R00000000000000000000018 /* Mock */,
+				R00000000000000000000019 /* Maps */,
+				R0000000000000000000001A /* UI */,
+				R2000000000000000000000D /* Assets.xcassets */,
+				R2000000000000000000000E /* Info.plist */,
+			);
+			path = Raide;
+			sourceTree = "<group>";
+		};
+		R00000000000000000000015 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				R20000000000000000000001 /* RaideApp.swift */,
+				R20000000000000000000002 /* ContentView.swift */,
+				R20000000000000000000003 /* RootFlowView.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		R00000000000000000000016 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				R20000000000000000000004 /* TripModels.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		R00000000000000000000017 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				R20000000000000000000005 /* TripSession.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		R00000000000000000000018 /* Mock */ = {
+			isa = PBXGroup;
+			children = (
+				R20000000000000000000006 /* MockCatalog.swift */,
+			);
+			path = Mock;
+			sourceTree = "<group>";
+		};
+		R00000000000000000000019 /* Maps */ = {
+			isa = PBXGroup;
+			children = (
+				R20000000000000000000007 /* MapBootstrap.swift */,
+				R20000000000000000000008 /* RaideMapView.swift */,
+			);
+			path = Maps;
+			sourceTree = "<group>";
+		};
+		R0000000000000000000001A /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				R0000000000000000000001B /* Theme */,
+				R0000000000000000000001C /* Components */,
+				R0000000000000000000001D /* Flow */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
+		R0000000000000000000001B /* Theme */ = {
+			isa = PBXGroup;
+			children = (
+				R20000000000000000000009 /* RaideTheme.swift */,
+			);
+			path = Theme;
+			sourceTree = "<group>";
+		};
+		R0000000000000000000001C /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				R2000000000000000000000A /* RaideChrome.swift */,
+				R20000000000000000000010 /* RaideGlass.swift */,
+				R20000000000000000000011 /* RaideUIKitBridge.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		R0000000000000000000001D /* Flow */ = {
+			isa = PBXGroup;
+			children = (
+				R2000000000000000000000B /* SplashView.swift */,
+				R2000000000000000000000C /* FlowScaffolds.swift */,
+			);
+			path = Flow;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		R00000000000000000000005 /* Raide */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = R0000000000000000000000F /* Build configuration list for PBXNativeTarget "Raide" */;
+			buildPhases = (
+				R00000000000000000000007 /* Sources */,
+				R00000000000000000000008 /* Frameworks */,
+				R00000000000000000000009 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Raide;
+			packageProductDependencies = (
+				R30000000000000000000001 /* GoogleMaps */,
+				R30000000000000000000002 /* ComponentsKit */,
+			);
+			productName = Raide;
+			productReference = R00000000000000000000010 /* Raide.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		R00000000000000000000006 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1600;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					R00000000000000000000005 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+				};
+			};
+			buildConfigurationList = R0000000000000000000000E /* Build configuration list for PBXProject "Raide" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = R00000000000000000000003;
+			packageReferences = (
+				R40000000000000000000001 /* XCRemoteSwiftPackageReference "ios-maps-sdk" */,
+				R40000000000000000000002 /* XCRemoteSwiftPackageReference "ComponentsKit" */,
+			);
+			productRefGroup = R00000000000000000000004 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				R00000000000000000000005 /* Raide */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		R00000000000000000000009 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				R1000000000000000000000D /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		R00000000000000000000007 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				R10000000000000000000001 /* RaideApp.swift in Sources */,
+				R10000000000000000000002 /* ContentView.swift in Sources */,
+				R10000000000000000000003 /* RootFlowView.swift in Sources */,
+				R10000000000000000000004 /* TripModels.swift in Sources */,
+				R10000000000000000000005 /* TripSession.swift in Sources */,
+				R10000000000000000000006 /* MockCatalog.swift in Sources */,
+				R10000000000000000000007 /* MapBootstrap.swift in Sources */,
+				R10000000000000000000008 /* RaideMapView.swift in Sources */,
+				R10000000000000000000009 /* RaideTheme.swift in Sources */,
+				R1000000000000000000000A /* RaideChrome.swift in Sources */,
+				R10000000000000000000010 /* RaideGlass.swift in Sources */,
+				R10000000000000000000011 /* RaideUIKitBridge.swift in Sources */,
+				R1000000000000000000000B /* SplashView.swift in Sources */,
+				R1000000000000000000000C /* FlowScaffolds.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		R0000000000000000000000A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		R0000000000000000000000B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		R0000000000000000000000C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Raide/Info.plist;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.raide.demo;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		R0000000000000000000000D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Raide/Info.plist;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.raide.demo;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		R0000000000000000000000E /* Build configuration list for PBXProject "Raide" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				R0000000000000000000000A /* Debug */,
+				R0000000000000000000000B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		R0000000000000000000000F /* Build configuration list for PBXNativeTarget "Raide" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				R0000000000000000000000C /* Debug */,
+				R0000000000000000000000D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		R40000000000000000000001 /* XCRemoteSwiftPackageReference "ios-maps-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/googlemaps/ios-maps-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 9.0.0;
+			};
+		};
+		R40000000000000000000002 /* XCRemoteSwiftPackageReference "ComponentsKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/componentskit/ComponentsKit";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.7.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		R30000000000000000000001 /* GoogleMaps */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = R40000000000000000000001 /* XCRemoteSwiftPackageReference "ios-maps-sdk" */;
+			productName = GoogleMaps;
+		};
+		R30000000000000000000002 /* ComponentsKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = R40000000000000000000002 /* XCRemoteSwiftPackageReference "ComponentsKit" */;
+			productName = ComponentsKit;
+		};
+/* End XCSwiftPackageProductDependency section */
+
+	};
+	rootObject = R00000000000000000000006 /* Project object */;
+}

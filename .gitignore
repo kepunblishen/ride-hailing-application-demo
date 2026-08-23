@@ -1,0 +1,24 @@
+# Xcode
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+DerivedData/
+build/
+*.ipa
+*.dSYM.zip
+
+# macOS
+.DS_Store
+
+# Secrets / keys
+*.p12
+*.mobileprovision
+GoogleService-Info.plist
+**/Secrets.xcconfig
+**/GoogleMapsAPIKey.swift
+codemagic-plist-base64.txt
+
+# Reference clones (large — not committed)
+reference/ComponentsKit/
+
+# Temporary source apps (remove after scaffolding)
+Wells-Gas-Level-Monitor-main/
