@@ -228,3 +228,12 @@ Do **not** block Codemagic for these:
 | Fare | `PricingEngine.swift` |
 | Tests | `MapBootstrapKeyTests`, `RouteDeviationTests`, `ReverseGeocodingNamingTests`, ... |
 | Docs | `GOOGLE_API_MATRIX.md`, `GOOGLE_MAPS_ARCHITECTURE.md`, `GOOGLE_INTEGRATION_TEST_PLAN.md`, `GOOGLE_MAPS_SETUP.md`, `PLACES_SDK_DECISION.md`, `PRE_BUILD_MAPS_GATE.md`, `MAPS_POST_KEY_QA.md` |
+
+
+## Safety-map hardening (2026-08-23)
+
+- [x] Share-trip / SOS include live lat/lng + Maps link when `RiderLocationManager.latestLocation` is available
+- [x] Wired through ActiveTripFlowView, SafetyToolkitView, SafetySettingsView, DriverCardViews, DiagnosticsToolsView
+- [x] `requestSOS(coordinate:)` embeds coords via `TripShare.sosDetailBody`
+- [x] TripMapLayer: `showsUserLocation: location.isAuthorized` + `startUpdatingIfAllowed()` on appear
+- Audit §65 SOS / trip sharing marked done in root audit STATUS TRACKER

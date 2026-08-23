@@ -65,6 +65,7 @@ Gap matrix: [`docs/MAPS_AUDIT_GAP_STATUS.md`](docs/MAPS_AUDIT_GAP_STATUS.md).
 - [x] **safety-map** — Active-trip / Safety toolkit / Safety settings / driver share bars pass live coordinate into share + `requestSOS(coordinate:)`
 - [x] **safety-map** — Map hardening: `TripMapLayer` enables blue-dot only when authorized and starts updates on appear (`showsUserLocation: location.isAuthorized`)
 
+
 ### Explicitly not verified / open (do not check until proven)
 
 - [x] §2 / §39 — Written Google API keep/remove matrix → [`docs/GOOGLE_API_MATRIX.md`](docs/GOOGLE_API_MATRIX.md)
