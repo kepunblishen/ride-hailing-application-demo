@@ -168,16 +168,39 @@ struct AccountHubView: View {
         }
     }
 
+    private var profileInitials: String {
+        let first = session.firstName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let last = session.lastName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let firstLetter = first.first.map { String($0) } ?? ""
+        let lastLetter = last.first.map { String($0) } ?? ""
+        let fromNames = (firstLetter + lastLetter).uppercased()
+        if fromNames.count == 2 {
+            return fromNames
+        }
+        let display = session.displayName
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .filter { !$0.isWhitespace }
+        let chars = display.prefix(2).map { String($0) }.joined().uppercased()
+        return chars.isEmpty ? "?" : chars
+    }
+
     private var profileHeader: some View {
         HStack(spacing: VuumLayout.rowSpacing) {
-            Circle()
-                .fill(VuumColor.brand)
-                .frame(width: 64, height: 64)
-                .overlay(
-                    Text(String(session.firstName.prefix(1)).uppercased())
-                        .font(.system(size: 26, weight: .bold))
-                        .foregroundStyle(VuumColor.accentOn)
-                )
+            ZStack {
+                Circle()
+                    .fill(VuumColor.chipBackground)
+                Circle()
+                    .strokeBorder(
+                        VuumColor.secondaryText.opacity(0.55),
+                        style: StrokeStyle(lineWidth: 1.5, dash: [3, 3])
+                    )
+                Text(profileInitials)
+                    .font(.system(size: 22, weight: .semibold))
+                    .foregroundStyle(VuumColor.primaryText)
+            }
+            .frame(width: 64, height: 64)
+            .accessibilityHidden(true)
+
             VStack(alignment: .leading, spacing: 6) {
                 Text(session.displayName)
                     .font(VuumType.titleSmall)
@@ -186,11 +209,8 @@ struct AccountHubView: View {
                     .font(VuumType.callout)
                     .foregroundStyle(VuumColor.secondaryText)
                 Text(L10n.Account.personalInfo)
-                    .font(VuumType.micro)
-                    .foregroundStyle(VuumColor.accent)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 4)
-                    .background(VuumColor.accent.opacity(0.16), in: Capsule())
+                    .font(VuumType.caption)
+                    .foregroundStyle(VuumColor.secondaryText)
             }
             Spacer(minLength: 0)
         }

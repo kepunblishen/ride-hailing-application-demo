@@ -1,24 +1,6 @@
 import SwiftUI
 
-// MARK: - Filters
-
-private enum ActivitySegment: String, CaseIterable, Identifiable {
-    case all
-    case completed
-    case cancelled
-    case upcoming
-
-    var id: String { rawValue }
-
-    var title: String {
-        switch self {
-        case .all: return "All"
-        case .completed: return "Completed"
-        case .cancelled: return "Cancelled"
-        case .upcoming: return "Upcoming"
-        }
-    }
-}
+// MARK: - Time filter (toolbar menu only)
 
 private enum ActivityTimeFilter: String, CaseIterable, Identifiable {
     case all
@@ -56,9 +38,7 @@ struct ActivityHubView: View {
     @EnvironmentObject private var tripSession: TripSession
     @EnvironmentObject private var session: SessionStore
 
-    @State private var segment: ActivitySegment = .all
     @State private var timeFilter: ActivityTimeFilter = .all
-    @State private var productFilter: String = "All"
     @State private var helpReceipt: TripReceipt?
     @State private var shareText: String?
 
@@ -66,49 +46,48 @@ struct ActivityHubView: View {
         AppLocale.market(countryCode: session.countryCode)
     }
 
-    private var productOptions: [String] {
-        let tiers = Set(tripSession.tripHistory.map(\.tierName))
-            .union(tripSession.reservedTrips.map(\.tierName))
-        return ["All"] + tiers.sorted()
-    }
-
     private var filteredHistory: [TripReceipt] {
-        tripSession.tripHistory.filter { receipt in
-            timeFilter.includes(receipt.date)
-                && (productFilter == "All" || receipt.tierName == productFilter)
-                && statusMatches(receipt.status)
-        }
+        tripSession.tripHistory.filter { timeFilter.includes($0.date) }
     }
 
     private var filteredReservations: [ReservedTrip] {
-        tripSession.reservedTrips.filter { trip in
-            timeFilter.includes(trip.when)
-                && (productFilter == "All" || trip.tierName == productFilter)
-        }
-        .sorted { $0.when < $1.when }
-    }
-
-    private func statusMatches(_ status: TripReceiptStatus) -> Bool {
-        switch segment {
-        case .all, .upcoming:
-            return true
-        case .completed:
-            return status == .completed
-        case .cancelled:
-            return status == .cancelled
-        }
+        tripSession.reservedTrips
+            .filter { timeFilter.includes($0.when) }
+            .sorted { $0.when < $1.when }
     }
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                filterChrome
-                VuumHubLoadContainer {
-                    content
-                }
+            VuumHubLoadContainer {
+                content
             }
             .background(VuumColor.groupedBackground.ignoresSafeArea())
             .navigationTitle(L10n.t("activity.title"))
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        ForEach(ActivityTimeFilter.allCases) { filter in
+                            Button {
+                                timeFilter = filter
+                            } label: {
+                                HStack {
+                                    Text(filter.title)
+                                    if timeFilter == filter {
+                                        Image(systemName: "checkmark")
+                                    }
+                                }
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "calendar")
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundStyle(
+                                timeFilter == .all ? VuumColor.secondaryText : VuumColor.brand
+                            )
+                            .accessibilityLabel("Time range")
+                    }
+                }
+            }
             .navigationDestination(for: TripReceipt.self) { receipt in
                 ActivityReceiptDetailView(
                     receipt: receipt,
@@ -134,169 +113,20 @@ struct ActivityHubView: View {
             }
             .onAppear {
                 tripSession.refreshReservationStatuses()
-                if segment == .all || segment == .completed {
-                    if tripSession.tripHistory.isEmpty, !tripSession.reservedTrips.isEmpty {
-                        segment = .upcoming
-                    }
-                }
             }
         }
-    }
-
-    // MARK: Chrome
-
-    private var filterChrome: some View {
-        VStack(alignment: .leading, spacing: VuumLayout.rowSpacing) {
-            Picker("Activity", selection: $segment) {
-                ForEach(ActivitySegment.allCases) { item in
-                    Text(item.title).tag(item)
-                }
-            }
-            .pickerStyle(.segmented)
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: VuumLayout.chipSpacing) {
-                    ForEach(ActivityTimeFilter.allCases) { filter in
-                        filterChip(
-                            title: filter.title,
-                            selected: timeFilter == filter
-                        ) {
-                            timeFilter = filter
-                        }
-                    }
-
-                    if productOptions.count > 1 {
-                        Menu {
-                            ForEach(productOptions, id: \.self) { option in
-                                Button(option) { productFilter = option }
-                            }
-                        } label: {
-                            HStack(spacing: 4) {
-                                Text(productFilter == "All" ? "Product" : productFilter)
-                                    .font(VuumType.captionSemibold)
-                                Image(systemName: "chevron.down")
-                                    .font(.system(size: 10, weight: .bold))
-                            }
-                            .foregroundStyle(productFilter == "All" ? VuumColor.primaryText : VuumColor.accentOn)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
-                            .background(
-                                productFilter == "All" ? VuumColor.chipBackground : VuumColor.brand,
-                                in: Capsule()
-                            )
-                        }
-                    }
-                }
-                .padding(.vertical, 2)
-            }
-        }
-        .padding(.horizontal, VuumLayout.pageInset)
-        .padding(.top, 10)
-        .padding(.bottom, 14)
-        .background(VuumColor.pageBackground)
-    }
-
-    private func filterChip(title: String, selected: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(title)
-                .font(VuumType.captionSemibold)
-                .foregroundStyle(selected ? VuumColor.accentOn : VuumColor.primaryText)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(
-                    selected ? VuumColor.brand : VuumColor.chipBackground,
-                    in: Capsule()
-                )
-        }
-        .buttonStyle(.plain)
     }
 
     // MARK: Content
 
     @ViewBuilder
     private var content: some View {
-        switch segment {
-        case .upcoming:
-            upcomingContent
-        case .all:
-            combinedContent
-        case .completed, .cancelled:
-            pastContent
-        }
-    }
-
-    @ViewBuilder
-    private var pastContent: some View {
-        if filteredHistory.isEmpty {
-            emptyState(
-                title: tripSession.tripHistory.isEmpty
-                    ? L10n.t("activity.empty_title")
-                    : "No trips match",
-                systemImage: segment == .cancelled ? "xmark.circle" : "clock",
-                message: tripSession.tripHistory.isEmpty
-                    ? L10n.t("activity.empty_detail")
-                    : "Try a different time range or product filter."
-            )
-        } else {
-            List {
-                Section {
-                    ForEach(filteredHistory) { receipt in
-                        NavigationLink(value: receipt) {
-                            PastTripRow(receipt: receipt, market: market)
-                        }
-                    }
-                } header: {
-                    Text("\(filteredHistory.count) trip\(filteredHistory.count == 1 ? "" : "s")")
-                }
-            }
-            .listStyle(.insetGrouped)
-            .scrollContentBackground(.hidden)
-            .background(VuumColor.groupedBackground)
-        }
-    }
-
-    @ViewBuilder
-    private var upcomingContent: some View {
-        if filteredReservations.isEmpty {
-            emptyState(
-                title: tripSession.reservedTrips.isEmpty ? "No upcoming rides" : "No reservations match",
-                systemImage: "calendar",
-                message: tripSession.reservedTrips.isEmpty
-                    ? "Reserved pickups will show here. Schedule a ride from Services."
-                    : "Try a different time range or product filter."
-            )
-        } else {
-            List {
-                Section {
-                    ForEach(filteredReservations) { trip in
-                        NavigationLink {
-                            ReservedTripDetailView(trip: trip, market: market)
-                        } label: {
-                            UpcomingTripRow(trip: trip, market: market)
-                        }
-                    }
-                } header: {
-                    Text("\(filteredReservations.count) reserved")
-                }
-            }
-            .listStyle(.insetGrouped)
-            .scrollContentBackground(.hidden)
-            .background(VuumColor.groupedBackground)
-        }
-    }
-
-    @ViewBuilder
-    private var combinedContent: some View {
         if filteredHistory.isEmpty, filteredReservations.isEmpty {
-            emptyState(
-                title: L10n.t("activity.empty_title"),
-                systemImage: "clock",
-                message: L10n.t("activity.empty_detail")
-            )
+            emptyState
         } else {
             List {
                 if !filteredReservations.isEmpty {
-                    Section("Upcoming") {
+                    Section {
                         ForEach(filteredReservations) { trip in
                             NavigationLink {
                                 ReservedTripDetailView(trip: trip, market: market)
@@ -304,14 +134,21 @@ struct ActivityHubView: View {
                                 UpcomingTripRow(trip: trip, market: market)
                             }
                         }
+                    } header: {
+                        Text("Upcoming")
                     }
                 }
+
                 if !filteredHistory.isEmpty {
-                    Section("Past") {
+                    Section {
                         ForEach(filteredHistory) { receipt in
                             NavigationLink(value: receipt) {
                                 PastTripRow(receipt: receipt, market: market)
                             }
+                        }
+                    } header: {
+                        if !filteredReservations.isEmpty {
+                            Text("Past")
                         }
                     }
                 }
@@ -322,22 +159,16 @@ struct ActivityHubView: View {
         }
     }
 
-    private func emptyState(title: String, systemImage: String, message: String) -> some View {
-        let showBook = tripSession.tripHistory.isEmpty
-            && (segment == .all || segment == .completed || segment == .cancelled)
-        let showServices = tripSession.reservedTrips.isEmpty && segment == .upcoming
+    private var emptyState: some View {
+        let hasAnyTrips = !tripSession.tripHistory.isEmpty || !tripSession.reservedTrips.isEmpty
         return ActivityEmptyStateView(
-            systemImage: systemImage,
-            title: title,
-            message: message,
-            actionTitle: showBook || showServices ? L10n.t("status.empty_trips_action") : nil,
-            action: {
-                if showBook {
-                    MainTabNavigation.openHome(beginBooking: true)
-                } else if showServices {
-                    MainTabNavigation.openServices()
-                }
-            }
+            systemImage: "clock",
+            title: hasAnyTrips ? "No trips in this range" : L10n.t("activity.empty_title"),
+            message: hasAnyTrips
+                ? "Try a different time range from the calendar menu."
+                : L10n.t("activity.empty_detail"),
+            actionTitle: hasAnyTrips ? nil : L10n.t("status.empty_trips_action"),
+            action: hasAnyTrips ? nil : { MainTabNavigation.openHome(beginBooking: true) }
         )
     }
 
@@ -377,86 +208,54 @@ private struct PastTripRow: View {
     let receipt: TripReceipt
     let market: AppLocale.Market
 
-    var body: some View {
-        HStack(alignment: .top, spacing: VuumLayout.rowSpacing) {
-            Image(systemName: receipt.status == .cancelled ? "xmark.circle.fill" : "car.fill")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(receipt.status == .cancelled ? VuumColor.secondaryText : VuumColor.brand)
-                .frame(width: VuumLayout.iconBadgeLarge, height: VuumLayout.iconBadgeLarge)
-                .background(
-                    (receipt.status == .cancelled
-                        ? VuumColor.secondaryText.opacity(0.14)
-                        : VuumColor.brand.opacity(0.18)),
-                    in: RoundedRectangle(cornerRadius: VuumLayout.radiusChip, style: .continuous)
-                )
+    private var fareLabel: String {
+        if receipt.status == .cancelled {
+            return "No charge"
+        }
+        return AppLocale.formatFareTotal(
+            cdf: receipt.chargedTotalCDF,
+            usd: receipt.chargedTotalUSD,
+            market: market
+        )
+    }
 
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    Text(receipt.dropoffName)
-                        .font(VuumType.rowTitle)
-                        .foregroundStyle(VuumColor.primaryText)
-                        .lineLimit(2)
-                    Spacer(minLength: 8)
-                    Text(receipt.status.title)
-                        .font(VuumType.micro)
-                        .foregroundStyle(receipt.status == .cancelled ? VuumColor.secondaryText : VuumColor.brand)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(
-                            (receipt.status == .cancelled
-                                ? VuumColor.secondaryText.opacity(0.12)
-                                : VuumColor.brand.opacity(0.16)),
-                            in: Capsule()
-                        )
-                }
-                Text("\(receipt.pickupName) · \(receipt.tierName)")
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .firstTextBaseline, spacing: 12) {
+                Text(receipt.dropoffName)
+                    .font(VuumType.rowTitle)
+                    .foregroundStyle(VuumColor.primaryText)
+                    .lineLimit(1)
+                Spacer(minLength: 8)
+                Text(fareLabel)
+                    .font(VuumType.callout)
+                    .foregroundStyle(
+                        receipt.status == .cancelled
+                            ? VuumColor.secondaryText
+                            : VuumColor.primaryText
+                    )
+                    .lineLimit(1)
+            }
+
+            HStack(spacing: 6) {
+                Text(receipt.date.formatted(date: .abbreviated, time: .shortened))
                     .font(VuumType.caption)
                     .foregroundStyle(VuumColor.secondaryText)
-                    .lineLimit(1)
-                if !receipt.vehicleLabel.isEmpty {
-                    Text("\(receipt.driverName) · \(receipt.vehicleLabel)")
-                        .font(.system(size: 12))
-                        .foregroundStyle(VuumColor.secondaryText)
-                        .lineLimit(1)
-                } else {
-                    Text(receipt.driverName)
-                        .font(.system(size: 12))
+                if receipt.status == .cancelled {
+                    Text("·")
+                        .font(VuumType.caption)
+                        .foregroundStyle(VuumColor.tertiaryText)
+                    Text(receipt.status.title)
+                        .font(VuumType.caption)
                         .foregroundStyle(VuumColor.secondaryText)
                 }
-                HStack(alignment: .firstTextBaseline) {
-                    Text(receipt.date.formatted(date: .abbreviated, time: .shortened))
-                        .font(.system(size: 12))
-                        .foregroundStyle(VuumColor.secondaryText)
-                    Spacer(minLength: 8)
-                    if receipt.status == .cancelled {
-                        Text("No charge")
-                            .font(VuumType.callout)
-                            .foregroundStyle(VuumColor.secondaryText)
-                    } else {
-                        Text(
-                            AppLocale.formatFareTotal(
-                                cdf: receipt.chargedTotalCDF,
-                                usd: receipt.chargedTotalUSD,
-                                market: market
-                            )
-                        )
-                        .font(VuumType.callout)
-                        .foregroundStyle(VuumColor.primaryText)
-                    }
-                }
-                HStack(spacing: VuumLayout.chipSpacing) {
-                    Label(receipt.paymentMethod.title, systemImage: receipt.paymentMethod.systemImage)
-                    if let rating = receipt.rating {
-                        Label("\(rating)", systemImage: "star.fill")
-                    }
-                }
-                .font(VuumType.micro)
-                .foregroundStyle(VuumColor.secondaryText)
             }
         }
-        .padding(.vertical, 6)
+        .padding(.vertical, 4)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(receipt.dropoffName), \(receipt.status.title), \(receipt.date.formatted(date: .abbreviated, time: .shortened))")
+        .accessibilityLabel(
+            "\(receipt.dropoffName), \(receipt.status.title), \(receipt.date.formatted(date: .abbreviated, time: .shortened)), \(fareLabel)"
+        )
     }
 }
 
@@ -466,53 +265,44 @@ private struct UpcomingTripRow: View {
     var onCancel: (() -> Void)? = nil
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .top, spacing: VuumLayout.rowSpacing) {
-                Image(systemName: trip.status == .driverAssigned ? "car.fill" : "calendar")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(VuumColor.brand)
-                    .frame(width: VuumLayout.iconBadgeLarge, height: VuumLayout.iconBadgeLarge)
-                    .background(
-                        VuumColor.brand.opacity(0.18),
-                        in: RoundedRectangle(cornerRadius: VuumLayout.radiusChip, style: .continuous)
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .firstTextBaseline, spacing: 12) {
+                Text(trip.dropoffName)
+                    .font(VuumType.rowTitle)
+                    .foregroundStyle(VuumColor.primaryText)
+                    .lineLimit(1)
+                Spacer(minLength: 8)
+                Text(
+                    AppLocale.formatFareTotal(
+                        cdf: trip.priceCDF,
+                        usd: trip.priceUSD,
+                        market: market
                     )
+                )
+                .font(VuumType.callout)
+                .foregroundStyle(VuumColor.primaryText)
+                .lineLimit(1)
+            }
 
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("\(trip.pickupName) → \(trip.dropoffName)")
-                        .font(VuumType.rowTitle)
-                        .foregroundStyle(VuumColor.primaryText)
-                        .lineLimit(2)
-                    Text(trip.when.formatted(date: .complete, time: .shortened))
-                        .font(VuumType.caption)
-                        .foregroundStyle(VuumColor.secondaryText)
-                    Text("\(trip.tierName) · \(AppLocale.formatFareTotal(cdf: trip.priceCDF, usd: trip.priceUSD, market: market))")
-                        .font(VuumType.callout)
-                        .foregroundStyle(VuumColor.primaryText)
-                    Text(trip.statusDetailLine)
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(VuumColor.brand)
-                    if !trip.stopNames.isEmpty {
-                        Text("Stops: \(trip.stopNames.joined(separator: ", "))")
-                            .font(.system(size: 12))
-                            .foregroundStyle(VuumColor.secondaryText)
-                    }
-                    if let prefs = trip.preferences.summaryLine {
-                        Text(prefs)
-                            .font(.system(size: 12))
-                            .foregroundStyle(VuumColor.secondaryText)
-                    }
-                    Text("Conf · \(trip.confirmationCode)")
-                        .font(.system(size: 11, design: .monospaced))
-                        .foregroundStyle(VuumColor.secondaryText)
-                }
+            HStack(spacing: 6) {
+                Text(trip.when.formatted(date: .abbreviated, time: .shortened))
+                    .font(VuumType.caption)
+                    .foregroundStyle(VuumColor.secondaryText)
+                Text("·")
+                    .font(VuumType.caption)
+                    .foregroundStyle(VuumColor.tertiaryText)
+                Text(trip.status.title)
+                    .font(VuumType.caption)
+                    .foregroundStyle(VuumColor.secondaryText)
             }
 
             if let onCancel {
                 Button("Cancel reservation", role: .destructive, action: onCancel)
                     .font(VuumType.bodySemibold)
+                    .padding(.top, 4)
             }
         }
-        .padding(.vertical, 6)
+        .padding(.vertical, 4)
     }
 }
 
@@ -635,229 +425,166 @@ struct ReservedTripDetailView: View {
     }
 }
 
-// MARK: - Receipt detail (PDF-like)
+// MARK: - Receipt detail
 
 struct ActivityReceiptDetailView: View {
-    @Environment(\.colorScheme) private var colorScheme
     let receipt: TripReceipt
     let market: AppLocale.Market
     let onRebook: () -> Void
     let onHelp: () -> Void
     let onShare: () -> Void
 
-    var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                receiptCard
+    private var totalLabel: String {
+        if receipt.status == .cancelled {
+            return AppLocale.formatFareTotal(cdf: 0, usd: 0, market: market)
+        }
+        return AppLocale.formatFareTotal(
+            cdf: receipt.chargedTotalCDF,
+            usd: receipt.chargedTotalUSD,
+            market: market
+        )
+    }
 
-                VStack(spacing: VuumLayout.stackSpacing) {
-                    if receipt.status == .completed {
-                        VuumPrimaryButton(title: "Rebook this trip", action: onRebook)
-                    }
-                    Button(action: onHelp) {
-                        Label("Get help with this trip", systemImage: "questionmark.circle")
+    var body: some View {
+        List {
+            Section {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(receipt.dropoffName)
+                        .font(VuumType.titleSmall)
+                        .foregroundStyle(VuumColor.primaryText)
+                    Text(receipt.date.formatted(date: .complete, time: .shortened))
+                        .font(VuumType.caption)
+                        .foregroundStyle(VuumColor.secondaryText)
+                    Text(receipt.status.title)
+                        .font(VuumType.caption)
+                        .foregroundStyle(VuumColor.secondaryText)
+                }
+                .padding(.vertical, 4)
+                .listRowInsets(EdgeInsets(top: 14, leading: 16, bottom: 14, trailing: 16))
+            }
+
+            Section("Route") {
+                LabeledContent("From", value: receipt.pickupName)
+                if !receipt.stopNames.isEmpty {
+                    LabeledContent("Stops", value: receipt.stopNames.joined(separator: " → "))
+                }
+                LabeledContent("To", value: receipt.dropoffName)
+                LabeledContent("Distance", value: String(format: "%.1f km", receipt.fare.distanceKm))
+                LabeledContent(
+                    "Duration",
+                    value: TripGeo.formatDuration(minutes: receipt.fare.durationMinutes)
+                )
+            }
+
+            Section("Fare") {
+                fareRow("Base fare", receipt.fare.baseFareCDF)
+                fareRow("Distance", receipt.fare.distanceFareCDF)
+                fareRow("Time", receipt.fare.timeFareCDF)
+                if receipt.fare.waitingFareCDF > 0 {
+                    fareRow("Waiting", receipt.fare.waitingFareCDF)
+                }
+                fareRow("Booking fee", receipt.fare.bookingFeeCDF)
+                if receipt.fare.surgeFareCDF > 0 {
+                    let surgeTitle = receipt.fare.surgeMultiplier > 1.001
+                        ? String(format: "Peak · %.1f×", receipt.fare.surgeMultiplier)
+                        : "Peak"
+                    fareRow(surgeTitle, receipt.fare.surgeFareCDF)
+                }
+                if receipt.fare.tollCDF > 0 {
+                    fareRow("Toll", receipt.fare.tollCDF)
+                }
+                if receipt.fare.serviceFeeCDF > 0 {
+                    fareRow("Service fee", receipt.fare.serviceFeeCDF)
+                }
+                if receipt.fare.taxCDF > 0 {
+                    fareRow(market == .kenya ? "Tax" : "TVA 16%", receipt.fare.taxCDF)
+                }
+                if receipt.fare.discountCDF > 0 {
+                    fareRow("Promo", -receipt.fare.discountCDF)
+                }
+                if receipt.tipCDF > 0 {
+                    fareRow("Tip", receipt.tipCDF)
+                }
+                HStack {
+                    Text(receipt.status == .cancelled ? "Total" : "Total charged")
+                        .font(VuumType.bodySemibold)
+                        .foregroundStyle(VuumColor.primaryText)
+                    Spacer()
+                    Text(totalLabel)
+                        .font(VuumType.bodySemibold)
+                        .foregroundStyle(VuumColor.primaryText)
+                }
+            }
+
+            Section("Trip details") {
+                LabeledContent("Driver", value: receipt.driverName)
+                if !receipt.vehicleLabel.isEmpty {
+                    LabeledContent("Vehicle", value: receipt.vehicleLabel)
+                }
+                LabeledContent("Product", value: receipt.tierName)
+                LabeledContent("Payment", value: receipt.paymentMethod.title)
+                if let rating = receipt.rating {
+                    LabeledContent("Your rating", value: "\(rating) / 5")
+                }
+                if !receipt.feedbackTags.isEmpty {
+                    LabeledContent("Feedback", value: receipt.feedbackTags.joined(separator: " · "))
+                }
+                if let note = receipt.feedbackNote, !note.isEmpty {
+                    LabeledContent("Comment", value: note)
+                }
+                if let reason = receipt.cancelReason, !reason.isEmpty {
+                    LabeledContent("Cancel reason", value: reason)
+                }
+                LabeledContent(
+                    "Receipt ID",
+                    value: String(receipt.id.prefix(8)).uppercased()
+                )
+            }
+
+            Section {
+                if receipt.status == .completed {
+                    Button(action: onRebook) {
+                        Text("Rebook this trip")
                             .font(VuumType.bodySemibold)
                             .frame(maxWidth: .infinity)
-                            .frame(height: 50)
-                            .foregroundStyle(VuumColor.primaryText)
-                            .background(
-                                VuumColor.chipBackground,
-                                in: RoundedRectangle(cornerRadius: VuumLayout.radiusControl, style: .continuous)
-                            )
-                    }
-                    .buttonStyle(.plain)
-                    Button(action: onShare) {
-                        Label("Share receipt", systemImage: "square.and.arrow.up")
-                            .font(VuumType.callout)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 10)
                             .foregroundStyle(VuumColor.brand)
                     }
-                    .buttonStyle(.plain)
                 }
-                .padding(.horizontal, VuumLayout.pageInset)
+                Button(action: onHelp) {
+                    Label("Get help with this trip", systemImage: "questionmark.circle")
+                        .font(VuumType.bodySemibold)
+                        .foregroundStyle(VuumColor.primaryText)
+                }
+                Button(action: onShare) {
+                    Label("Share receipt", systemImage: "square.and.arrow.up")
+                        .font(VuumType.callout)
+                        .foregroundStyle(VuumColor.secondaryText)
+                }
             }
-            .padding(.vertical, VuumLayout.pageInset)
         }
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
         .background(VuumColor.groupedBackground.ignoresSafeArea())
         .navigationTitle("Receipt")
         .navigationBarTitleDisplayMode(.inline)
     }
 
-    private var receiptCard: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack {
-                Text("VUUM")
-                    .font(.system(size: 22, weight: .black, design: .rounded))
-                    .foregroundStyle(VuumColor.brand)
-                Spacer()
-                Text(receipt.status.title)
-                    .font(VuumType.micro)
-                    .foregroundStyle(VuumColor.secondaryText)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(VuumColor.chipBackground, in: Capsule())
-            }
-            .padding(.bottom, 16)
-
-            Text(receipt.date.formatted(date: .complete, time: .shortened))
-                .font(VuumType.caption)
-                .foregroundStyle(VuumColor.secondaryText)
-                .padding(.bottom, 18)
-
-            routeBlock(title: "From", value: receipt.pickupName)
-            if !receipt.stopNames.isEmpty {
-                Divider().padding(.vertical, VuumLayout.rowSpacing)
-                routeBlock(title: "Stops", value: receipt.stopNames.joined(separator: " → "))
-            }
-            Divider().padding(.vertical, VuumLayout.rowSpacing)
-            routeBlock(title: "To", value: receipt.dropoffName)
-            Divider().padding(.vertical, VuumLayout.rowSpacing)
-
-            metaRow("Driver", receipt.driverName)
-            if !receipt.vehicleLabel.isEmpty {
-                metaRow("Vehicle", receipt.vehicleLabel)
-            }
-            metaRow("Product", receipt.tierName)
-            metaRow("Payment", receipt.paymentMethod.title)
-            if let rating = receipt.rating {
-                metaRow("Your rating", "\(rating) / 5")
-            }
-            if !receipt.feedbackTags.isEmpty {
-                metaRow("Feedback", receipt.feedbackTags.joined(separator: " · "))
-            }
-            if let note = receipt.feedbackNote, !note.isEmpty {
-                metaRow("Comment", note)
-            }
-            if let reason = receipt.cancelReason, !reason.isEmpty {
-                metaRow("Cancel reason", reason)
-            }
-            metaRow("Distance", String(format: "%.1f km", receipt.fare.distanceKm))
-            metaRow("Duration", TripGeo.formatDuration(minutes: receipt.fare.durationMinutes))
-
-            Divider().padding(.vertical, 14)
-
-            Text("Fare breakdown")
-                .font(VuumType.captionSemibold)
-                .foregroundStyle(VuumColor.secondaryText)
-                .padding(.bottom, 8)
-
-            fareLine("Base fare", receipt.fare.baseFareCDF, nil)
-            fareLine("Distance", receipt.fare.distanceFareCDF, nil)
-            fareLine("Time", receipt.fare.timeFareCDF, nil)
-            if receipt.fare.waitingFareCDF > 0 {
-                fareLine("Waiting", receipt.fare.waitingFareCDF, nil)
-            }
-            fareLine("Booking fee", receipt.fare.bookingFeeCDF, nil)
-            if receipt.fare.surgeFareCDF > 0 {
-                let surgeTitle = receipt.fare.surgeMultiplier > 1.001
-                    ? String(format: "Peak · %.1f×", receipt.fare.surgeMultiplier)
-                    : "Peak"
-                fareLine(surgeTitle, receipt.fare.surgeFareCDF, nil)
-            }
-            if receipt.fare.tollCDF > 0 {
-                fareLine("Toll", receipt.fare.tollCDF, nil)
-            }
-            if receipt.fare.serviceFeeCDF > 0 {
-                fareLine("Service fee", receipt.fare.serviceFeeCDF, nil)
-            }
-            if receipt.fare.taxCDF > 0 {
-                fareLine(market == .kenya ? "Tax" : "TVA 16%", receipt.fare.taxCDF, nil)
-            }
-            if receipt.fare.discountCDF > 0 {
-                fareLine("Promo", -receipt.fare.discountCDF, nil)
-            }
-            if receipt.tipCDF > 0 {
-                fareLine("Tip", receipt.tipCDF, nil)
-            }
-
-            Text(TripEmissions.displayLabel(distanceKm: receipt.fare.distanceKm, vehicleClass: .standard))
-                .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(VuumColor.secondaryText)
-                .padding(.top, 6)
-
-            Divider().padding(.vertical, 14)
-
-            HStack(alignment: .firstTextBaseline) {
-                Text(receipt.status == .cancelled ? "Total" : "Total charged")
-                    .font(.system(size: 17, weight: .bold))
-                    .foregroundStyle(VuumColor.primaryText)
-                Spacer()
-                Text(
-                    receipt.status == .cancelled
-                        ? AppLocale.formatFareTotal(cdf: 0, usd: 0, market: market)
-                        : AppLocale.formatFareTotal(
-                            cdf: receipt.chargedTotalCDF,
-                            usd: receipt.chargedTotalUSD,
-                            market: market
-                        )
-                )
-                .font(.system(size: 18, weight: .bold))
-                .foregroundStyle(VuumColor.primaryText)
-                .multilineTextAlignment(.trailing)
-            }
-
-            Text("Receipt ID · \(String(receipt.id.prefix(8)).uppercased())")
-                .font(.system(size: 11, design: .monospaced))
-                .foregroundStyle(VuumColor.secondaryText)
-                .padding(.top, 16)
-        }
-        .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: VuumLayout.radiusCard, style: .continuous)
-                .fill(VuumColor.cardBackground)
-                .shadow(color: VuumColor.glassShadow(for: colorScheme), radius: 12, y: 4)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: VuumLayout.radiusCard, style: .continuous)
-                .strokeBorder(VuumColor.divider.opacity(0.7), lineWidth: 1)
-        )
-        .padding(.horizontal, VuumLayout.pageInset)
-    }
-
-    private func routeBlock(title: String, value: String) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(title.uppercased())
-                .font(VuumType.micro)
-                .foregroundStyle(VuumColor.secondaryText)
-            Text(value)
-                .font(VuumType.rowTitle)
-                .foregroundStyle(VuumColor.primaryText)
-        }
-    }
-
-    private func metaRow(_ title: String, _ value: String) -> some View {
-        HStack(alignment: .firstTextBaseline) {
-            Text(title)
-                .font(VuumType.body)
-                .foregroundStyle(VuumColor.secondaryText)
-            Spacer(minLength: 12)
-            Text(value)
-                .font(VuumType.callout)
-                .foregroundStyle(VuumColor.primaryText)
-                .multilineTextAlignment(.trailing)
-        }
-        .padding(.vertical, 4)
-    }
-
-    private func fareLine(_ title: String, _ cdf: Int, _ usdHint: Double?) -> some View {
+    private func fareRow(_ title: String, _ cdf: Int) -> some View {
         HStack {
             Text(title)
                 .font(VuumType.body)
                 .foregroundStyle(VuumColor.secondaryText)
             Spacer()
-            Text(lineAmount(cdf: cdf, usdHint: usdHint))
+            Text(lineAmount(cdf: cdf))
                 .font(VuumType.callout)
                 .foregroundStyle(cdf < 0 ? VuumColor.success : VuumColor.primaryText)
         }
-        .padding(.vertical, 3)
     }
 
-    private func lineAmount(cdf: Int, usdHint: Double?) -> String {
+    private func lineAmount(cdf: Int) -> String {
         let absLocal = abs(cdf)
         let sign = cdf < 0 ? "−" : ""
         let fareMarket: AppLocale.Market = market == .kenya ? .kenya : .drc
-        _ = usdHint
         return sign + Money.local(absLocal, market: fareMarket).formatted
     }
 }
@@ -930,7 +657,7 @@ private struct TripHelpSheet: View {
     }
 }
 
-// MARK: - Activity empty state (semantic colors; Activity-scoped)
+// MARK: - Activity empty state
 
 private struct ActivityEmptyStateView: View {
     @Environment(\.colorScheme) private var colorScheme
@@ -945,11 +672,11 @@ private struct ActivityEmptyStateView: View {
         VStack(spacing: 12) {
             Image(systemName: systemImage)
                 .font(.system(size: 30, weight: .semibold))
-                .foregroundStyle(VuumColor.brand)
+                .foregroundStyle(VuumColor.secondaryText)
                 .symbolRenderingMode(.hierarchical)
                 .frame(width: 64, height: 64)
                 .background(
-                    VuumColor.brand.opacity(colorScheme == .dark ? 0.28 : 0.14),
+                    VuumColor.chipBackground,
                     in: RoundedRectangle(cornerRadius: 16, style: .continuous)
                 )
 

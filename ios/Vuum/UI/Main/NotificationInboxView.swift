@@ -6,8 +6,6 @@ struct NotificationInboxView: View {
     @EnvironmentObject private var permissions: PermissionCenter
     @Environment(\.openURL) private var openURL
 
-    @State private var filter: NotificationFilterGroup = .all
-
     private var pushEnabled: Bool {
         switch permissions.notificationAuthorization {
         case .authorized, .provisional, .ephemeral:
@@ -15,10 +13,6 @@ struct NotificationInboxView: View {
         default:
             return false
         }
-    }
-
-    private var filteredItems: [AppNotification] {
-        notifications.items.filter { filter.includes($0.kind) }
     }
 
     var body: some View {
@@ -29,42 +23,21 @@ struct NotificationInboxView: View {
                 }
             }
 
-            Section {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: VuumLayout.chipSpacing) {
-                        ForEach(NotificationFilterGroup.allCases) { group in
-                            VuumFilterChip(title: group.title, selected: filter == group) {
-                                filter = group
-                            }
-                        }
-                    }
-                    .padding(.vertical, 2)
-                }
-                .listRowInsets(EdgeInsets(
-                    top: 6,
-                    leading: VuumLayout.pageInset,
-                    bottom: 6,
-                    trailing: VuumLayout.pageInset
-                ))
-                .listRowBackground(Color.clear)
-                .listRowSeparator(.hidden)
-            }
-
-            if filteredItems.isEmpty {
+            if notifications.items.isEmpty {
                 Section {
                     inboxEmptyState
                         .listRowBackground(Color.clear)
                         .listRowInsets(EdgeInsets(
-                            top: 12,
+                            top: 24,
                             leading: VuumLayout.pageInset,
-                            bottom: 12,
+                            bottom: 24,
                             trailing: VuumLayout.pageInset
                         ))
                         .listRowSeparator(.hidden)
                 }
             } else {
                 Section {
-                    ForEach(filteredItems) { item in
+                    ForEach(notifications.items) { item in
                         Button {
                             notifications.markRead(item.id)
                         } label: {
@@ -72,9 +45,9 @@ struct NotificationInboxView: View {
                         }
                         .buttonStyle(.plain)
                         .listRowInsets(EdgeInsets(
-                            top: 8,
+                            top: 12,
                             leading: VuumLayout.pageInset,
-                            bottom: 8,
+                            bottom: 12,
                             trailing: VuumLayout.pageInset
                         ))
                         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
@@ -93,9 +66,6 @@ struct NotificationInboxView: View {
                             }
                         }
                     }
-                } header: {
-                    Text("\(filteredItems.count) · \(notifications.unreadCount) unread")
-                        .foregroundStyle(VuumColor.secondaryText)
                 }
             }
         }
@@ -129,45 +99,36 @@ struct NotificationInboxView: View {
 
     private var inboxEmptyState: some View {
         VStack(spacing: VuumLayout.stackSpacing) {
-            Image(systemName: "bell.slash")
-                .font(.system(size: 32, weight: .medium))
-                .foregroundStyle(VuumColor.brand)
-                .frame(width: 64, height: 64)
-                .background(VuumColor.chipBackground, in: RoundedRectangle(cornerRadius: VuumLayout.radiusCard, style: .continuous))
+            Image(systemName: "bell")
+                .font(.system(size: 28, weight: .medium))
+                .foregroundStyle(VuumColor.secondaryText)
+                .symbolRenderingMode(.hierarchical)
+                .frame(width: 56, height: 56)
 
             VStack(spacing: 6) {
-                Text(
-                    notifications.items.isEmpty
-                        ? L10n.t("status.empty_notifications_title")
-                        : "Nothing in this filter"
-                )
-                .font(VuumType.titleSmall)
-                .foregroundStyle(VuumColor.primaryText)
-                .multilineTextAlignment(.center)
+                Text(L10n.t("status.empty_notifications_title"))
+                    .font(VuumType.titleSmall)
+                    .foregroundStyle(VuumColor.primaryText)
+                    .multilineTextAlignment(.center)
 
-                Text(
-                    notifications.items.isEmpty
-                        ? L10n.t("status.empty_notifications_detail")
-                        : "Try another category or mark new alerts as you ride."
-                )
-                .font(VuumType.body)
-                .foregroundStyle(VuumColor.secondaryText)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
+                Text(L10n.t("status.empty_notifications_detail"))
+                    .font(VuumType.body)
+                    .foregroundStyle(VuumColor.secondaryText)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 20)
+        .padding(.vertical, 28)
         .accessibilityElement(children: .combine)
     }
 
     private var permissionCard: some View {
         VStack(alignment: .leading, spacing: VuumLayout.rowSpacing) {
-            Label("Stay updated on trips", systemImage: "bell.badge.fill")
+            Label("Stay updated on trips", systemImage: "bell.badge")
                 .font(VuumType.rowTitle)
                 .foregroundStyle(VuumColor.primaryText)
                 .symbolRenderingMode(.hierarchical)
-                .tint(VuumColor.accent)
 
             Text("Get driver arrival, trip, receipt, and safety updates on this device.")
                 .font(VuumType.callout)
@@ -199,61 +160,67 @@ struct NotificationInboxView: View {
 
     private func notificationRow(_ item: AppNotification) -> some View {
         HStack(alignment: .top, spacing: VuumLayout.rowSpacing) {
-            Image(systemName: item.kind.systemImage)
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(VuumColor.accentOn)
-                .frame(width: VuumLayout.iconBadge, height: VuumLayout.iconBadge)
-                .background(iconBackground(for: item.kind), in: RoundedRectangle(cornerRadius: VuumLayout.radiusChip, style: .continuous))
+            Image(systemName: quietSystemImage(for: item.kind))
+                .font(.system(size: 17, weight: .regular))
+                .foregroundStyle(item.isRead ? VuumColor.secondaryText : VuumColor.primaryText)
+                .symbolRenderingMode(.hierarchical)
+                .frame(width: 28, alignment: .center)
+                .padding(.top, 2)
 
             VStack(alignment: .leading, spacing: 4) {
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
                     Text(item.title)
-                        .font(.system(size: 15, weight: item.isRead ? .semibold : .bold))
+                        .font(.system(size: 15, weight: item.isRead ? .regular : .semibold))
                         .foregroundStyle(VuumColor.primaryText)
                         .multilineTextAlignment(.leading)
+                        .lineLimit(2)
                     Spacer(minLength: 8)
                     Text(relativeTime(item.createdAt))
                         .font(VuumType.caption)
                         .foregroundStyle(VuumColor.secondaryText)
                 }
 
-                Text(item.kind.label)
-                    .font(VuumType.captionSemibold)
-                    .foregroundStyle(VuumColor.accent)
-
                 Text(item.body)
                     .font(VuumType.callout)
                     .foregroundStyle(VuumColor.secondaryText)
                     .multilineTextAlignment(.leading)
-                    .fixedSize(horizontal: false, vertical: true)
+                    .lineLimit(2)
             }
 
             if !item.isRead {
                 Circle()
                     .fill(VuumColor.accent)
-                    .frame(width: 8, height: 8)
+                    .frame(width: 7, height: 7)
                     .padding(.top, 6)
                     .accessibilityHidden(true)
             }
         }
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(item.title). \(item.kind.label). \(item.body)")
+        .accessibilityLabel("\(item.title). \(item.body)")
         .accessibilityHint(item.isRead ? "Read" : "Unread. Double tap to mark as read.")
     }
 
-    private func iconBackground(for kind: AppNotificationKind) -> Color {
-        switch kind.category {
-        case .promo:
-            return VuumColor.brand
-        case .payment:
-            return VuumColor.success
-        case .safety:
-            return VuumColor.danger
-        case .system:
-            return VuumColor.secondaryText
-        case .trip:
-            return VuumColor.accent
+    /// Glyph-only symbols — no filled badge blobs.
+    private func quietSystemImage(for kind: AppNotificationKind) -> String {
+        switch kind {
+        case .promo: return "tag"
+        case .otp: return "lock.shield"
+        case .driverAssigned, .driverReassigned: return "person"
+        case .driverArriving: return "car"
+        case .driverArrived: return "mappin.and.ellipse"
+        case .tripStarted: return "arrow.triangle.turn.up.right.diamond"
+        case .tripCompleted, .trip: return "checkmark.circle"
+        case .receipt: return "doc.text"
+        case .scheduledReminder, .schedule: return "calendar"
+        case .paymentSucceeded, .payment: return "creditcard"
+        case .paymentFailed: return "exclamationmark.triangle"
+        case .cancellation: return "xmark.circle"
+        case .supportResponse, .support: return "bubble.left.and.bubble.right"
+        case .safetyEvent, .safety: return "shield.lefthalf.filled"
+        case .recordingStarted, .recordingStopped: return "mic"
+        case .incidentUpdate: return "exclamationmark.shield"
+        case .system: return "bell"
         }
     }
 

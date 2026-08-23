@@ -54,11 +54,8 @@ struct VuumOfflineBanner: View {
         }
         .animation(.easeInOut(duration: 0.25), value: network.status)
         .animation(.easeInOut(duration: 0.25), value: showConstrainedBanner)
-        .onAppear {
-            if network.status == .constrained {
-                presentConstrainedBanner()
-            }
-        }
+        // Do not flash the constrained tip on every tab/appear while still on Low Data Mode —
+        // only show on a status edge (see handleStatusChange).
         .onChange(of: network.status) { previous, next in
             handleStatusChange(from: previous, to: next)
         }

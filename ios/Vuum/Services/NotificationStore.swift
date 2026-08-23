@@ -156,7 +156,8 @@ struct AppNotification: Identifiable, Codable, Equatable {
 @MainActor
 final class NotificationStore: ObservableObject {
     private enum Keys {
-        static let items = "vuum.notifications.items.v3"
+        /// Bumped when sample seed / inbox layout changes so installs pick up a calmer default set.
+        static let items = "vuum.notifications.items.v4"
     }
 
     @Published private(set) var items: [AppNotification] = []
@@ -371,7 +372,7 @@ final class NotificationStore: ObservableObject {
     }
 
     private func loadOrSeed() {
-        // Fresh v3 key so installs pick up the full category seed (legacy keys ignored).
+        // Fresh storage key so installs pick up the calmer seed set (legacy keys ignored).
         if let data = defaults.data(forKey: Keys.items),
            let decoded = try? JSONDecoder().decode([AppNotification].self, from: data),
            !decoded.isEmpty {
@@ -395,67 +396,11 @@ final class NotificationStore: ObservableObject {
             ),
             AppNotification(
                 id: UUID(),
-                kind: .driverAssigned,
-                title: "Jean-Claude is on the way",
-                body: "ETA 8 min · Toyota Corolla · ABC 482 · Comfort",
-                createdAt: now.addingTimeInterval(-18 * 60),
-                isRead: false
-            ),
-            AppNotification(
-                id: UUID(),
-                kind: .promo,
-                title: "20% off your next ride",
-                body: "Use code VUUM20 this week on Comfort and XL trips in Lubumbashi.",
-                createdAt: now.addingTimeInterval(-3 * 3600),
-                isRead: false
-            ),
-            AppNotification(
-                id: UUID(),
                 kind: .receipt,
                 title: "Receipt ready",
-                body: "Your trip to Gécamines is saved in Activity with a full fare breakdown.",
+                body: "Your trip to Gécamines is saved in Activity.",
                 createdAt: now.addingTimeInterval(-5 * 3600),
                 isRead: false
-            ),
-            AppNotification(
-                id: UUID(),
-                kind: .tripStarted,
-                title: "Trip started",
-                body: "You’re heading to Gécamines. Share live status from Safety anytime.",
-                createdAt: now.addingTimeInterval(-5 * 3600 - 25 * 60),
-                isRead: true
-            ),
-            AppNotification(
-                id: UUID(),
-                kind: .driverArrived,
-                title: "Your driver is here",
-                body: "Meet Jean-Claude at your pickup and share your trip PIN to start.",
-                createdAt: now.addingTimeInterval(-5 * 3600 - 28 * 60),
-                isRead: true
-            ),
-            AppNotification(
-                id: UUID(),
-                kind: .recordingStarted,
-                title: "Audio recording on",
-                body: "In-trip audio capture started on your device. Your driver was notified.",
-                createdAt: now.addingTimeInterval(-5 * 3600 - 20 * 60),
-                isRead: true
-            ),
-            AppNotification(
-                id: UUID(),
-                kind: .recordingStopped,
-                title: "Audio recording stopped",
-                body: "Recording ended before drop-off. File kept only if you report an incident.",
-                createdAt: now.addingTimeInterval(-5 * 3600 - 5 * 60),
-                isRead: true
-            ),
-            AppNotification(
-                id: UUID(),
-                kind: .tripCompleted,
-                title: "Trip completed",
-                body: "You arrived at Gécamines. Rate your trip from Activity when you’re ready.",
-                createdAt: now.addingTimeInterval(-5 * 3600 + 60),
-                isRead: true
             ),
             AppNotification(
                 id: UUID(),
@@ -467,74 +412,18 @@ final class NotificationStore: ObservableObject {
             ),
             AppNotification(
                 id: UUID(),
-                kind: .scheduledReminder,
-                title: "Upcoming reserved ride",
-                body: "Airport pickup tomorrow at 06:40. We’ll notify you when a driver is assigned.",
-                createdAt: now.addingTimeInterval(-8 * 3600),
-                isRead: true
-            ),
-            AppNotification(
-                id: UUID(),
-                kind: .driverReassigned,
-                title: "New driver assigned",
-                body: "Amina will pick you up · Hyundai Tucson · KDG 219",
-                createdAt: now.addingTimeInterval(-30 * 3600),
-                isRead: true
-            ),
-            AppNotification(
-                id: UUID(),
-                kind: .cancellation,
-                title: "Trip cancelled",
-                body: "Your Comfort trip to Hub Mall was cancelled. No cancellation fee applied.",
-                createdAt: now.addingTimeInterval(-36 * 3600),
-                isRead: true
-            ),
-            AppNotification(
-                id: UUID(),
-                kind: .paymentFailed,
-                title: "Payment could not be completed",
-                body: "We couldn’t charge your card ending in 4242. Update payment methods in Account.",
+                kind: .supportResponse,
+                title: "Support replied",
+                body: "Your lost-item request is being reviewed in Help.",
                 createdAt: now.addingTimeInterval(-2 * 24 * 3600),
                 isRead: true
             ),
             AppNotification(
                 id: UUID(),
-                kind: .supportResponse,
-                title: "Support replied",
-                body: "Your lost-item request for yesterday’s Comfort trip is being reviewed.",
-                createdAt: now.addingTimeInterval(-2 * 24 * 3600 - 3600),
-                isRead: true
-            ),
-            AppNotification(
-                id: UUID(),
-                kind: .safetyEvent,
-                title: "Trip share link updated",
-                body: "Trusted contacts can follow your live trip status while you ride.",
-                createdAt: now.addingTimeInterval(-3 * 24 * 3600),
-                isRead: true
-            ),
-            AppNotification(
-                id: UUID(),
-                kind: .incidentUpdate,
-                title: "Incident report received",
-                body: "Safety is reviewing your report from trip #VU-1842. We’ll follow up in Help.",
-                createdAt: now.addingTimeInterval(-4 * 24 * 3600),
-                isRead: true
-            ),
-            AppNotification(
-                id: UUID(),
-                kind: .otp,
-                title: "Verification code sent",
-                body: "Use the code we texted you to finish signing in to Vuum.",
-                createdAt: now.addingTimeInterval(-5 * 24 * 3600),
-                isRead: true
-            ),
-            AppNotification(
-                id: UUID(),
                 kind: .promo,
-                title: "Invite friends, ride free",
-                body: "Share your invite link. You both get a ride credit after their first trip.",
-                createdAt: now.addingTimeInterval(-6 * 24 * 3600),
+                title: "20% off your next ride",
+                body: "Use code VUUM20 this week on Comfort trips.",
+                createdAt: now.addingTimeInterval(-3 * 24 * 3600),
                 isRead: true
             ),
         ].sorted { $0.createdAt > $1.createdAt }

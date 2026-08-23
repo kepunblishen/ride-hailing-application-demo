@@ -242,7 +242,8 @@ struct SafetyToolkitView: View {
         } message: {
             Text("Safety recording is available only during an active trip. Your driver is notified while recording is on.")
         }
-        .presentationDetents([.medium, .large])
+        .presentationDetents([.large])
+        .presentationDragIndicator(.visible)
         .task {
             location.startUpdatingIfAllowed()
             await permissions.refreshStatuses()

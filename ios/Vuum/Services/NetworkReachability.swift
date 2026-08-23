@@ -57,7 +57,9 @@ final class NetworkReachability: ObservableObject {
 
     private func apply(_ path: NWPath) {
         if path.status == .satisfied {
-            lastPathStatus = path.isConstrained || path.isExpensive ? .constrained : .online
+            // Cellular / hotspot sets `isExpensive` — that is normal mobile data, not "slow".
+            // Only Low Data Mode (`isConstrained`) should surface the weak-network banner.
+            lastPathStatus = path.isConstrained ? .constrained : .online
         } else {
             lastPathStatus = .offline
         }

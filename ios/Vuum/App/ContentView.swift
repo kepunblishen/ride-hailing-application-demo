@@ -72,6 +72,7 @@ struct ContentView: View {
         .environmentObject(SavedPlacesStore())
         .environmentObject(TrustedContactsStore())
         .environmentObject(PaymentMethodStore())
+        .environmentObject(PromoCodesStore())
         .environmentObject(NetworkReachability())
         .environmentObject(AppPreferences.shared)
 }
