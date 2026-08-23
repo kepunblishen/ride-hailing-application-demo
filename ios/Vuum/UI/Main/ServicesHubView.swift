@@ -39,7 +39,10 @@ struct ServicesHubView: View {
             .VuumGroupedBackground()
             .navigationTitle(L10n.t("services.title"))
             .sheet(isPresented: $showSchedule) {
-                ScheduleRideSheet()
+                // Confirm → Plan your ride. Cancel / tap-outside stays on Services.
+                ScheduleRideSheet(onConfirmed: {
+                    onRequestRide(nil)
+                })
             }
             .sheet(isPresented: $showCourier) {
                 CourierProductSheet()

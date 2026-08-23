@@ -358,7 +358,10 @@ struct HomeMapScaffoldView: View {
             SafetyToolkitView()
         }
         .sheet(isPresented: $showSchedule) {
-            ScheduleRideSheet()
+            // Confirm only — dismissing Later must not jump into Plan your ride.
+            ScheduleRideSheet(onConfirmed: {
+                tripSession.beginDestinationSelection()
+            })
         }
         .sheet(isPresented: $showAdjustPickup) {
             AdjustPickupSheet()

@@ -99,6 +99,9 @@ struct MainTabView: View {
     @EnvironmentObject private var notifications: NotificationStore
     @Environment(\.colorScheme) private var colorScheme
     @State private var selectedTab: MainTab = .home
+    /// Tab the rider was on before booking forced Home (e.g. Services → Plan your ride).
+    /// Restored when they cancel back to `.idle` — not after a live trip completes.
+    @State private var tabToRestoreAfterBooking: MainTab?
 
     /// Immersive map: hide the tab bar on map-hosted booking + live trip phases.
     private var hidesTabBarForActiveTrip: Bool {
@@ -166,6 +169,10 @@ struct MainTabView: View {
             || (userInfo?[MainTabNavigation.beginBookingUserInfoKey] as? NSNumber)?.boolValue == true
         let preferredTierID = userInfo?[MainTabNavigation.preferredTierIDUserInfoKey] as? String
 
+        if beginBooking, tab == .home {
+            rememberTabBeforeBookingIfNeeded()
+        }
+
         withAnimation(.easeInOut(duration: 0.22)) {
             selectedTab = tab
         }
@@ -174,17 +181,31 @@ struct MainTabView: View {
         }
     }
 
+    private func rememberTabBeforeBookingIfNeeded() {
+        if selectedTab != .home, tabToRestoreAfterBooking == nil {
+            tabToRestoreAfterBooking = selectedTab
+        }
+    }
+
     private func handleTripPhaseChange(_ phase: TripPhase) {
         switch phase {
         case .idle:
-            break
+            // Cancelled Plan your ride / choose-ride — return to Services (etc.), not stuck on Home.
+            if let restore = tabToRestoreAfterBooking {
+                tabToRestoreAfterBooking = nil
+                withAnimation(.easeInOut(duration: 0.22)) {
+                    selectedTab = restore
+                }
+            }
         case .completed:
+            tabToRestoreAfterBooking = nil
             notifications.postTripCompleted()
             if let receipt = tripSession.lastReceipt {
                 notifications.postReceiptReady(destination: receipt.dropoffName)
             }
             // Stay on Home for rating / receipt sheet; Activity remains one tap away.
         case .driverEnRoute:
+            tabToRestoreAfterBooking = nil
             if let trip = tripSession.activeTrip {
                 notifications.postDriverAssigned(
                     driverName: trip.driver.name,
@@ -195,12 +216,19 @@ struct MainTabView: View {
             }
             selectedTab = .home
         case .driverArrived:
+            tabToRestoreAfterBooking = nil
             notifications.postDriverArrived()
             selectedTab = .home
         case .inTrip:
+            tabToRestoreAfterBooking = nil
             notifications.postTripStarted()
             selectedTab = .home
-        case .selectingDestination, .choosingRide, .confirmingRide, .searching, .matched:
+        case .selectingDestination, .choosingRide, .confirmingRide:
+            rememberTabBeforeBookingIfNeeded()
+            selectedTab = .home
+        case .searching, .matched:
+            // Matching started — booking originated here; don't bounce back to Services after.
+            tabToRestoreAfterBooking = nil
             selectedTab = .home
         }
     }
