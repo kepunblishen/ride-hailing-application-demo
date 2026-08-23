@@ -1,5 +1,6 @@
 import Combine
 import Foundation
+import UIKit
 import UserNotifications
 
 /// Top-level inbox buckets used for filtering and chrome badges.
@@ -164,6 +165,8 @@ final class NotificationStore: ObservableObject {
 
     private let defaults: UserDefaults
     private let center: UNUserNotificationCenter
+    /// Icon badge mirrors unread count only while a rider session is active.
+    private var iconBadgeEnabled = false
 
     var unreadCount: Int {
         items.reduce(0) { $0 + ($1.isRead ? 0 : 1) }
@@ -182,6 +185,32 @@ final class NotificationStore: ObservableObject {
         self.defaults = defaults
         self.center = center
         loadOrSeed()
+        // Cold start / splash / auth: never show a leftover home-screen badge.
+        applyIconBadge(0)
+    }
+
+    /// Keep the home-screen badge aligned with session: unread while signed in, zero when signed out.
+    func applySessionState(isSignedIn: Bool) {
+        if isSignedIn {
+            iconBadgeEnabled = true
+            syncAppBadge()
+        } else {
+            clearForSignedOutSession()
+        }
+    }
+
+    /// Session ended — no badge, no pending rider alerts, inbox treated as read for a logged-out device.
+    func clearForSignedOutSession() {
+        iconBadgeEnabled = false
+        if items.contains(where: { !$0.isRead }) {
+            for index in items.indices {
+                items[index].isRead = true
+            }
+            persist()
+        }
+        center.removeAllPendingNotificationRequests()
+        center.removeAllDeliveredNotifications()
+        applyIconBadge(0)
     }
 
     func markRead(_ id: UUID) {
@@ -437,6 +466,16 @@ final class NotificationStore: ObservableObject {
     }
 
     private func syncAppBadge() {
-        center.setBadgeCount(unreadCount)
+        guard iconBadgeEnabled else {
+            applyIconBadge(0)
+            return
+        }
+        applyIconBadge(unreadCount)
+    }
+
+    private func applyIconBadge(_ count: Int) {
+        let value = max(0, count)
+        center.setBadgeCount(value)
+        UIApplication.shared.applicationIconBadgeNumber = value
     }
 }

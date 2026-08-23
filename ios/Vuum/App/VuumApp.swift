@@ -50,6 +50,10 @@ struct VuumApp: App {
                     tripSession.bind(fieldSales: fieldSales)
                     permissions.applyPreciseLocationPreference()
                     network.setForcedOffline(diagnostics.forceNetworkOffline)
+                    notifications.applySessionState(isSignedIn: sessionStore.isSignedIn)
+                }
+                .onChange(of: sessionStore.isSignedIn) { _, signedIn in
+                    notifications.applySessionState(isSignedIn: signedIn)
                 }
                 .onChange(of: location.latestLocation) { _, newValue in
                     appLocale.update(from: newValue)

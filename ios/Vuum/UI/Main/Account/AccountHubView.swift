@@ -154,6 +154,7 @@ struct AccountHubView: View {
                 Section {
                     Button(role: .destructive) {
                         tripSession.resetToHome()
+                        notifications.clearForSignedOutSession()
                         session.signOut()
                     } label: {
                         Text(L10n.Account.signOut)
